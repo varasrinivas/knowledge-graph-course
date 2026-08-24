@@ -18,6 +18,16 @@ cp .env.example .env
 
 Only the LLM-enrichment steps (M08 optional pass 2, capstone extension) need `ANTHROPIC_API_KEY` in `.env`. Everything structural runs offline — that is the point of deterministic extraction.
 
+## Where to run commands from
+
+Every lab README states its working directory, and the relative paths in its commands (`../shared_tools/...`, `../M06-okf-authoring/solution/...`) only resolve from there. Rule of thumb:
+
+- Lab exercises: run from inside that lab's folder (`labs/M01-graph-fundamentals/starter`, `labs/M02B-context-levers/solution`, ...)
+- Anything that operates ON the sample repo (M04 graphify, M07 bundle authoring, M08 hook, M11 gate, Capstone 1): run from `labs/sample-project`
+- Capstone 2: run from `labs/CAPSTONE-2-java-token-benchmark`
+
+If a command fails with `No such file or directory` on a `../` path, you are in the wrong directory — `cd` to the one named at the top of the lab's README before debugging anything else.
+
 ## Tool installs used by specific labs
 
 | Lab | Tool | Install |

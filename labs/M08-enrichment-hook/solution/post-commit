@@ -11,6 +11,9 @@ PYTHON="${ORDERFLOW_PYTHON:-python}"
 command -v "$PYTHON" >/dev/null 2>&1 || PYTHON=python3
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 "$PYTHON" "$REPO_ROOT/../M08-enrichment-hook/solution/refresh_concepts.py" "$REPO_ROOT" || {
-    echo "[enrich] FAILED — bundle NOT updated. Fix before trusting the graph." >&2
+    # "NOT published", not "not updated": the draft pass may already have
+    # rewritten concept files on disk before lint rejected them — the bundle
+    # is dirty and unpublished, and must not be trusted or committed as-is.
+    echo "[enrich] FAILED — bundle NOT published (lint rejected it; local concept files may hold unpublished drafts). Fix before trusting or committing the bundle." >&2
     exit 1
 }
