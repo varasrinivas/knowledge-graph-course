@@ -141,6 +141,7 @@ tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
   <a href="#phase5">Phase 5 — Honest Writeup</a>
   <a href="#phase6">Phase 6 — Live (Optional)</a>
   <a href="#results">Measured Reference Results</a>
+  <a href="#live-run">What a Real Live Run Looks Like</a>
   <a href="#testcases">Test Cases</a>
   <a href="#further">Going Further</a>
   <a href="#quiz">Knowledge Check</a>
@@ -484,6 +485,29 @@ AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code><
 </section>
 
 <!-- ============ TEST CASES ============ -->
+<section class="section" id="live-run">
+<h2>What a Real Live Run Looks Like</h2>
+<p>Everything above is the <strong>mechanical</strong> benchmark — no model in the loop. We also ran the Phase&nbsp;6 live experiment for you once, so you can see what actually happens: the same four questions (2 structural, 2 logic) asked via <code>claude -p</code> against this spring-framework snapshot, with and without the graph MCP server registered. Same model (Sonnet) on both arms; the only variable is the graph.</p>
+<div style="overflow-x:auto"><table>
+<thead><tr><th>Question</th><th>Type</th><th>Baseline (Grep/Read)</th><th>With graph MCP</th><th>Graph &Delta; tokens</th></tr></thead>
+<tbody>
+<tr><td>who calls <code>registerBeanDefinition</code></td><td>structural</td><td>4 turns · 115K tok · $0.093</td><td>5 turns · 207K tok · $0.138</td><td><strong>+79%</strong></td></tr>
+<tr><td>who calls <code>ResolvableType.forClass</code></td><td>structural</td><td>4 turns · 169K tok · $0.142</td><td>9 turns · 381K tok · $0.196</td><td><strong>+125%</strong></td></tr>
+<tr><td>why <code>BeanDefinitionOverrideException</code></td><td>logic</td><td>3 turns · 114K tok · $0.071</td><td>6 turns · 156K tok · $0.096</td><td>+37%</td></tr>
+<tr><td><code>refresh()</code> + late bean definitions</td><td>logic</td><td>3 turns · 113K tok · $0.068</td><td>3 turns · 115K tok · $0.079</td><td>+2%</td></tr>
+<tr><td><strong>Total</strong></td><td></td><td><strong>14 turns · 512K tok · $0.37</strong></td><td><strong>23 turns · 859K tok · $0.51</strong></td><td><strong>+68%</strong></td></tr>
+</tbody></table></div>
+<p><strong>The graph arm lost.</strong> Answer quality was comparable and correct on both arms — both found <code>isBeanDefinitionOverridable</code> at the same line, both traced the three-phase re-query in <code>PostProcessorRegistrationDelegate</code>. But the graph cost 68% MORE tokens. After a page of 33.7x mechanical multiples, this deserves an explanation, not a shrug:</p>
+<ol>
+<li><strong>The live baseline never pays the whole-file floor.</strong> The mechanical benchmark charges the full size of every matched file, because that is the cost of <em>certain</em> confirmation. But a real agent's Grep returns matching <em>lines</em>, not whole files — the baseline answered the callers question in 4 turns mostly from grep output alone. Good line-granular search undercuts the worst case dramatically.</li>
+<li><strong>This course's teaching-grade server sends bloated answers.</strong> Bare-name resolution fans <code>registerBeanDefinition</code> out to a huge caller list, AMBIGUOUS candidates included — one MCP answer was ~11K tokens. Production tools win partly because type resolution keeps answers <em>small</em>.</li>
+<li><strong>The model didn't trust the graph blindly.</strong> On the <code>forClass</code> question it spent 9 turns cross-verifying graph claims against files — paying for both retrieval paths.</li>
+<li><strong>Logic questions confirmed the prediction exactly.</strong> The <code>refresh()</code> question was a wash (+2%): reasoning dominates, and no graph removes reasoning tokens.</li>
+</ol>
+<div class="callout-why"><span class="box-label">&#127891; The Three Quantities</span>
+<p>You now have three numbers for the same repo, and all three are correct — they just measure different things. The <strong>mechanical per-question floor</strong> (33.7x) measures worst-case exploration vs answer size, no model involved. The <strong>replicated session ranges</strong> (6.8x&ndash;49x) measure other people's stacks on other people's tasks. The <strong>live run on this stack</strong> (0.6x &mdash; a loss) measures a naive bare-name server against an agent with line-granular grep. Only the third describes <em>your</em> setup &mdash; which is why this capstone makes you run it. With a type-resolved graph, compact answers, and a long session amortizing the MCP schema overhead, the sign can flip back; proving that is the stretch experiment.</p></div>
+</section>
+
 <section class="section" id="testcases">
   <h2>Test Cases</h2>
   <div class="table-wrap"><table>

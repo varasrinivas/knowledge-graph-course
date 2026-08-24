@@ -70,7 +70,9 @@ python solution/measure_tokens.py <repo> <repo>-graph.json --questions 8 --json 
 14. ✅ The M11 question, again: your spring graph took ~2.5 min to build. How would you detect it going stale within 24 hours? (Your Capstone-1 freshness gate works unchanged here.)
 
 ## Phase 6 — OPTIONAL live measurement (step 15)
-15. With an API key and quota: ask `claude -p` the same 2 questions with and without the MCP server registered and compare the reported token usage. Expect the live gap to be smaller than the harness's mechanical floor — the live agent reads files partially and reasons either way. Write down both numbers; understanding WHY they differ is the graduation exercise.
+15. With an API key and quota: ask `claude -p` the same questions with and without the MCP server registered and compare the reported token usage. Write down both numbers; understanding WHY they differ from the mechanical floor is the graduation exercise.
+
+**A reference live run** (2 structural + 2 logic questions, Sonnet both arms, this exact spring snapshot — full data in `expected_output/live-run-summary.json`): the graph arm **lost** — 859K tokens / $0.51 / 23 turns vs the baseline's 512K / $0.37 / 14 turns (+68% tokens), with comparable answer quality. Why the sign flipped vs the harness's 33.7x: (1) a real agent's Grep returns matching *lines*, not whole files, so the baseline never pays the whole-file confirmation floor; (2) this course's bare-name server sends bloated fan-out answers (~11K tokens for `registerBeanDefinition`) where type-resolved tools send compact ones; (3) the model cross-verified graph claims against files, paying for both paths; (4) logic questions were a wash (+2%) — reasoning tokens don't shrink. Three quantities, all correct, measuring different things: the mechanical floor (33.7x), replicated session ranges (6.8x–49x), and YOUR stack live (here: 0.6x). Only the third describes your setup — that's why you run it.
 
 ## Test Cases
 | # | Type | Input | Expected |
