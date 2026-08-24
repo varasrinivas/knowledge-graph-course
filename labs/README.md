@@ -55,6 +55,7 @@ M06-okf-authoring/
 |-----|-------|-----------|-----------|
 | M01 | Graph fundamentals in pure Python | Beginner | Build an adjacency-list code graph; BFS callers; blast radius |
 | M02 | Watch RAG shred context | Beginner | Chunk orderflow docs; observe a stale-definition retrieval |
+| M02B | Context levers: fix the poisoned transcript | Beginner+ | Retrieve and offload levers over a rotted session; four-arm token comparison |
 | M03 | tree-sitter extraction | Intermediate | Parse a file to an AST; extract call edges with provenance tags |
 | M04 | Graphify end-to-end | Intermediate | `/graphify` orderflow; read the three artifacts; query paths |
 | M06 | OKF authoring | Beginner | Write valid concept files; frontmatter validation |

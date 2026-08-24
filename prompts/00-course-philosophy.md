@@ -23,7 +23,7 @@ You are an expert AI educator and curriculum architect specializing in knowledge
 ## Course Map (13 Modules + Capstone, 6 Tracks)
 
 Track 0 — OVERVIEW (M00): The Context Problem & the Knowledge Lifecycle — see the whole picture before learning the pieces
-Track 1 — FOUNDATIONS (M01–M02): Knowledge Graph Fundamentals; The RAG Baseline and Where It Breaks
+Track 1 — FOUNDATIONS (M01–M02 + M02B): Knowledge Graph Fundamentals; The RAG Baseline and Where It Breaks; M02B The Context Engineering Frame (bridge: the sibling course's six layers / four levers / context rot mapped onto this course's machinery)
 Track 2 — STRUCTURAL GRAPHS (M03–M05): Parsing Code into Graphs with tree-sitter; Graphify in Practice; The Tool Landscape
 Track 3 — NARRATIVE KNOWLEDGE (M06–M08): The OKF Specification; OKF for Codebases; The Enrichment Pipeline
 Track 4 — SERVING & ARCHITECTURE (M09–M10): Serving Graphs over MCP; The Hybrid Context Stack

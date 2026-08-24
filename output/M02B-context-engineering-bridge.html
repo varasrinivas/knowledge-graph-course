@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M02B · The Context Engineering Frame — Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0A1628; --bg-secondary: #111D33; --bg-card: #162033; --bg-surface: #1A2740;
+  --text-primary: #E8ECF1; --text-secondary: #94A3B8; --text-muted: #64748B;
+  --accent-primary: #D4A843; --accent-hover: #E5BC5A; --accent-muted: rgba(212,168,67,0.15);
+  --success: #10B981; --success-bg: rgba(16,185,129,0.1);
+  --warning: #F59E0B; --warning-bg: rgba(245,158,11,0.1);
+  --error: #F43F5E; --error-bg: rgba(244,63,94,0.1);
+  --info: #3B82F6; --info-bg: rgba(59,130,246,0.1);
+  --track-color: #6366F1;
+  --code-bg: #0D1117; --code-border: #21262D; --code-text: #C9D1D9;
+  --code-comment: #8B949E; --code-keyword: #FF7B72; --code-string: #A5D6FF;
+  --code-function: #D2A8FF; --code-number: #79C0FF;
+  --transition-fast: 150ms; --transition-normal: 300ms; --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Source Sans 3', sans-serif; font-size: 1.05rem; line-height: 1.7; }
+.page-container { max-width: 1200px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: 240px 1fr; gap: 3rem; }
+.sidebar-nav { position: sticky; top: 2rem; height: calc(100vh - 4rem); overflow-y: auto; font-family: 'Bricolage Grotesque', sans-serif; }
+.sidebar-nav .nav-title { font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.9rem; }
+.sidebar-nav a { display: block; color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 600; padding: 0.35rem 0.6rem; border-left: 2px solid transparent; transition: all var(--transition-fast); }
+.sidebar-nav a:hover { color: var(--track-color); border-left-color: var(--track-color); }
+.content { max-width: 800px; min-width: 0; }
+.section { margin-bottom: 4rem; }
+h1 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 2rem; line-height: 1.25; margin: 0.6rem 0; }
+h2 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.5rem; margin: 2.2rem 0 1rem; scroll-margin-top: 1rem; }
+h3 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: 1.25rem; margin: 1.6rem 0 0.8rem; scroll-margin-top: 1rem; }
+p { margin: 0 0 1rem; }
+em { color: var(--text-primary); }
+.course-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent-primary); font-weight: 600; }
+.badges { display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.8rem 0; }
+.badge { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.08em; padding: 0.3rem 0.9rem; border-radius: 999px; border: 1px solid var(--track-color); color: var(--track-color); }
+.badge.gold { border-color: var(--accent-primary); color: var(--accent-primary); }
+.meta-row { display: flex; gap: 1.5rem; flex-wrap: wrap; color: var(--text-secondary); font-size: 0.95rem; margin: 0.6rem 0 1rem; }
+.progress-bar { height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; margin: 1rem 0 0.4rem; }
+.progress-fill { height: 100%; width: 21%; background: linear-gradient(90deg, var(--track-color), var(--accent-primary)); border-radius: 2px; }
+.progress-label { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--text-muted); }
+ul, ol { margin: 0 0 1rem 1.4rem; }
+li { margin: 0.35rem 0; }
+a { color: var(--accent-primary); }
+.analogy-box, .tech-def-box, .callout { border-radius: 0 8px 8px 0; padding: 1.5rem; margin: 1.5rem 0; }
+.analogy-box { background: var(--accent-muted); border-left: 4px solid var(--accent-primary); }
+.analogy-box::before { content: '💡 Everyday Analogy'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--accent-primary); display: block; margin-bottom: 0.5rem; }
+.tech-def-box { background: var(--info-bg); border-left: 4px solid var(--info); }
+.tech-def-box::before { content: '📐 Technical Definition'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--info); display: block; margin-bottom: 0.5rem; }
+.callout { border-left: 4px solid; }
+.callout .box-label { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: 0.5rem; }
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-info { background: var(--info-bg); border-left-color: var(--info); }
+.callout-info .box-label { color: var(--info); }
+.term-tooltip { position: relative; color: var(--accent-primary); cursor: help; border-bottom: 1px dashed var(--accent-primary); }
+.term-tooltip .tooltip-content { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--accent-primary); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--text-primary); width: 300px; opacity: 0; pointer-events: none; transition: opacity var(--transition-fast); z-index: 20; }
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; font-size: 0.93rem; }
+th, td { border: 1px solid var(--code-border); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+th { background: var(--bg-surface); font-family: 'Bricolage Grotesque', sans-serif; font-size: 0.85rem; }
+tr.hl td { background: rgba(99,102,241,0.12); }
+.table-scroll { overflow-x: auto; }
+.code-wrap { position: relative; margin: 1.2rem 0; }
+pre { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 10px; padding: 1.1rem 1.2rem; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; color: var(--code-text); }
+code { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; background: var(--bg-surface); border-radius: 5px; padding: 0.1em 0.4em; }
+pre code { background: none; padding: 0; }
+.copy-btn { position: absolute; top: 0.55rem; right: 0.55rem; background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; padding: 0.3rem 0.65rem; border-radius: 6px; cursor: pointer; transition: all var(--transition-fast); }
+.copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.k { color: var(--code-keyword); } .s { color: var(--code-string); } .f { color: var(--code-function); } .n { color: var(--code-number); } .c { color: var(--code-comment); }
+.animation-container { background: var(--bg-secondary); border: 1px solid var(--code-border); border-radius: 12px; padding: 1.6rem; margin: 2rem 0 2.6rem; position: relative; min-height: 300px; }
+.anim-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--track-color); margin-bottom: 1rem; }
+.animation-controls { display: flex; gap: 0.5rem; position: absolute; bottom: 1rem; right: 1rem; }
+.animation-controls button { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-primary); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all var(--transition-fast); }
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.anim-note { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.8rem; max-width: 78%; }
+.step-card { background: var(--bg-card); border: 1px solid var(--code-border); border-left: 4px solid var(--track-color); border-radius: 0 10px 10px 0; padding: 1.2rem 1.4rem; margin: 1.2rem 0; }
+.step-card h4 { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.02rem; margin-bottom: 0.5rem; }
+.checkpoint { background: var(--success-bg); border-left: 4px solid var(--success); border-radius: 0 8px 8px 0; padding: 0.9rem 1.2rem; margin: 0.9rem 0; font-size: 0.95rem; }
+.quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.quiz-question .q { font-weight: 600; margin-bottom: 0.8rem; }
+.quiz-option { padding: 0.75rem 1rem; margin: 0.5rem 0; border: 1px solid var(--code-border); border-radius: 8px; cursor: pointer; transition: all var(--transition-fast); }
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-feedback { margin-top: 0.75rem; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; display: none; }
+.quiz-feedback.show { display: block; background: var(--bg-surface); }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.9rem; margin: 1.2rem 0; }
+.summary-card { background: var(--bg-card); border-top: 3px solid var(--track-color); border-radius: 10px; padding: 1rem 1.1rem; font-size: 0.9rem; }
+.summary-card b { font-family: 'Bricolage Grotesque', sans-serif; display: block; margin-bottom: 0.35rem; }
+.module-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; }
+.module-nav a { flex: 1; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 10px; padding: 1rem 1.2rem; text-decoration: none; color: var(--text-primary); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; transition: all var(--transition-fast); }
+.module-nav a:hover { border-color: var(--track-color); }
+.module-nav .dir { display: block; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem; }
+.module-nav .next { text-align: right; }
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; }
+  .sidebar-nav { position: static; height: auto; margin-bottom: 1rem; }
+}
+@media (max-width: 768px) { .page-container { padding: 1rem; } }
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+  .animation-controls { display: none; }
+  .anim-note::after { content: ' (Animations are paused because your system prefers reduced motion — each panel shows its final state.)'; }
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+
+<nav class="sidebar-nav" aria-label="Module contents">
+  <div class="nav-title">Module 2B · Contents</div>
+  <a href="#objectives">Learning Objectives</a>
+  <a href="#premise">The Coupling Premise</a>
+  <a href="#six-layers">The Six Layers</a>
+  <a href="#kg-layers">Where KG Artifacts Land</a>
+  <a href="#mapping">The Four Levers → This Course</a>
+  <a href="#taxonomy">The Taxonomy Fork</a>
+  <a href="#rot">Two Altitudes of Context Rot</a>
+  <a href="#ordering">Static-First &amp; the Middle</a>
+  <a href="#walkthrough">Code: The Two New Levers</a>
+  <a href="#lab">Hands-On Lab</a>
+  <a href="#misconceptions">Common Misconceptions</a>
+  <a href="#quiz">Knowledge Check</a>
+  <a href="#summary">Summary</a>
+  <a href="#references">References</a>
+</nav>
+
+<main class="content">
+
+<header class="section" style="margin-bottom:2.5rem">
+  <div class="course-eyebrow">Knowledge Graphs for AI Agents</div>
+  <div class="badges">
+    <span class="badge">TRACK 1 · FOUNDATIONS</span>
+    <span class="badge gold">MODULE 2B · BRIDGE</span>
+  </div>
+  <h1>The Context Engineering Frame</h1>
+  <div class="meta-row">
+    <span>⏱️ ~40 min</span>
+    <span>📋 Prerequisites: <strong>M01–M02</strong> (sibling course M03B recommended)</span>
+    <span aria-label="difficulty">Beginner+</span>
+  </div>
+  <div class="progress-bar" role="img" aria-label="Bridge module positioned between Module 2 and Module 3"><div class="progress-fill"></div></div>
+  <div class="progress-label">Bridge · between M02 and M03 — outside the 14-part numbering</div>
+</header>
+
+<section class="section" id="objectives">
+  <h2>Learning Objectives</h2>
+  <p>By the end of this bridge module you will be able to:</p>
+  <ul>
+    <li>Recite the <strong>six context layers</strong> and place every artifact this course builds — graphs, bundles, MCP answers, index files — into the correct layer.</li>
+    <li>Map each of the <strong>four context-engineering levers</strong> (add, compress, retrieve, offload) onto the specific modules of this course that industrialize it.</li>
+    <li>Explain <strong>context rot at two altitudes</strong> — a rotting transcript and a drifting graph — as the same signal-to-noise disease with two cures.</li>
+    <li>Connect <strong>static-first ordering</strong> and <strong>lost-in-the-middle</strong> to the design of <code>index.md</code> and the <code>explore()</code> composite answer.</li>
+    <li>Fix a poisoned transcript with the two levers the sibling course's lab left unimplemented — <strong>retrieve</strong> and <strong>offload</strong> — and measure the result.</li>
+  </ul>
+</section>
+
+<section class="section" id="premise">
+  <h2>The Coupling Premise</h2>
+  <p>If you took the sibling course <em>Building AI Agents with Claude</em>, you met context engineering in module M03B: the discipline of deciding what the model sees, in what order, compressed how. If you started here instead, you've spent two modules learning graphs and RAG limits without anyone naming the discipline you were practicing.</p>
+  <p>Here is the claim this module exists to make explicit: <strong>this entire course is applied context engineering.</strong> Every mechanism in Tracks 2 through 5 — tree-sitter graphs, OKF bundles, MCP servers, freshness gates — is one of context engineering's four levers, industrialized. The sibling course teaches the levers as techniques you apply by hand inside one conversation. This course builds the infrastructure that pulls those levers automatically, for every agent, on every task.</p>
+  <div class="analogy-box">
+    <p><strong>BEFORE:</strong> The sibling course's M03B uses a packing analogy — preparing a suitcase for a trip. You can throw things in (add), use packing cubes (compress), ship a box ahead to the hotel (retrieve it there), or hand bags to a travel buddy (offload). That works beautifully for one traveler packing one suitcase — one agent, one conversation, one context window.</p>
+    <p><strong>PAIN:</strong> Now imagine a company where a thousand travelers take the same trip every day. Each one packs from scratch, ships their own boxes, negotiates their own buddy system. The packing skill doesn't scale — every traveler re-derives the same decisions, and most of them pack badly under deadline pressure. That is your engineering org running coding agents without shared context infrastructure: every session re-explores the repo, re-derives the schema, re-argues about the metric definition.</p>
+    <p><strong>MAPPING:</strong> This course builds the airline's luggage <em>infrastructure</em>: the pre-shipped hotel boxes are your structural graph and OKF bundle (built once, queried by everyone), the packing-cube factory is your report and summary generators, and the freshness gate is the inspection that catches a box that's been sitting at the hotel for three weeks with last season's clothes in it. Same four levers — operated by machinery instead of willpower.</p>
+  </div>
+  <p>The rest of this module walks the mapping in detail, using the sibling course's own vocabulary and numbers so learners from either side land in the same place.</p>
+</section>
+
+<section class="section" id="six-layers">
+  <h2>What the Model Actually Sees: The Six Layers</h2>
+  <div class="tech-def-box">
+    <p>From the sibling course, verbatim: <em>"Context engineering is the practice of deciding what content occupies the model's context window on each turn, in what order, and how it is compressed or fetched. Prompt engineering is a sub-discipline of context engineering that handles the authoring of one piece of that context (typically the system prompt or current user message)."</em></p>
+    <p>And the line that reframes everything: <em>"Prompt engineering asks 'what words go in this message?' Context engineering asks 'what gets included at all, in what order, fresh or cached, full or summarized?' <strong>The first is a writing problem. The second is a budgeting problem.</strong>"</em></p>
+  </div>
+  <p>The budget has six line items. On any turn, the model's context window contains: the <span class="term-tooltip" tabindex="0">system prompt<span class="tooltip-content">The standing instructions loaded at the start of every turn — identity, rules, conventions. Static by design.</span></span>, the <span class="term-tooltip" tabindex="0">tool definitions<span class="tooltip-content">The JSON schemas describing every tool the agent can call. Loaded whether or not the tools get used.</span></span>, the conversation <strong>history</strong>, any <strong>retrieved</strong> documents, accumulated <strong>tool results</strong>, and the <strong>current turn</strong> — the user's actual message.</p>
+  <p>M03B grounds this with an inventory of a real research agent at turn 8. Watch the animation build it, and watch where the user's message ends up:</p>
+
+  <div class="animation-container" id="animSixLayers" role="img" aria-label="Animated stacked bar filling with the six context layers to 9,685 tokens; the current-turn layer is a tiny sliver">
+    <div class="anim-title">SIX_LAYERS — one turn's context budget, layer by layer</div>
+    <svg viewBox="0 0 700 250" width="100%" height="250" aria-hidden="true">
+      <g id="slBars"></g>
+      <line x1="90" y1="20" x2="90" y2="222" stroke="#21262D" stroke-width="1"/>
+      <line x1="90" y1="222" x2="680" y2="222" stroke="#21262D" stroke-width="1"/>
+      <text id="slTotal" x="680" y="18" text-anchor="end" font-family="JetBrains Mono" font-size="14" fill="#D4A843">0 tokens</text>
+    </svg>
+    <div class="anim-note">Turn 8 of a research agent: system 420 · tools 1,180 · history 3,250 · retrieved 2,800 · tool results 1,950 · current turn 85 = <strong>9,685 tokens</strong>. The message the user typed is <strong>0.9%</strong> of what the model reads.</div>
+    <div class="animation-controls">
+      <button data-anim="sl" data-act="play" aria-label="Play six layers animation">▶</button>
+      <button data-anim="sl" data-act="pause" aria-label="Pause six layers animation">⏸</button>
+      <button data-anim="sl" data-act="restart" aria-label="Restart six layers animation">↻</button>
+    </div>
+  </div>
+
+  <p>Sit with that 0.9% for a second. When an agent answers badly, the instinct is to rewrite the prompt — to polish the 85 tokens. But the other 9,600 tokens are where the answer actually lives or dies: which files got dumped in as tool results, whether the retrieved doc is the current one or the stale one, whether turn 3's resolved error is still taking up residence. Optimizing the 0.9% while ignoring the 99.1% is why "prompt engineering" alone plateaus.</p>
+  <p>You have already seen this exact failure in this course, before it had a name. M00's agent read 147 files to fix a 3-line bug — that was the <em>tool results</em> layer eating the whole budget. M02's RAG pipeline retrieved a stale WAU definition — that was the <em>retrieved</em> layer poisoning the well. The six-layer inventory is the diagnostic frame those stories were missing.</p>
+</section>
+
+<section class="section" id="kg-layers">
+  <h2>Where This Course's Artifacts Land</h2>
+  <p>Every artifact you build in Tracks 2–5 occupies exactly one of those six layers. Naming the layer tells you what budget line the artifact is optimizing:</p>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Context layer</th><th>What this course puts there</th><th>Instead of…</th></tr></thead>
+    <tbody>
+      <tr><td><strong>tools</strong></td><td>MCP tool schemas — <code>graph_callers</code>, <code>explore</code>, <code>search</code> (M09)</td><td>nothing — this layer is the price of admission, kept small by composite tools</td></tr>
+      <tr><td><strong>retrieved</strong></td><td>OKF concept files, loaded selectively via <code>index.md</code> (M06–M08)</td><td>similarity-ranked chunks of whatever the embedder liked (M02)</td></tr>
+      <tr><td><strong>tool results</strong></td><td>one compact graph answer — callers, callees, blast radius (M09)</td><td>dozens of whole-file dumps from grep-and-read exploration (M00)</td></tr>
+      <tr><td><strong>history (static prefix)</strong></td><td>the <code>index.md</code> pre-flight read — stable, cacheable orientation</td><td>re-derived architectural chatter scattered through the transcript</td></tr>
+      <tr><td><strong>system</strong></td><td>layered CLAUDE.md — repo-wide facts only (M12)</td><td>a 340-line everything-file costing every session (M12's before-picture)</td></tr>
+      <tr><td><strong>current</strong></td><td>the user's question — the one layer this course leaves alone</td><td>—</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout callout-why">
+    <span class="box-label">✅ Why It Matters</span>
+    <p>Layers turn vague complaints into line items. "The agent is expensive" becomes "tool results are 2,341 of our 3,131 tokens — 75% of the budget is exploration dumps." That is a real number from this module's lab fixture, and once you can see it, the fix is obvious: attack the biggest line, not the prompt. The whole architecture of this course — graph for tool results, bundle for retrieved, index for the static prefix — is an attack plan ordered by layer size.</p>
+  </div>
+</section>
+
+<section class="section" id="mapping">
+  <h2>The Four Levers → This Course's Machinery</h2>
+  <p>M03B's second organizing idea: everything you can do about a context budget is one of four levers — <strong>add</strong>, <strong>compress</strong>, <strong>retrieve</strong>, <strong>offload</strong>. Its exact words: <em>"Every RAG technique, every memory architecture, every multi-agent pattern you'll learn later is one of these four wearing a different costume."</em> This course is where the costumes come off. Here is the centerpiece of this module — the mapping table:</p>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Lever (M03B)</th><th>What it means</th><th>Industrialized by (this course)</th></tr></thead>
+    <tbody>
+      <tr><td><strong>add</strong></td><td>put it in context deliberately</td><td>M12's layered CLAUDE.md — facts every session genuinely needs, and nothing else, loaded by directory scope</td></tr>
+      <tr class="hl"><td><strong>compress</strong></td><td>same information, fewer tokens</td><td><code>GRAPH_REPORT.md</code> and the ~700-token orientation read (M04, M09); summaries generated once, reused by every session</td></tr>
+      <tr class="hl"><td><strong>retrieve</strong></td><td>fetch on demand instead of carrying</td><td>structural graph queries — "answers, not leads" (M03–M05, M09); vector RAG kept for the unstructured long tail (M02, M10)</td></tr>
+      <tr class="hl"><td><strong>offload</strong></td><td>external memory something else maintains</td><td>the OKF bundle + <code>log.md</code> (M06–M08); MCP servers holding the graph (M09); subagents exploring in their own window (M12)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Notice which rows are highlighted: <em>compress</em>, <em>retrieve</em>, and <em>offload</em> are the levers that need infrastructure to pull well. Anyone can add; adding is the default failure mode. The other three require something to exist first — a report to have been generated, a graph to query, a bundle to read back. Building those somethings is Tracks 2 through 5 of this course.</p>
+
+  <div class="animation-container" id="animLeverMap" role="img" aria-label="Animation of four lever nodes lighting up and drawing connections to the course modules that implement them">
+    <div class="anim-title">LEVER_MAP — four levers, and the machinery behind each</div>
+    <svg viewBox="0 0 700 280" width="100%" height="280" aria-hidden="true">
+      <g id="lmLeft"></g>
+      <g id="lmRight"></g>
+      <g id="lmEdges"></g>
+    </svg>
+    <div class="anim-note">Each lever lights up and connects to the modules that industrialize it. The three infrastructure levers (compress, retrieve, offload) are why this course exists.</div>
+    <div class="animation-controls">
+      <button data-anim="lm" data-act="play" aria-label="Play lever map animation">▶</button>
+      <button data-anim="lm" data-act="pause" aria-label="Pause lever map animation">⏸</button>
+      <button data-anim="lm" data-act="restart" aria-label="Restart lever map animation">↻</button>
+    </div>
+  </div>
+
+  <p>Read the table back the other way and each module of this course acquires a one-line justification in context-engineering terms. Why does M09's server exist? Because <em>retrieve</em> beats carrying 24KB files. Why does M08's enrichment hook exist? Because <em>offload</em> is only safe if something keeps the external memory honest. Why does M12 teach CLAUDE.md layering? Because even the humble <em>add</em> lever has a right way and a wrong way.</p>
+</section>
+
+<section class="section" id="taxonomy">
+  <h2>The Taxonomy Fork</h2>
+  <p>One housekeeping note before we go deeper, because it trips up learners who did both tracks of the sibling course. There are <strong>two</strong> four-lever taxonomies in circulation there:</p>
+  <ul>
+    <li>The <strong>Claude track</strong> uses <em>add / compress / retrieve / offload</em> — the version this module uses.</li>
+    <li>The <strong>open-source track</strong> uses <em>crop / compress / summarize / select</em> — organized around what its <code>ContextBudget.strategy()</code> lab actually does to a transcript.</li>
+  </ul>
+  <p>They describe the same territory from different angles: <em>crop</em> is the destructive edge of compress, <em>select</em> is retrieve's decision half, <em>summarize</em> is compress with an LLM. Neither is the Anthropic write/select/compress/isolate quartet — a third taxonomy you'll meet in the wild. Don't memorize taxonomies; memorize the moves.</p>
+  <div class="callout callout-info">
+    <span class="box-label">ℹ️ Where crop lives in this course</span>
+    <p>We use the Claude-track names, but the open-source track's <em>crop</em> — deliberately refusing to include something — shows up here in two places worth naming: M12's permission <strong>deny rules</strong> (generated and vendored code never enters context at all), and Capstone 2's <strong>AMBIG_CAP refusal</strong> (a call to a name with 150 definitions produces no edges — the extractor declines to guess rather than emit noise). Cropping at the infrastructure level means the noise never even reaches the budget.</p>
+  </div>
+</section>
+
+<section class="section" id="rot">
+  <h2>Two Altitudes of Context Rot</h2>
+  <div class="tech-def-box">
+    <p>M03B, verbatim: <em>"Context rot is the degradation of agent quality caused by accumulated stale, contradictory, or low-relevance content in the context window. It's distinct from running out of tokens — <strong>you can hit context rot at 60% window utilization. The key signal is signal-to-noise ratio, not raw size.</strong>"</em></p>
+  </div>
+  <p>The sibling course diagnoses rot inside <em>one conversation</em>: duplicate tool results, superseded instructions, resolved detours that keep occupying tokens. Its cure is compaction — summarize the past, crop the noise, keep the signal. That is rot at the <strong>transcript altitude</strong>.</p>
+  <p>This course's M11 diagnoses the same disease one level down, at the <strong>infrastructure altitude</strong>. A structural graph that stopped rebuilding two weeks ago is stale, contradictory, low-relevance content — served fresh to every session that queries it. M11's warning — <em>"a stale structural graph is worse than no graph — it provides high-confidence wrong answers"</em> — is the rot definition wearing infrastructure clothes. The transcript version poisons one conversation; the infrastructure version poisons every conversation that trusts the graph.</p>
+  <p>Same signal-to-noise disease, two cures that rhyme: <strong>compaction</strong> cures the transcript, the <strong>freshness gate</strong> cures the infrastructure. Both are scheduled hygiene, not one-time fixes — and both fail the same way, silently, which is why M11 makes you write down how you'd detect staleness within 24 hours.</p>
+
+  <div class="animation-container" id="animRot" role="img" aria-label="Split-panel animation: a transcript accumulating noise turns on the left, a graph timestamp freezing behind commits on the right, both leading to a wrong answer until compaction and a freshness gate cure them">
+    <div class="anim-title">ROT_TWO_ALTITUDES — one disease, two altitudes, two cures</div>
+    <svg viewBox="0 0 700 270" width="100%" height="270" aria-hidden="true">
+      <text x="175" y="22" text-anchor="middle" font-family="Bricolage Grotesque" font-size="14" font-weight="700" fill="#94A3B8">TRANSCRIPT</text>
+      <text x="525" y="22" text-anchor="middle" font-family="Bricolage Grotesque" font-size="14" font-weight="700" fill="#94A3B8">INFRASTRUCTURE</text>
+      <line x1="350" y1="12" x2="350" y2="230" stroke="#21262D" stroke-width="1"/>
+      <g id="rotLeft"></g>
+      <g id="rotRight"></g>
+      <text id="rotVerdict" x="350" y="256" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#64748B"></text>
+    </svg>
+    <div class="anim-note">Left: noise turns pile onto a transcript until the signal drowns. Right: commits land while the graph's timestamp freezes. Both agents answer confidently and wrongly — until compaction (left) and the freshness gate (right) restore signal.</div>
+    <div class="animation-controls">
+      <button data-anim="rot" data-act="play" aria-label="Play context rot animation">▶</button>
+      <button data-anim="rot" data-act="pause" aria-label="Pause context rot animation">⏸</button>
+      <button data-anim="rot" data-act="restart" aria-label="Restart context rot animation">↻</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="ordering">
+  <h2>Static-First Ordering and the Missing Middle</h2>
+  <p>Two more M03B rules complete the bridge, and both are quietly load-bearing in designs you've already met.</p>
+  <h3 id="static-first">Static-first ordering ⇄ the index.md pre-flight</h3>
+  <p>M03B teaches that context should be assembled <em>static-first</em>: the parts that never change between turns (system prompt, tool schemas, stable orientation) go at the front, the volatile parts at the back. The reason is <span class="term-tooltip" tabindex="0">prompt caching<span class="tooltip-content">Providers cache the processed prefix of a prompt. If your next request starts with the identical prefix, that part is nearly free. One changed byte early in the prompt invalidates everything after it.</span></span>: <em>"same content in the wrong order can cost 6x more."</em> A cache is invalidated from the first changed byte — so anything stable that sits behind something volatile gets re-paid every turn.</p>
+  <p>Now look again at the OKF bundle's <code>index.md</code> with cache-aware eyes. It is a deliberately <em>stable</em>, deliberately <em>small</em> orientation document that an agent reads before touching anything else — the ideal static prefix. The bundle's design puts the stable map first and lets the volatile detail be fetched on demand. Progressive disclosure (M06) and static-first ordering are the same idea seen from two directions: one is about what to load, the other about where the loaded thing sits.</p>
+  <h3 id="middle">Lost-in-the-middle ⇄ the explore() composite</h3>
+  <p>M03B's position-effects rule: models recall the start and end of a long context far better than the middle — so critical facts scattered across a sprawl of tool dumps are effectively hidden even when technically present. This course's answer is M09's <code>explore()</code>: instead of five facts spread across five tool results (each a page of noise), one compact composite — kind, location, callers, callees, blast radius — lands as a single short block adjacent to the question. You cannot lose in the middle what has no middle.</p>
+</section>
+
+<section class="section" id="walkthrough">
+  <h2>Code Walkthrough: The Two New Levers</h2>
+  <p>The sibling lab's <code>ContextBudget</code> fixed a poisoned transcript with the compress lever. This course's lab adds the other two, and each is startlingly small once the infrastructure exists — which is the entire point. First, <strong>retrieve</strong>:</p>
+  <p><em>What's happening:</em> we throw away every accumulated grep dump — all 2,341 tokens of tool results — and replace them with one graph answer. <em>Why it works:</em> the expensive part (parsing, indexing) happened at extract time; the query is nearly free. <em>Gotcha:</em> <code>explore()</code> reports blast radius as a count, so we name the transitive callers ourselves with the same reverse-index BFS you wrote in M01 — three lines.</p>
+  <div class="code-wrap">
+    <button class="copy-btn" aria-label="Copy retrieve lever code">Copy</button>
+<pre><code><span class="k">def</span> <span class="f">fix_by_retrieve</span>(self) -&gt; <span class="f">dict</span>:
+    t = json.loads(json.dumps(self.t))          <span class="c"># deep copy</span>
+    answer = m09.explore(<span class="s">"decode_jwt"</span>)         <span class="c"># ONE tool call</span>
+    <span class="c"># name the transitive callers — the M01 walk, three lines</span>
+    queue, seen = deque(seeds), <span class="f">set</span>(seeds)
+    <span class="k">while</span> queue:
+        <span class="k">for</span> edge <span class="k">in</span> m09._reverse.get(queue.popleft(), []):
+            ...  <span class="c"># collect edge["source"], BFS onward</span>
+    answer[<span class="s">"transitive_callers"</span>] = <span class="f">sorted</span>(transitive)
+    <span class="c"># one deterministic answer replaces every grep dump</span>
+    t[<span class="s">"tool_results"</span>] = [{<span class="s">"tool"</span>: <span class="s">"graph.explore('decode_jwt')"</span>,
+                          <span class="s">"content"</span>: json.dumps(answer, indent=<span class="n">2</span>)}]
+    <span class="k">return</span> t</code></pre>
+  </div>
+  <p>Then <strong>offload</strong>. <em>What's happening:</em> the transcript contains a whole argument about the WAU definition — a stale retrieved paragraph, a correction, a re-correction. All of it is superseded by one canonical file that something else (M08's enrichment hook) keeps honest. <em>Why it works:</em> settled knowledge doesn't belong in history; it belongs in external memory, read back on demand. <em>Gotcha:</em> when you drop the WAU debate from history, make sure your replacement actually contains the facts — the lab's checker will catch you if the filter ate the answer too.</p>
+  <div class="code-wrap">
+    <button class="copy-btn" aria-label="Copy offload lever code">Copy</button>
+<pre><code><span class="k">def</span> <span class="f">fix_by_offload</span>(self) -&gt; <span class="f">dict</span>:
+    t = json.loads(json.dumps(self.t))
+    post = frontmatter.load(WAU_CONCEPT)         <span class="c"># M06's canonical file</span>
+    concept = <span class="s">f"[OKF concept </span>{post.metadata.get(<span class="s">'title'</span>)}<span class="s">]\n</span>{post.content}<span class="s">"</span>
+    <span class="c"># the canonical file replaces BOTH stale retrieved chunks...</span>
+    t[<span class="s">"retrieved"</span>] = [{<span class="s">"source"</span>: WAU_CONCEPT.name, <span class="s">"text"</span>: concept}]
+    <span class="c"># ...and the settled WAU debate leaves the history</span>
+    t[<span class="s">"history"</span>] = [m <span class="k">for</span> m <span class="k">in</span> t[<span class="s">"history"</span>]
+                    <span class="k">if</span> <span class="s">"wau"</span> <span class="k">not in</span> m[<span class="s">"content"</span>].lower()]
+    <span class="k">return</span> t</code></pre>
+  </div>
+  <div class="callout callout-why">
+    <span class="box-label">🧠 What Just Happened?</span>
+    <p>Two levers, maybe fifteen meaningful lines between them — because the hard work lives elsewhere. <code>explore()</code> exists because M03–M05 built extraction and M09 built serving; the WAU concept exists because M06 taught authoring and M08 keeps it fresh. That asymmetry is the bridge's whole lesson: <strong>in-conversation context engineering is cheap exactly when the infrastructure behind it is real.</strong> The sibling course's levers are hand tools; this course is the power grid they plug into.</p>
+  </div>
+</section>
+
+<section class="section" id="lab">
+  <h2>Hands-On Lab: Four Arms, One Poisoned Transcript</h2>
+  <p><strong>What you'll build:</strong> the two missing levers of the sibling lab, run against a rotted orderflow session. <strong>Time:</strong> 30–45 min. <strong>Lab folder:</strong> <code>labs/M02B-context-levers/</code> (starter with TODOs, solution, expected output).</p>
+  <div class="step-card">
+    <h4>Step 1 — Meet the poison</h4>
+    <p>Open <code>starter/poisoned_transcript.json</code>. It is a 17-turn session with every rot species from M03B: two timed-out grep retries, the same grep dump attached <em>twice</em>, a stale WAU paragraph retrieved twice, and a fully resolved expiry detour still squatting in history. Run the accounting:</p>
+    <div class="code-wrap"><button class="copy-btn" aria-label="Copy step 1 command">Copy</button><pre><code>cd labs/M02B-context-levers/starter
+python context_levers.py</code></pre></div>
+    <div class="checkpoint">✅ Expected: the per-layer table prints, with <code>tool_results 2,341</code> dominating a 3,131-token raw context — 75% of the budget is exploration dumps.</div>
+  </div>
+  <div class="step-card">
+    <h4>Step 2 — Implement <code>fix_by_retrieve()</code> (TODO 1)</h4>
+    <p>One <code>explore()</code> answer plus named transitive callers replaces every tool result. If your check later reports a missing transitive caller, your BFS is walking edges forward — you need callee → caller.</p>
+  </div>
+  <div class="step-card">
+    <h4>Step 3 — Implement <code>fix_by_offload()</code> (TODO 2) and <code>fix_combined()</code> (TODO 3)</h4>
+    <p>One canonical concept read replaces the stale chunks and the settled debate. Combined = offload first, then retrieve.</p>
+  </div>
+  <div class="step-card">
+    <h4>Step 4 — Run the check</h4>
+    <div class="code-wrap"><button class="copy-btn" aria-label="Copy step 4 command">Copy</button><pre><code>python context_levers.py --check</code></pre></div>
+    <p>The real measured table (your numbers will match — everything is deterministic):</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>arm</th><th>tokens</th><th>vs raw</th><th>facts preserved</th></tr></thead>
+      <tbody>
+        <tr><td>raw</td><td>3,131</td><td>100%</td><td>ALL</td></tr>
+        <tr><td>compress (sibling's lever)</td><td>1,551</td><td>50%</td><td>ALL</td></tr>
+        <tr><td>retrieve</td><td>1,049</td><td>34%</td><td>ALL</td></tr>
+        <tr><td>offload</td><td>2,802</td><td>89%</td><td>ALL</td></tr>
+        <tr class="hl"><td><strong>retrieve+offload</strong></td><td><strong>721</strong></td><td><strong>23%</strong></td><td><strong>ALL</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="checkpoint">✅ Expected final line: <code>SUCCESS CRITERION MET: each lever preserves the facts it owns at fewer tokens than raw.</code> If a lever loses its facts, the README's failure-diagnosis notes name the two usual suspects.</div>
+  </div>
+  <p>Read the table like a context engineer. The <em>raw</em> arm also says "ALL facts preserved" — of course it does, nothing was removed. The facts are simply buried under 2,400 tokens of duplicate dumps and dead detours. That is M03B's core claim made concrete: <strong>rot is a signal-to-noise problem, not a budget problem.</strong> The levers don't add information; they delete everything that isn't the answer. And note <em>offload</em>'s modest 89%: it only owns the WAU facts, so it only cleans the WAU mess — levers compose precisely because each one targets a different layer.</p>
+</section>
+
+<section class="section" id="misconceptions">
+  <h2>Common Misconceptions</h2>
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"Context engineering is just prompt engineering with a fancier name."</strong> — No. Prompt engineering authors one layer (usually the smallest — 0.9% in the M03B inventory). Context engineering budgets all six. One is writing; the other is resource management.</p>
+    <p><strong>"More context is always better — just include everything."</strong> — The lab's raw arm includes everything, preserves every fact, and is the worst of the five arms. Recall degrades with sprawl (lost-in-the-middle), cost grows linearly, and rot compounds. Inclusion is a cost, not a kindness.</p>
+    <p><strong>"Context rot means running out of tokens."</strong> — M03B's exact counter: you can hit rot at 60% utilization. The signal is stale-and-contradictory content, not a full meter. The lab fixture rots at 3,131 tokens — nowhere near any limit.</p>
+    <p><strong>"The four levers are conversation techniques, so this course's infrastructure is a separate topic."</strong> — The mapping table is the refutation: every piece of infrastructure here IS one of the levers, operated by machinery. If you can name the lever, you know which module to reach for.</p>
+  </div>
+</section>
+
+<section class="section" id="quiz">
+  <h2>Knowledge Check</h2>
+  <div id="quizRoot"></div>
+</section>
+
+<section class="section" id="summary">
+  <h2>Module Summary</h2>
+  <div class="summary-grid">
+    <div class="summary-card"><b>Six layers</b>system · tools · history · retrieved · tool results · current. Inventory before you debug; attack the biggest line.</div>
+    <div class="summary-card"><b>add →</b> M12 layered CLAUDE.md — deliberate, scoped, minimal.</div>
+    <div class="summary-card"><b>compress →</b> GRAPH_REPORT.md &amp; orientation reads — summaries built once, reused everywhere.</div>
+    <div class="summary-card"><b>retrieve →</b> graph queries (answers, not leads) + vector RAG for the long tail.</div>
+    <div class="summary-card"><b>offload →</b> OKF bundle + log.md, MCP servers, subagents — external memory kept honest by M08.</div>
+    <div class="summary-card"><b>Rot, two altitudes</b>Transcript rot ⇄ graph drift. Cures: compaction ⇄ freshness gate. Both are scheduled hygiene.</div>
+    <div class="summary-card"><b>Ordering</b>Static-first ⇄ index.md pre-flight; no middle to get lost in ⇄ explore()'s composite.</div>
+    <div class="summary-card"><b>Measured</b>raw 3,131 → retrieve+offload 721 tokens (23%), all facts intact. Rot is signal-to-noise, not budget.</div>
+  </div>
+  <p><strong>Next:</strong> M03 opens Track 2 — parsing code into graphs with tree-sitter. You now know exactly which lever that track is building: retrieve, made deterministic.</p>
+</section>
+
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul>
+    <li>Sibling course, M03B Context Engineering (Claude track): <a href="../../claude-agent-course-final-adv/output/courses/claude-agents/M03B-context-engineering.html">M03B-context-engineering.html</a> — the six layers, four levers, and the ContextBudget lab this module bridges to.</li>
+    <li>Sibling course, M03B (open-source track, crop/compress/summarize/select taxonomy): <a href="../../claude-agent-course-final-adv/output/courses/opensource/M03B-context-engineering.html">opensource variant</a>.</li>
+    <li>This module's lab: <code>labs/M02B-context-levers/</code> — the retrieve and offload arms the sibling lab left unimplemented.</li>
+    <li>Related modules here: M06 (progressive disclosure), M09 (explore composite), M11 (drift as rot), M12 (the levers by hand).</li>
+  </ul>
+</section>
+
+<nav class="module-nav" aria-label="Module navigation">
+  <a class="prev" href="M02-rag-baseline-limits.html"><span class="dir">← Previous</span>M02 · The RAG Baseline</a>
+  <a class="next" href="M03-tree-sitter-parsing.html"><span class="dir">Next →</span>M03 · tree-sitter Parsing</a>
+</nav>
+
+</main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- copy buttons ---------- */
+  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      var text = pre ? pre.innerText : "";
+      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+        .then(function () { btn.textContent = "Copied!"; })
+        .catch(function () { btn.textContent = "Select & copy"; });
+      setTimeout(function () { btn.textContent = "Copy"; }, 1500);
+    });
+  });
+
+  /* ---------- tiny animation engine: step timers with play/pause/restart -- */
+  function makeAnim(name, totalSteps, stepMs, renderFn) {
+    var step = 0, playing = false, timer = null;
+    function render() { renderFn(step, totalSteps); }
+    function tick() {
+      if (!playing) return;
+      step = Math.min(step + 1, totalSteps);
+      render();
+      if (step >= totalSteps) { playing = false; return; }
+      timer = setTimeout(tick, stepMs);
+    }
+    var api = {
+      play: function () { if (playing) return; if (step >= totalSteps) step = 0; playing = true; tick(); },
+      pause: function () { playing = false; if (timer) clearTimeout(timer); },
+      restart: function () { api.pause(); step = 0; render(); api.play(); },
+      finish: function () { step = totalSteps; playing = false; render(); }
+    };
+    document.querySelectorAll('[data-anim="' + name + '"]').forEach(function (b) {
+      b.addEventListener("click", function () { api[b.dataset.act](); });
+    });
+    render();
+    if (reduced) api.finish();
+    return api;
+  }
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent, text) {
+    var e = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    parent.appendChild(e);
+    return e;
+  }
+
+  /* ---------- SIX_LAYERS ---------- */
+  (function () {
+    var layers = [
+      { name: "system", v: 420, c: "#6366F1" },
+      { name: "tools", v: 1180, c: "#8B5CF6" },
+      { name: "history", v: 3250, c: "#06B6D4" },
+      { name: "retrieved", v: 2800, c: "#F97316" },
+      { name: "tool results", v: 1950, c: "#F43F5E" },
+      { name: "current", v: 85, c: "#D4A843" }
+    ];
+    var g = document.getElementById("slBars");
+    var totalLabel = document.getElementById("slTotal");
+    var maxV = 3250, x0 = 100, w = 560, rowH = 30;
+    makeAnim("sl", layers.length, 700, function (step) {
+      while (g.firstChild) g.removeChild(g.firstChild);
+      var total = 0;
+      layers.forEach(function (L, i) {
+        var y = 26 + i * rowH;
+        el("text", { x: x0 - 10, y: y + 15, "text-anchor": "end", "font-family": "JetBrains Mono", "font-size": 11, fill: "#94A3B8" }, g, L.name);
+        el("rect", { x: x0, y: y, width: w, height: 20, rx: 4, fill: "#1A2740" }, g);
+        if (i < step) {
+          total += L.v;
+          var bw = Math.max(4, (L.v / maxV) * w);
+          el("rect", { x: x0, y: y, width: bw, height: 20, rx: 4, fill: L.c, opacity: 0.9 }, g);
+          el("text", { x: x0 + bw + 8, y: y + 15, "font-family": "JetBrains Mono", "font-size": 11, fill: "#E8ECF1" }, g,
+            L.v.toLocaleString() + (L.name === "current" ? " ← the user's message (0.9%)" : ""));
+        }
+      });
+      totalLabel.textContent = total.toLocaleString() + " tokens";
+    });
+  })();
+
+  /* ---------- LEVER_MAP ---------- */
+  (function () {
+    var levers = [
+      { name: "add", y: 45, targets: ["M12 CLAUDE.md"] },
+      { name: "compress", y: 105, targets: ["M04 GRAPH_REPORT", "M09 orientation"] },
+      { name: "retrieve", y: 165, targets: ["M03–M05 graph", "M09 MCP", "M02/M10 RAG"] },
+      { name: "offload", y: 225, targets: ["M06–M08 OKF bundle", "M09 servers", "M12 subagents"] }
+    ];
+    var rights = []; levers.forEach(function (L) { L.targets.forEach(function (t) { rights.push(t); }); });
+    var left = document.getElementById("lmLeft"), right = document.getElementById("lmRight"), edges = document.getElementById("lmEdges");
+    makeAnim("lm", levers.length, 900, function (step) {
+      [left, right, edges].forEach(function (g) { while (g.firstChild) g.removeChild(g.firstChild); });
+      rights.forEach(function (t, i) {
+        var y = 30 + i * 30;
+        el("rect", { x: 430, y: y - 16, width: 250, height: 24, rx: 6, fill: "#162033", stroke: "#21262D" }, right);
+        el("text", { x: 555, y: y, "text-anchor": "middle", "font-family": "JetBrains Mono", "font-size": 11, fill: "#94A3B8" }, right, t);
+      });
+      levers.forEach(function (L, i) {
+        var on = i < step;
+        el("rect", { x: 20, y: L.y - 20, width: 150, height: 34, rx: 8, fill: on ? "#6366F1" : "#162033", stroke: on ? "#6366F1" : "#21262D" }, left);
+        el("text", { x: 95, y: L.y + 2, "text-anchor": "middle", "font-family": "Bricolage Grotesque", "font-size": 14, "font-weight": 700, fill: on ? "#0A1628" : "#94A3B8" }, left, L.name);
+        if (on) {
+          L.targets.forEach(function (t) {
+            var idx = rights.indexOf(t), ty = 30 + idx * 30 - 4;
+            el("path", { d: "M 170 " + L.y + " C 300 " + L.y + ", 300 " + ty + ", 430 " + ty, fill: "none", stroke: "#6366F1", "stroke-width": 1.6, opacity: 0.75 }, edges);
+            el("rect", { x: 430, y: ty - 12, width: 250, height: 24, rx: 6, fill: "rgba(99,102,241,0.15)", stroke: "#6366F1" }, edges);
+            el("text", { x: 555, y: ty + 4, "text-anchor": "middle", "font-family": "JetBrains Mono", "font-size": 11, fill: "#E8ECF1" }, edges, t);
+          });
+        }
+      });
+    });
+  })();
+
+  /* ---------- ROT_TWO_ALTITUDES ---------- */
+  (function () {
+    var L = document.getElementById("rotLeft"), R = document.getElementById("rotRight"), V = document.getElementById("rotVerdict");
+    var TOTAL = 9; // 6 rot steps, then wrong-answer, then cures, then healthy
+    makeAnim("rot", TOTAL, 800, function (step) {
+      [L, R].forEach(function (g) { while (g.firstChild) g.removeChild(g.firstChild); });
+      var noise = Math.min(step, 6);
+      // left: transcript turns stack up, noise in red
+      for (var i = 0; i < noise; i++) {
+        var bad = (i === 1 || i === 3 || i === 4);
+        var y = 40 + i * 26;
+        el("rect", { x: 40, y: y, width: 270, height: 20, rx: 4, fill: bad ? "rgba(244,63,94,0.25)" : "rgba(16,185,129,0.18)", stroke: bad ? "#F43F5E" : "#10B981" }, L);
+        el("text", { x: 50, y: y + 14, "font-family": "JetBrains Mono", "font-size": 10, fill: "#94A3B8" }, L,
+          bad ? ["dup grep dump", "stale WAU chunk", "resolved detour"][(i - 1) % 3 === 0 ? 0 : (i === 3 ? 1 : 2)] : "turn " + (i + 1) + " (signal)");
+      }
+      // right: commits land, graph timestamp frozen
+      for (var j = 0; j < noise; j++) {
+        el("circle", { cx: 420 + j * 40, cy: 60, r: 9, fill: "#22C55E" }, R);
+        el("text", { x: 420 + j * 40, cy: 0, y: 84, "text-anchor": "middle", "font-family": "JetBrains Mono", "font-size": 9, fill: "#64748B" }, R, "c" + (j + 1));
+      }
+      el("rect", { x: 420, y: 110, width: 240, height: 34, rx: 8, fill: "#162033", stroke: step >= 6 && step < 8 ? "#F43F5E" : "#21262D" }, R);
+      el("text", { x: 540, y: 132, "text-anchor": "middle", "font-family": "JetBrains Mono", "font-size": 11, fill: step >= 8 ? "#10B981" : "#F59E0B" }, R,
+        step >= 8 ? "graph.json — rebuilt @ HEAD ✓" : "graph.json — built 2 weeks ago");
+      if (step === 7) {
+        el("text", { x: 175, y: 215, "text-anchor": "middle", "font-family": "Bricolage Grotesque", "font-size": 13, "font-weight": 700, fill: "#F43F5E" }, L, "confidently wrong ✗");
+        el("text", { x: 525, y: 215, "text-anchor": "middle", "font-family": "Bricolage Grotesque", "font-size": 13, "font-weight": 700, fill: "#F43F5E" }, R, "confidently wrong ✗");
+        V.textContent = "same disease: signal-to-noise";
+      } else if (step >= 8) {
+        el("text", { x: 175, y: 215, "text-anchor": "middle", "font-family": "Bricolage Grotesque", "font-size": 13, "font-weight": 700, fill: "#10B981" }, L, "cured: compaction ✓");
+        el("text", { x: 525, y: 215, "text-anchor": "middle", "font-family": "Bricolage Grotesque", "font-size": 13, "font-weight": 700, fill: "#10B981" }, R, "cured: freshness gate ✓");
+        V.textContent = "two altitudes, two scheduled cures";
+      } else {
+        V.textContent = noise > 3 ? "noise accumulating…" : "";
+      }
+    });
+  })();
+
+  /* ---------- quiz ---------- */
+  var QUESTIONS = [
+    { q: "In M03B's turn-8 inventory (9,685 tokens), the user's actual message was roughly what share of the context?",
+      opts: ["About a third — it's the main content", "0.9% — the smallest of the six layers", "Half, split with the system prompt", "It isn't counted in the budget"],
+      a: 1, exp: "85 of 9,685 tokens ≈ 0.9%. That sliver is what prompt engineering optimizes; context engineering budgets the other 99.1%." },
+    { q: "An OKF bundle read back on demand, kept honest by the M08 enrichment hook, is which lever?",
+      opts: ["add", "compress", "retrieve", "offload"],
+      a: 3, exp: "Offload: external memory that something else maintains. The agent doesn't carry the knowledge — it reads it back when needed." },
+    { q: "M09's graph_callers answering in one tool call instead of grep-and-read exploration is which lever?",
+      opts: ["retrieve", "add", "compress", "crop"],
+      a: 0, exp: "Retrieve: fetch on demand instead of carrying. The graph makes it deterministic — answers, not leads." },
+    { q: "M03B says you can hit context rot at 60% window utilization. Why?",
+      opts: ["Because providers throttle at 60%", "Rot is a signal-to-noise problem, not a budget problem — stale content degrades quality long before the window fills", "Because caching stops working at 60%", "It can't — rot requires a full window"],
+      a: 1, exp: "The key signal is signal-to-noise ratio, not raw size. This module's lab fixture rots at 3,131 tokens — nowhere near any limit." },
+    { q: "What is the infrastructure-altitude equivalent of a rotting transcript, and its cure?",
+      opts: ["A slow parser; buy faster hardware", "A drifting/stale graph; the freshness gate (M11)", "A large repo; sparse worktrees", "An over-long system prompt; prompt compression"],
+      a: 1, exp: "A stale graph is stale, contradictory, low-relevance content served to every session — rot one level down. The freshness gate is compaction for infrastructure." },
+    { q: "Why does static-first ordering make index.md a good pre-flight read?",
+      opts: ["It's alphabetically first in the bundle", "Stable content at the front of the prompt stays cache-valid — 'same content in the wrong order can cost 6x more'", "Markdown parses faster than JSON", "Agents can only read one file per turn"],
+      a: 1, exp: "Prompt caches invalidate from the first changed byte. A small, stable orientation document is the ideal static prefix; volatile detail gets fetched behind it." },
+    { q: "In the lab, the raw arm preserves ALL key facts yet is the worst arm. What lesson is that teaching?",
+      opts: ["The fact checker is broken", "Facts present ≠ facts findable: rot buries signal under noise, and the levers work by deleting everything that isn't the answer", "More context always helps, so raw should win", "Token counting is unreliable"],
+      a: 1, exp: "Raw contains the facts plus 2,400 tokens of duplicate dumps and dead detours. The fixed arms (retrieve+offload: 721 tokens, 23% of raw) keep the same facts with the noise gone." }
+  ];
+  var root = document.getElementById("quizRoot");
+  QUESTIONS.forEach(function (item, qi) {
+    var qd = document.createElement("div"); qd.className = "quiz-question";
+    var qt = document.createElement("div"); qt.className = "q"; qt.textContent = (qi + 1) + ". " + item.q; qd.appendChild(qt);
+    var fb = document.createElement("div"); fb.className = "quiz-feedback";
+    item.opts.forEach(function (opt, oi) {
+      var od = document.createElement("div"); od.className = "quiz-option"; od.textContent = opt;
+      od.setAttribute("role", "button"); od.setAttribute("tabindex", "0");
+      od.setAttribute("aria-label", "Answer option: " + opt);
+      function answer() {
+        if (qd.dataset.done) return;
+        qd.dataset.done = "1";
+        qd.querySelectorAll(".quiz-option").forEach(function (o, i2) {
+          if (i2 === item.a) o.classList.add("correct");
+        });
+        if (oi !== item.a) od.classList.add("incorrect");
+        fb.textContent = (oi === item.a ? "✅ Correct. " : "❌ Not quite. ") + item.exp;
+        fb.classList.add("show");
+      }
+      od.addEventListener("click", answer);
+      od.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); answer(); } });
+      qd.appendChild(od);
+    });
+    qd.appendChild(fb);
+    root.appendChild(qd);
+  });
+})();
+</script>
+</body>
+</html>

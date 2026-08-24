@@ -581,6 +581,8 @@ python -c "import server; server.load_graph()" &amp;&amp; echo graph ok</code></
   <p><strong>Stretch goals:</strong> add a <code>status</code> tool returning the graph's load timestamp and node count (your first drift detector — M11 builds on this); add <code>graph_path(a, b)</code> using bidirectional BFS.</p>
 </section>
 
+<div class="callout-why" style="margin:2.5rem 0"><span class="box-label">🔍 Context Engineering Lens</span><p>This module is the <em>retrieve</em> lever from the sibling course's four-lever frame (M03B: add / compress / retrieve / offload), industrialized: instead of carrying grep dumps in history, the agent fetches one deterministic answer on demand. The composite <code>explore</code> is also a lost-in-the-middle countermeasure — one compact block at the context's fresh end beats the same facts scattered across thirty stale turns. Full mapping in <a href="M02B-context-engineering-bridge.html">M02B</a>.</p></div>
+
 <section class="section" id="quiz">
   <h2>Knowledge Check</h2>
 

@@ -14,9 +14,10 @@ The course teaches how AI coding agents stop wasting tokens re-deriving codebase
 
 **CAPSTONE-2 is an optional bonus BUILD module** — the student graphs a real large Java codebase (commons-lang, spring-framework, or a deterministic synthetic fallback) with `labs/shared_tools/kg_extract_java.py` (tree-sitter-java) and produces their own measured benchmark table with `measure_tokens.py`. It stays outside the 14-part numbering (badge: "Capstone 2 · Bonus").
 
-## Course Map (13 Modules + Capstone, 6 Tracks)
+## Course Map (13 Modules + M02B bridge + 2 Capstones, 6 Tracks)
+B-suffix modules are ADDITIVE (sibling-course convention): inserted between numbered modules, badge "Module 2B · Bridge", the numbered spine keeps "Module N of 14".
 - Track 0 — OVERVIEW: M00 The Context Problem & the Knowledge Lifecycle
-- Track 1 — FOUNDATIONS (M01–M02): Knowledge Graph Fundamentals; The RAG Baseline and Where It Breaks
+- Track 1 — FOUNDATIONS (M01–M02 + M02B): Knowledge Graph Fundamentals; The RAG Baseline and Where It Breaks; The Context Engineering Frame (bridge to the sibling course's M03B — maps its four levers add/compress/retrieve/offload onto this course's machinery)
 - Track 2 — STRUCTURAL GRAPHS (M03–M05): Parsing Code into Graphs with tree-sitter; Graphify in Practice; The Tool Landscape (CodeGraph, okf-rs, and Friends)
 - Track 3 — NARRATIVE KNOWLEDGE (M06–M08): The OKF Specification; OKF for Codebases; The Enrichment Pipeline (Self-Updating Graphs)
 - Track 4 — SERVING & ARCHITECTURE (M09–M10): Serving Graphs to Agents over MCP; The Hybrid Context Stack

@@ -599,6 +599,8 @@ python validate.py knowledge</code></pre></div>
   <p><strong>Troubleshooting:</strong> a YAML <code>ScannerError</code> usually means your <code>---</code> fences aren't alone on their lines; a validator that passes empty files means you forgot that <code>frontmatter.load</code> returns empty metadata rather than raising. <strong>Stretch goal:</strong> add a dangling-link check — every relative <code>.md</code> link must resolve inside the bundle.</p>
 </section>
 
+<div class="callout-why" style="margin:2.5rem 0"><span class="box-label">🔍 Context Engineering Lens</span><p>In context-engineering terms (sibling course M03B), <code>index.md</code> is <em>static-first ordering</em> plus the <em>select</em> decision: a stable pre-flight read that lets the agent choose which concept files enter context at all. M03B's caching rule — "same content in the wrong order can cost 6x more" — is exactly why the bundle's entry point never changes shape while its leaves do. Progressive disclosure is the select lever with a filesystem for a UI. Full mapping in <a href="M02B-context-engineering-bridge.html">M02B</a>.</p></div>
+
 <section class="section" id="quiz">
   <h2>Knowledge Check</h2>
 
