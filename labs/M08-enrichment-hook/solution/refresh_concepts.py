@@ -83,7 +83,12 @@ def lint(bundle: Path) -> None:
                             capture_output=True, text=True)
     print(f"[enrich] lint: {result.stdout.strip()}")
     if result.returncode != 0:
-        raise RuntimeError("lint failed — refusing to publish the bundle")
+        # surface stderr too — a crashed validator (e.g. missing dependency in
+        # the hook's interpreter) must be diagnosable, not a silent empty line
+        if result.stderr.strip():
+            print(f"[enrich] lint stderr: {result.stderr.strip().splitlines()[-1]}",
+                  file=sys.stderr)
+        raise SystemExit("[enrich] lint failed — refusing to publish the bundle")
 
 
 def main(repo: Path) -> int:

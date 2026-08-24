@@ -1,9 +1,16 @@
 #!/bin/sh
 # orderflow enrichment hook — diff-scoped, loud on failure.
 # No nohup, no backgrounding, no silent skips (see M11 for why).
+#
+# Interpreter note: hooks run with a minimal environment, OUTSIDE any
+# activated venv. `python3` and `python` can resolve to different installs
+# (a classic silent-failure source — the M11 lesson applies to hooks too).
+# Set ORDERFLOW_PYTHON to pin the interpreter that has the lab deps.
 set -e
+PYTHON="${ORDERFLOW_PYTHON:-python}"
+command -v "$PYTHON" >/dev/null 2>&1 || PYTHON=python3
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-python3 "$REPO_ROOT/../M08-enrichment-hook/solution/refresh_concepts.py" "$REPO_ROOT" || {
+"$PYTHON" "$REPO_ROOT/../M08-enrichment-hook/solution/refresh_concepts.py" "$REPO_ROOT" || {
     echo "[enrich] FAILED — bundle NOT updated. Fix before trusting the graph." >&2
     exit 1
 }
