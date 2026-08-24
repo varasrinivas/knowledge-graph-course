@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M04 · Graphify in Practice — Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0A1628; --bg-secondary: #111D33; --bg-card: #162033; --bg-surface: #1A2740;
+  --text-primary: #E8ECF1; --text-secondary: #94A3B8; --text-muted: #64748B;
+  --accent-primary: #D4A843; --accent-hover: #E5BC5A; --accent-muted: rgba(212,168,67,0.15);
+  --success: #10B981; --success-bg: rgba(16,185,129,0.1);
+  --warning: #F59E0B; --warning-bg: rgba(245,158,11,0.1);
+  --error: #F43F5E; --error-bg: rgba(244,63,94,0.1);
+  --info: #3B82F6; --info-bg: rgba(59,130,246,0.1);
+  --track-overview: #D4A843; --track-foundations: #6366F1; --track-structural: #8B5CF6;
+  --track-narrative: #06B6D4; --track-serving: #F97316; --track-production: #22C55E; --track-capstone: #D4A843;
+  --track-color: #8B5CF6;
+  --code-bg: #0D1117; --code-border: #21262D; --code-text: #C9D1D9; --code-comment: #8B949E;
+  --code-keyword: #FF7B72; --code-string: #A5D6FF; --code-function: #D2A8FF; --code-number: #79C0FF;
+  --transition-fast: 150ms; --transition-normal: 300ms; --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Source Sans 3', sans-serif; font-size: 1.05rem; line-height: 1.7; }
+h1, h2, h3, h4 { font-family: 'Bricolage Grotesque', sans-serif; line-height: 1.25; }
+h1 { font-size: 2rem; font-weight: 700; }
+h2 { font-size: 1.5rem; font-weight: 700; margin: 0 0 1rem; padding-top: .5rem; }
+h3 { font-size: 1.25rem; font-weight: 600; margin: 2rem 0 .75rem; }
+p { margin-bottom: 1rem; }
+a { color: var(--accent-primary); }
+strong { font-weight: 600; }
+ul, ol { margin: 0 0 1rem 1.5rem; }
+li { margin-bottom: .4rem; }
+code { font-family: 'JetBrains Mono', monospace; font-size: .9rem; background: var(--bg-surface); padding: .1em .35em; border-radius: 4px; }
+.page-container { max-width: 1200px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: 240px 1fr; gap: 3rem; }
+.sidebar-nav { position: sticky; top: 2rem; height: calc(100vh - 4rem); overflow-y: auto; font-family: 'Bricolage Grotesque', sans-serif; font-size: .85rem; }
+.sidebar-nav .nav-title { color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; margin-bottom: .75rem; }
+.sidebar-nav a { display: block; color: var(--text-secondary); text-decoration: none; padding: .35rem .6rem; border-left: 2px solid var(--code-border); transition: all var(--transition-fast); }
+.sidebar-nav a:hover { color: var(--text-primary); }
+.sidebar-nav a.active { color: var(--track-color); border-left-color: var(--track-color); }
+.content { max-width: 800px; min-width: 0; }
+.section { margin-bottom: 4rem; }
+.course-kicker { font-family: 'Bricolage Grotesque', sans-serif; font-size: .85rem; color: var(--text-muted); letter-spacing: .05em; }
+.track-chip { display: inline-block; background: color-mix(in srgb, var(--track-color) 18%, transparent); color: var(--track-color); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: .8rem; padding: .2rem .7rem; border-radius: 999px; margin: .8rem 0 .6rem; }
+.progress-bar { height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; margin: 1rem 0; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--track-color), var(--accent-primary)); border-radius: 2px; transition: width var(--transition-slow); }
+.meta-row { display: flex; flex-wrap: wrap; gap: 1.25rem; color: var(--text-secondary); font-size: .9rem; margin-top: .75rem; }
+.meta-row span strong { color: var(--text-primary); }
+.objectives { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; }
+.objectives ul { margin-bottom: 0; }
+.skill-chip { display: inline-block; background: var(--info-bg); color: var(--info); border-radius: 999px; font-size: .78rem; padding: .15rem .65rem; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; margin-left: .5rem; vertical-align: middle; }
+.analogy-box, .tech-def-box, .callout { border-radius: 0 8px 8px 0; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid; }
+.analogy-box { background: var(--accent-muted); border-left-color: var(--accent-primary); }
+.analogy-box::before { content: '💡 Everyday Analogy'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--accent-primary); display: block; margin-bottom: .5rem; }
+.tech-def-box { background: var(--info-bg); border-left-color: var(--info); }
+.tech-def-box::before { content: '📐 Technical Definition'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--info); display: block; margin-bottom: .5rem; }
+.callout .box-label { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: .5rem; }
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-cost { background: var(--warning-bg); border-left-color: var(--accent-primary); }
+.callout-cost .box-label { color: var(--accent-primary); }
+.callout-security { background: var(--error-bg); border-left-color: var(--error); }
+.callout-security .box-label { color: var(--error); }
+.checkpoint { background: var(--success-bg); border: 1px solid rgba(16,185,129,.35); border-radius: 8px; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+.checkpoint .box-label { color: var(--success); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: .35rem; }
+.bridge { font-style: italic; color: var(--text-secondary); border-top: 1px dashed var(--code-border); border-bottom: 1px dashed var(--code-border); padding: .9rem .25rem; margin: 2rem 0; }
+.term-tooltip { position: relative; color: var(--accent-primary); cursor: help; border-bottom: 1px dashed var(--accent-primary); }
+.term-tooltip .tooltip-content { position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--accent-primary); border-radius: 8px; padding: .75rem 1rem; font-size: .85rem; color: var(--text-primary); width: 280px; opacity: 0; pointer-events: none; transition: opacity var(--transition-fast); z-index: 10; font-style: normal; font-weight: 400; line-height: 1.5; }
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+.code-card { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 10px; margin: 1.25rem 0; overflow: hidden; }
+.code-card .code-head { display: flex; justify-content: space-between; align-items: center; padding: .45rem .9rem; border-bottom: 1px solid var(--code-border); font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: var(--text-muted); }
+.copy-btn { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: .72rem; border-radius: 6px; padding: .25rem .6rem; cursor: pointer; transition: all var(--transition-fast); }
+.copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.code-card pre { padding: 1rem; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: .85rem; line-height: 1.6; color: var(--code-text); }
+.code-card pre code { background: none; padding: 0; font-size: inherit; }
+.tok-k { color: var(--code-keyword); } .tok-s { color: var(--code-string); } .tok-c { color: var(--code-comment); font-style: italic; } .tok-f { color: var(--code-function); } .tok-n { color: var(--code-number); }
+.code-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--code-border); margin-top: 1.25rem; }
+.code-tab { padding: .5rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: .8rem; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px; color: var(--text-muted); transition: all var(--transition-fast); }
+.code-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+.tab-panel { display: none; } .tab-panel.active { display: block; }
+.animation-container { background: var(--bg-secondary); border: 1px solid var(--code-border); border-radius: 12px; padding: 1.5rem 1.5rem 4rem; margin: 2rem 0; position: relative; min-height: 300px; }
+.anim-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: .85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 1rem; }
+.animation-controls { display: flex; gap: .5rem; position: absolute; bottom: 1rem; right: 1rem; }
+.animation-controls button { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-primary); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all var(--transition-fast); }
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.anim-caption { position: absolute; bottom: 1.1rem; left: 1.5rem; right: 10rem; color: var(--text-secondary); font-size: .85rem; }
+.anim-fallback { display: none; color: var(--text-secondary); font-size: .9rem; }
+.quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.quiz-question h4 { margin-bottom: .75rem; font-size: 1.02rem; }
+.quiz-option { padding: .75rem 1rem; margin: .5rem 0; border: 1px solid var(--code-border); border-radius: 8px; cursor: pointer; transition: all var(--transition-fast); }
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-feedback { margin-top: .75rem; padding: .75rem; border-radius: 8px; font-size: .9rem; display: none; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); color: var(--text-primary); }
+.quiz-feedback.bad { background: var(--error-bg); color: var(--text-primary); }
+table.facts { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: .92rem; }
+table.facts th, table.facts td { border: 1px solid var(--code-border); padding: .55rem .75rem; text-align: left; vertical-align: top; }
+table.facts th { background: var(--bg-surface); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; }
+.table-wrap { overflow-x: auto; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 1rem; margin: 1.25rem 0; }
+.summary-card { background: var(--bg-card); border-radius: 10px; padding: 1.1rem 1.2rem; border-top: 3px solid var(--track-color); }
+.summary-card h4 { font-size: .95rem; margin-bottom: .4rem; }
+.summary-card p { font-size: .88rem; color: var(--text-secondary); margin: 0; }
+.prevnext { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; }
+.prevnext a { flex: 1; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 10px; padding: 1rem 1.25rem; text-decoration: none; color: var(--text-primary); transition: border-color var(--transition-fast); font-family: 'Bricolage Grotesque', sans-serif; }
+.prevnext a:hover { border-color: var(--track-color); }
+.prevnext .dir { display: block; font-size: .75rem; color: var(--text-muted); }
+.ref-list li { margin-bottom: .5rem; }
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; padding: 1.25rem; }
+  .sidebar-nav { position: static; height: auto; margin-bottom: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .anim-stage, .animation-controls { display: none !important; }
+  .anim-fallback { display: block !important; }
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+<nav class="sidebar-nav" aria-label="Module sections">
+  <div class="nav-title">Module 5 of 14</div>
+  <a href="#objectives">Learning objectives</a>
+  <a href="#what-is">What Graphify is</a>
+  <a href="#install">Install &amp; first run</a>
+  <a href="#artifacts">The three artifacts</a>
+  <a href="#querying">Querying the graph</a>
+  <a href="#communities">Communities &amp; god nodes</a>
+  <a href="#benchmarks">The honest benchmarks</a>
+  <a href="#limitations">Limitations</a>
+  <a href="#walkthrough">Code walkthrough</a>
+  <a href="#lab">Hands-on lab</a>
+  <a href="#quiz">Knowledge check</a>
+  <a href="#summary">Summary</a>
+  <a href="#references">References</a>
+</nav>
+<main class="content">
+
+<header class="section" id="top">
+  <div class="course-kicker">Knowledge Graphs for AI Agents · From RAG Limits to Self-Updating Codebase Brains</div>
+  <span class="track-chip">Track 2 — Structural Graphs</span>
+  <h1>M04 · Graphify in Practice</h1>
+  <div class="progress-bar" role="progressbar" aria-valuenow="5" aria-valuemin="1" aria-valuemax="14" aria-label="Module 5 of 14"><div class="progress-fill" style="width:35.7%"></div></div>
+  <div class="meta-row">
+    <span>📍 <strong>Module 5 of 14</strong></span>
+    <span>⏱ <strong>~60 minutes</strong></span>
+    <span>🎯 Level: <strong>Intermediate</strong></span>
+    <span>📋 Prerequisites: <strong>M03 (tree-sitter)</strong></span>
+  </div>
+</header>
+
+<section class="section" id="objectives">
+  <h2>Learning objectives <span class="skill-chip">Intermediate</span></h2>
+  <div class="objectives">
+    <ul>
+      <li>Install Graphify and build a graph of a real repository with one command — and know which pass costs tokens (only docs/PDFs/images) and which is free (all code).</li>
+      <li>Read all three output artifacts — <code>graph.json</code>, <code>graph.html</code>, <code>GRAPH_REPORT.md</code> — and explain what each is for.</li>
+      <li>Use community detection and god-node identification to see a codebase's real subsystems and refactoring risks.</li>
+      <li>Query the graph from the CLI (<code>graphify path</code>, <code>graphify query</code>) and load <code>graph.json</code> programmatically.</li>
+      <li>Interpret Graphify's benchmark claims <em>honestly</em>: what the 71.5× headline actually measured, what independent replications found (6.8×–49×, 7.3× from scratch), and where the ~500-file payoff floor comes from.</li>
+    </ul>
+  </div>
+  <p style="margin-top:1rem;">In M03 you built a toy extractor. This module hands you the production version of the same idea — then teaches you to evaluate its claims the way an engineer should. Both halves matter: Graphify is genuinely useful, <em>and</em> the numbers on its posters need footnotes. By the end you'll know how to run it and exactly how much to believe.</p>
+</section>
+
+<section class="section" id="what-is">
+  <h2>What Graphify is</h2>
+
+  <div class="tech-def-box">
+    <p><strong>Graphify</strong> is an open-source tool (built by Safi Shamsi, released under a permissive open-source license, a Y Combinator S26 project) that converts any folder — code, docs, PDFs, SQL schemas, configs, images, even video — into a queryable knowledge graph. It ships on PyPI as the package <code>graphifyy</code> (two y's; the CLI command is <code>graphify</code>) and installs a <code>/graphify</code> slash-command skill into 17 AI coding assistants, including Claude Code, Cursor, Codex, Gemini CLI, and Aider.</p>
+    <p>Its core design decision, straight from M03: <strong>code is parsed structurally, not semantically</strong>. Tree-sitter builds the AST across 36 language grammars (Python, TypeScript, Go, Rust, Java, C/C++, Swift, SQL, Terraform/HCL, and more) — no LLM, no API key, no token cost for the code portion, entirely local. Only docs, papers, and images go through an LLM — which means only that pass can hallucinate. On a pure-code repository, the entire run is free.</p>
+  </div>
+
+  <div class="analogy-box">
+    <p><strong>Before</strong>: Andrej Karpathy described the problem as the "/raw folder": a place where papers, tweets, screenshots, notes, and code accumulate — easy to drop things into, nearly impossible to query later. Everyone has this folder. Some people's is called "the repo."</p>
+    <p><strong>The pain</strong>: 90 days into a project the folder is write-only memory. Finding whether a design decision exists means re-reading everything, and your AI assistant has the same problem at token prices.</p>
+    <p><strong>The mapping</strong>: Graphify is the answer to that folder — the timeline is literally that direct. Karpathy posted the "LLM Wiki / knowledge compiler" thought experiment on April 1, 2026; Graphify launched on GitHub on April 3, 48 hours later; by June 1 it had 58,300 stars and 1.2 million PyPI downloads. One command turns the pile into a graph with every relationship labeled as found-or-guessed, and your assistant navigates the map instead of re-reading the pile.</p>
+  </div>
+
+  <p>Every extracted relationship carries the provenance tag you met in M03 — <strong>EXTRACTED</strong> (parsed directly from the AST, 100% confidence) or <strong>INFERRED</strong> (derived via heuristic, lower confidence, with a confidence score). One reviewer who ran it end-to-end on a real 36-file infrastructure repository called this "the whole argument: it is the only one of these tools that tells you which of its answers are facts and which are guesses."</p>
+</section>
+
+<section class="section" id="install">
+  <h2>Install and first run</h2>
+  <p>Three install routes, all landing in the same place. The <code>uv</code> route is recommended — it works on Mac and Linux with no PATH setup, and on Windows with a current uv:</p>
+  <div class="code-card"><div class="code-head"><span>shell · install</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-c"># Recommended</span>
+uv tool install graphifyy &amp;&amp; graphify install
+
+<span class="tok-c"># or with pipx</span>
+pipx install graphifyy &amp;&amp; graphify install
+
+<span class="tok-c"># or plain pip</span>
+pip install graphifyy &amp;&amp; graphify install</code></pre></div>
+  <p><code>graphify install</code> is the step people forget: it registers the <code>/graphify</code> skill with the assistants on your machine, so Claude Code (or Cursor, Codex, Gemini CLI…) can invoke the graph natively. Then, from your project root:</p>
+  <div class="code-card"><div class="code-head"><span>shell · build the graph</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code>cd your-project
+graphify update .
+<span class="tok-c"># or, inside your AI assistant:</span>
+/graphify .</code></pre></div>
+  <p>A successful run logs like this — read it closely, because three of these lines encode design decisions you now understand:</p>
+  <div class="code-card"><div class="code-head"><span>log output</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code>Re-extracting code files in . (no LLM needed)...
+[graphify watch] Rebuilt: 87 nodes, 100 edges, 13 communities
+[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in graphify-out
+Code graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.
+Tip: set MOONSHOT_API_KEY to use Kimi K2.6 for semantic extraction — 3x cheaper, richer graphs.</code></pre></div>
+  <ul>
+    <li><strong>"no LLM needed"</strong> — the code pass is the deterministic, free, zero-hallucination pass from M03.</li>
+    <li><strong>"For doc/paper/image changes run /graphify --update"</strong> — the semantic pass is separate, optional, and the only part that costs tokens (and the only part that can hallucinate).</li>
+    <li><strong>"13 communities"</strong> — clustering ran automatically; we'll read those below.</li>
+  </ul>
+  <p>Two housekeeping facts: a <code>.graphifyignore</code> file excludes junk directories (it politely ignores <code>.git</code> and <code>node_modules</code> by default), and on very large codebases <code>graph.html</code> is <em>skipped</em> — the log tells you when. The <code>cache/</code> directory means re-runs only touch changed files.</p>
+</section>
+
+<section class="section" id="artifacts">
+  <h2>The three artifacts</h2>
+  <p>Every run writes three files into <code>graphify-out/</code>. They are three <em>views of the same graph</em> for three different consumers — and the fact that there are three separate files becomes a production concern in M11 (they can desync; remember this).</p>
+  <div class="table-wrap"><table class="facts">
+    <thead><tr><th>Artifact</th><th>Consumer</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>graph.html</code></td><td>Humans</td><td>An interactive, self-contained clickable graph you open in a browser — communities colored, nodes searchable.</td></tr>
+      <tr><td><code>GRAPH_REPORT.md</code></td><td>Humans <em>and</em> agents</td><td>A plain-language audit: subsystems, god nodes, oddities. The "compact structural summary" an assistant reads instead of raw files.</td></tr>
+      <tr><td><code>graph.json</code></td><td>Machines</td><td>The raw, queryable graph — GraphRAG-ready. This is what MCP servers load (M09) and what your own scripts read. It persists: weeks later, still works.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="animation-container" id="anim-pipe">
+    <div class="anim-title">Animation · PIPELINE_FLOW — one folder in, three artifacts out</div>
+    <div class="anim-stage" style="position:relative;height:280px;">
+      <svg viewBox="0 0 760 280" width="100%" height="100%" aria-label="Animation of a folder flowing through tree-sitter extraction and optional LLM pass into three artifacts">
+        <g font-family="JetBrains Mono, monospace" font-size="11">
+          <g id="pf-folder"><rect x="20" y="105" width="120" height="60" rx="8" fill="#162033" stroke="#94A3B8"/><text x="80" y="130" text-anchor="middle" fill="#E8ECF1">your-project/</text><text x="80" y="148" text-anchor="middle" fill="#64748B" font-size="9">code · docs · imgs</text></g>
+          <g id="pf-ts" opacity="0"><rect x="220" y="55" width="150" height="50" rx="8" fill="#1A2740" stroke="#8B5CF6" stroke-width="2"/><text x="295" y="76" text-anchor="middle" fill="#8B5CF6">tree-sitter pass</text><text x="295" y="92" text-anchor="middle" fill="#10B981" font-size="9">code · $0 · deterministic</text></g>
+          <g id="pf-llm" opacity="0"><rect x="220" y="165" width="150" height="50" rx="8" fill="#1A2740" stroke="#F59E0B" stroke-width="2"/><text x="295" y="186" text-anchor="middle" fill="#F59E0B">LLM pass (optional)</text><text x="295" y="202" text-anchor="middle" fill="#F43F5E" font-size="9">docs/imgs · tokens · can err</text></g>
+          <g id="pf-dot" opacity="0"><circle id="pf-dot-c" cx="150" cy="135" r="6" fill="#D4A843"/></g>
+          <g id="pf-a1" opacity="0"><rect x="560" y="30" width="170" height="44" rx="8" fill="#162033" stroke="#3B82F6"/><text x="645" y="49" text-anchor="middle" fill="#E8ECF1">graph.json</text><text x="645" y="64" text-anchor="middle" fill="#64748B" font-size="9">machines · MCP · scripts</text></g>
+          <g id="pf-a2" opacity="0"><rect x="560" y="115" width="170" height="44" rx="8" fill="#162033" stroke="#10B981"/><text x="645" y="134" text-anchor="middle" fill="#E8ECF1">graph.html</text><text x="645" y="149" text-anchor="middle" fill="#64748B" font-size="9">humans · interactive</text></g>
+          <g id="pf-a3" opacity="0"><rect x="560" y="200" width="170" height="44" rx="8" fill="#162033" stroke="#D4A843"/><text x="645" y="219" text-anchor="middle" fill="#E8ECF1">GRAPH_REPORT.md</text><text x="645" y="234" text-anchor="middle" fill="#64748B" font-size="9">plain-language audit</text></g>
+          <g id="pf-lines" opacity="0" stroke="#64748B"><line x1="370" y1="80" x2="560" y2="52"/><line x1="370" y1="80" x2="560" y2="137"/><line x1="370" y1="190" x2="560" y2="222"/></g>
+        </g>
+      </svg>
+    </div>
+    <div class="anim-fallback"><p>Static description: a project folder feeds two passes — a deterministic $0 tree-sitter pass for code, and an optional token-costing LLM pass for docs/images. Both flow into three artifacts: graph.json (for machines), graph.html (interactive, for humans), GRAPH_REPORT.md (plain-language audit for humans and agents).</p></div>
+    <div class="anim-caption" id="anim-pipe-caption">One folder in; two passes with very different cost models; three views of one graph out.</div>
+    <div class="animation-controls">
+      <button data-anim="pipe" data-act="play" aria-label="Play pipeline animation">▶</button>
+      <button data-anim="pipe" data-act="pause" aria-label="Pause pipeline animation">⏸</button>
+      <button data-anim="pipe" data-act="restart" aria-label="Restart pipeline animation">↻</button>
+    </div>
+  </div>
+</section>
+
+<div class="bridge">Artifacts on disk are potential energy. The kinetic form is a query — and Graphify gives you three ways to ask.</div>
+
+<section class="section" id="querying">
+  <h2>Querying the graph</h2>
+  <p>The CLI has two workhorse queries. <code>path</code> answers "how are these two things connected?" and <code>query</code> takes a natural-language question against the graph index:</p>
+  <div class="code-card"><div class="code-head"><span>shell · queries</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-c"># Dependency path between two components</span>
+graphify path <span class="tok-s">"UserService"</span> <span class="tok-s">"DatabasePool"</span>
+
+<span class="tok-c"># Architectural blast radius before a refactor</span>
+graphify query <span class="tok-s">"What components depend on AuthTokenValidator?"</span></code></pre></div>
+  <p>Inside an assistant, <code>/graphify .</code> plus a question does the same thing conversationally — the assistant fetches relevant nodes and edges and reasons over <em>those</em>, not over raw files. And for always-on integration, the graph can be served over <span class="term-tooltip" tabindex="0">MCP<span class="tooltip-content">Model Context Protocol — the open standard that lets AI assistants call external tools. M09 builds a graph-serving MCP server from scratch.</span></span> so the assistant fetches nodes on the fly:</p>
+  <div class="code-card"><div class="code-head"><span>shell · serve over MCP</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code>python -m graphify.serve graphify-out/graph.json</code></pre></div>
+  <p>Which of the three routes to use is a serving-architecture question — the entire subject of M09. For now: CLI for you, slash-command for conversations, MCP for agents that need to query mid-task.</p>
+
+  <div class="callout-why callout">
+    <span class="box-label">✅ Why It Matters — the use cases people actually pay for</span>
+    <p><strong>Onboarding</strong>: hand a new dev the graph instead of a 40-page README nobody reads. <strong>Impact analysis</strong>: "if I delete this 'deprecated' method, will the payment gateway explode?" — the graph shows the 14 hidden dependencies that say <em>yes</em>. <strong>Security audits</strong>: trace exactly how an unauthenticated request flows through the system. <strong>Architecture discovery</strong>: find out which parts of your "microservices" are actually a secret monolith in a trench coat.</p>
+  </div>
+</section>
+
+<section class="section" id="communities">
+  <h2>Communities and god nodes: the graph reads your architecture</h2>
+  <p>Recall from M01: a <strong>community</strong> is a cluster of nodes more densely connected to each other than to the rest of the graph, and in code graphs communities ≈ natural subsystems. Graphify runs <span class="term-tooltip" tabindex="0">Leiden community detection<span class="tooltip-content">A graph-clustering algorithm (successor to Louvain) that partitions nodes to maximize modularity — the degree to which clusters are internally dense and externally sparse. M01 introduced it.</span></span> automatically on every build. On orderflow, the 36-node graph splits into clusters that map to <code>billing</code>, <code>orders</code>, and <code>notifications</code> — the architecture doc's claims, rediscovered from call edges alone, with no doc in sight.</p>
+  <p>It also flags <strong>god nodes</strong> — the high-centrality files that many communities depend on. On orderflow that's <code>shared/db.py</code>: every service imports it, so it sits at the center with edges radiating everywhere. A god node isn't automatically bad, but it is automatically <em>risky</em>: any change to it has the widest blast radius in the repo, and (M01 foreshadowed this) computing centrality exactly is O(V×E) work — which becomes M11's scale-wall story on 450K-node graphs.</p>
+
+  <div class="animation-container" id="anim-comm">
+    <div class="anim-title">Animation · COMMUNITY_MAP — orderflow clusters itself</div>
+    <div class="anim-stage" style="position:relative;height:300px;">
+      <svg viewBox="0 0 760 300" width="100%" height="100%" aria-label="Animation of orderflow nodes clustering into three communities around a pulsing god node">
+        <g font-family="JetBrains Mono, monospace" font-size="10">
+          <g id="cm-edges" stroke="#334155" opacity="1">
+            <line x1="380" y1="150" x2="180" y2="80"/><line x1="380" y1="150" x2="150" y2="140"/><line x1="380" y1="150" x2="200" y2="200"/>
+            <line x1="380" y1="150" x2="560" y2="70"/><line x1="380" y1="150" x2="620" y2="130"/>
+            <line x1="380" y1="150" x2="560" y2="230"/><line x1="180" y1="80" x2="150" y2="140"/>
+            <line x1="560" y1="70" x2="620" y2="130"/><line x1="150" y1="140" x2="200" y2="200"/>
+          </g>
+          <g id="cm-b1"><circle cx="180" cy="80" r="22" fill="#162033" stroke="#94A3B8"/><text x="180" y="84" text-anchor="middle" fill="#E8ECF1">app</text></g>
+          <g id="cm-b2"><circle cx="150" cy="140" r="22" fill="#162033" stroke="#94A3B8"/><text x="150" y="144" text-anchor="middle" fill="#E8ECF1">invoice</text></g>
+          <g id="cm-b3"><circle cx="200" cy="200" r="22" fill="#162033" stroke="#94A3B8"/><text x="200" y="204" text-anchor="middle" fill="#E8ECF1">webhooks</text></g>
+          <g id="cm-o1"><circle cx="560" cy="70" r="22" fill="#162033" stroke="#94A3B8"/><text x="560" y="74" text-anchor="middle" fill="#E8ECF1">orders</text></g>
+          <g id="cm-o2"><circle cx="620" cy="130" r="22" fill="#162033" stroke="#94A3B8"/><text x="620" y="134" text-anchor="middle" fill="#E8ECF1">metrics</text></g>
+          <g id="cm-n1"><circle cx="560" cy="230" r="22" fill="#162033" stroke="#94A3B8"/><text x="560" y="234" text-anchor="middle" fill="#E8ECF1">worker</text></g>
+          <g id="cm-god"><circle id="cm-god-c" cx="380" cy="150" r="28" fill="#162033" stroke="#D4A843" stroke-width="2"/><text x="380" y="147" text-anchor="middle" fill="#D4A843">shared/</text><text x="380" y="160" text-anchor="middle" fill="#D4A843">db.py</text></g>
+          <g id="cm-label" opacity="0"><text x="380" y="285" text-anchor="middle" fill="#94A3B8" font-size="12" font-family="Source Sans 3, sans-serif">3 communities found · 1 god node flagged (highest betweenness centrality)</text></g>
+        </g>
+      </svg>
+    </div>
+    <div class="anim-fallback"><p>Static description: orderflow's nodes settle into three colored clusters — billing (app, invoice, webhooks), orders (orders, metrics), notifications (worker) — while <code>shared/db.py</code> sits between all three, pulsing gold: the god node with the highest betweenness centrality.</p></div>
+    <div class="anim-caption" id="anim-comm-caption">Press play: Leiden clustering colors the subsystems; the god node pulses.</div>
+    <div class="animation-controls">
+      <button data-anim="comm" data-act="play" aria-label="Play community animation">▶</button>
+      <button data-anim="comm" data-act="pause" aria-label="Pause community animation">⏸</button>
+      <button data-anim="comm" data-act="restart" aria-label="Restart community animation">↻</button>
+    </div>
+  </div>
+
+  <div class="callout-warning callout">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"Communities are the folder structure."</strong> — No; they're computed from <em>edges</em>. When they disagree with your folders, the edges are telling you where the architecture actually lives — that disagreement is the insight, not an error.</p>
+    <p><strong>"A god node means bad code."</strong> — It means concentrated risk. <code>shared/db.py</code> is a reasonable design at orderflow's size; the flag says "changes here have maximum blast radius," not "rewrite this."</p>
+    <p><strong>"Clustering always finds the right subsystems."</strong> — In legacy monoliths, Leiden often clusters unrelated modules together just because they share infrastructure utilities (logging, telemetry singletons). Community noise is a known failure mode — treat clusters as hypotheses to check, not verdicts.</p>
+  </div>
+</section>
+
+<section class="section" id="benchmarks">
+  <h2>The honest benchmarks</h2>
+  <p>Now the part most write-ups skip. Graphify's marketing number is famous: <strong>up to 71.5× reduction in query tokens</strong>. That number is real — and almost useless as a planning input. Here is the full picture, every number sourced, vendor claims labeled as such.</p>
+
+  <h3 id="bench-71">Where 71.5× came from</h3>
+  <p>The headline (vendor) figure comes from a single favorable benchmark: a 52-file corpus — Karpathy's public repositories, 5 research papers, and 4 diagrams — where a naive assistant burned roughly <strong>123,000 tokens</strong> answering an architecture question that the graph answered in about <strong>1,700 tokens</strong>. That's a ceiling case: a favorable query, on a favorable corpus, measured once.</p>
+  <p>Independent replications tell the useful story. Across task types and repo sizes, the honest range came out to <strong>6.8×</strong> on code-review tasks up to <strong>49×</strong> on daily coding in 500+ file repositories. A from-scratch benchmark on a real, non-cherry-picked Python codebase landed at <strong>7.3×</strong>. Still genuinely good — a different conversation than "70×." As engineering writer Andrus put it during the July 2026 scrutiny wave: <em>"Whether you get anything close to the 70x savings comes down to a single property of your project that almost none of these posts bother to state out loud."</em> That property is <strong>corpus topology</strong> — flat-package enterprise codebases and 50,000-file monorepos do not behave like a curated 52-file demo set.</p>
+
+  <div class="animation-container" id="anim-bench">
+    <div class="anim-title">Animation · BENCHMARK_BARS — the claim vs. the replications</div>
+    <div class="anim-stage" style="position:relative;height:280px;">
+      <svg viewBox="0 0 760 280" width="100%" height="100%" aria-label="Bar chart animation comparing the 71.5x vendor claim with replicated 6.8x to 49x results">
+        <g font-family="JetBrains Mono, monospace" font-size="11">
+          <line x1="80" y1="240" x2="720" y2="240" stroke="#334155"/>
+          <g id="bb-b1"><rect x="110" y="240" width="70" height="0" fill="#F43F5E" opacity=".85"><animate attributeName="height" begin="indefinite" dur=".01s" fill="freeze"/></rect><text x="145" y="258" text-anchor="middle" fill="#94A3B8">71.5×</text><text x="145" y="272" text-anchor="middle" fill="#64748B" font-size="9">vendor · 52 files</text></g>
+          <g id="bb-b2"><text x="295" y="258" text-anchor="middle" fill="#94A3B8">49×</text><text x="295" y="272" text-anchor="middle" fill="#64748B" font-size="9">repl. · daily, 500+ files</text></g>
+          <g id="bb-b3"><text x="445" y="258" text-anchor="middle" fill="#94A3B8">7.3×</text><text x="445" y="272" text-anchor="middle" fill="#64748B" font-size="9">repl. · from-scratch py</text></g>
+          <g id="bb-b4"><text x="595" y="258" text-anchor="middle" fill="#94A3B8">6.8×</text><text x="595" y="272" text-anchor="middle" fill="#64748B" font-size="9">repl. · code review</text></g>
+          <rect id="bb-r1" x="110" y="240" width="70" height="0" fill="#F43F5E" opacity=".85"/>
+          <rect id="bb-r2" x="260" y="240" width="70" height="0" fill="#D4A843" opacity=".9"/>
+          <rect id="bb-r3" x="410" y="240" width="70" height="0" fill="#8B5CF6" opacity=".9"/>
+          <rect id="bb-r4" x="560" y="240" width="70" height="0" fill="#8B5CF6" opacity=".9"/>
+          <text id="bb-note" x="400" y="30" text-anchor="middle" fill="#94A3B8" font-size="12" font-family="Source Sans 3, sans-serif" opacity="0">Plan around the purple bars, not the red one. The variable is corpus topology.</text>
+        </g>
+      </svg>
+    </div>
+    <div class="anim-fallback"><p>Static description: four bars — 71.5× (vendor, 52-file corpus, tallest, red), 49× (replicated, daily coding on 500+ file repos), 7.3× (replicated from-scratch on a real Python codebase), 6.8× (replicated, code review). Caption: plan around the replicated bars; the variable is corpus topology.</p></div>
+    <div class="anim-caption" id="anim-bench-caption">Four measurements of "the same" tool. The difference is what was measured.</div>
+    <div class="animation-controls">
+      <button data-anim="bench" data-act="play" aria-label="Play benchmark animation">▶</button>
+      <button data-anim="bench" data-act="pause" aria-label="Pause benchmark animation">⏸</button>
+      <button data-anim="bench" data-act="restart" aria-label="Restart benchmark animation">↻</button>
+    </div>
+  </div>
+
+  <h3 id="bench-qa">The benchmark that contradicts the hype — and reframes the tool</h3>
+  <p>Open Graphify's own <code>BENCHMARKS.md</code> and you find numbers the launch posts skip. On <strong>LongMemEval-S</strong> (n=50), graph-expand retrieval scores <strong>76% QA accuracy with 0.844 recall@10</strong>. Dense vector RAG — same model (Kimi K2.6), same BGE-m3 embedder, identical token budgets — scores <strong>76% accuracy with 0.848 recall@10</strong>. A tie on accuracy; a slight <em>loss</em> on recall. And this is Graphify's own vendor-reported, blind-validated dataset (90.6% grading agreement, Cohen's kappa 0.81), not a hostile third party.</p>
+  <p>On <strong>LOCOMO</strong> (n=300) the interesting metric shifts to cost: Graphify scores 45.3% accuracy at roughly <strong>$1.40</strong> to ingest the dataset; Supermemory scores higher — 49.7% — but costs <strong>$15.67</strong> to ingest, roughly 11× more.</p>
+  <p>Put together, the honest reframe: <strong>Graphify does not out-retrieve a well-tuned vector RAG pipeline.</strong> It matches RAG on accuracy while costing a fraction to build, and its two real advantages are exactly the M03 story — <em>ingest cost efficiency</em> (AST parsing needs zero LLM calls) and <em>zero-hallucination structural extraction</em>. If you evaluated it as a RAG replacement, you evaluated the wrong axis. One more caveat belongs in your notes: no external benchmark comparing Graphify's graph queries against a raw-file or RAG baseline on a common test set has been independently reproduced — treat all vendor figures as directional.</p>
+
+  <div class="callout-cost callout">
+    <span class="box-label">💰 The ~500-file floor</span>
+    <p>Graph construction and maintenance overhead only pays for itself above roughly <strong>500 files</strong>. Below that, you're paying tooling tax for savings that don't exist yet — orderflow (15 files) is deliberately below the floor so the lab can teach you to <em>measure</em> rather than assume. If your repo is small, the honest recommendation from this course is: don't bother yet, and know why.</p>
+  </div>
+</section>
+
+<section class="section" id="limitations">
+  <h2>Limitations</h2>
+  <ul>
+    <li><strong>Noise on messy code</strong>: point it at a 5,000-line <code>GodController</code> and the graph looks like a ball of yarn after a cat attack. The graph reflects the code; it cannot untangle what the code tangled.</li>
+    <li><strong>Dynamic-language guessing</strong>: in JavaScript and friends, where "types are merely suggestions," edges lean on INFERRED heuristics (M03's ladder). The tags are your audit trail.</li>
+    <li><strong>Large-graph latency</strong>: at 500,000 nodes, querying can take a second — and rebuild-time centrality math gets far worse than that (the full scale-wall numbers, including a 96-core rebuild killed at 114 minutes, are in M11).</li>
+    <li><strong>Static snapshot</strong>: the graph does not update itself as developers commit. Without hooks wired in — and <em>working</em> — it silently drifts. This single sentence is the seed of the entire production track; M11 grows it into a checklist.</li>
+    <li><strong>Semantic pass hallucination</strong>: relationships extracted from docs, PDFs, and images go through an LLM and inherit its error rate. Only the code pass is deterministic.</li>
+  </ul>
+</section>
+
+<div class="bridge">You've read the artifacts and the caveats. Last step: touch the machine layer yourself — because in M09 you'll build a server on top of it, and you should know exactly what's inside.</div>
+
+<section class="section" id="walkthrough">
+  <h2>Code walkthrough: reading graph.json programmatically</h2>
+  <p>The lab's extractor writes the same shape Graphify does: a <code>nodes</code> array and an <code>edges</code> array. Let's load it and compute the top-degree nodes — a two-minute god-node detector. Tabs for both languages.</p>
+
+  <div class="code-tabs" role="tablist">
+    <button class="code-tab active" role="tab" data-tabgroup="gj" data-tab="py">Python</button>
+    <button class="code-tab" role="tab" data-tabgroup="gj" data-tab="js">Node.js</button>
+  </div>
+
+  <div class="tab-panel active" data-tabgroup="gj" data-tabname="py">
+    <p><strong>Chunk 1 — load defensively.</strong> <em>What</em>: read the JSON, fail with a message a human can act on. <em>Why</em>: "graph.json missing" usually means the extractor never ran — the fix is a command, and your error should say so. <em>Gotcha</em>: don't catch bare <code>Exception</code> here; a JSON parse error and a missing file deserve different messages.</p>
+    <div class="code-card"><div class="code-head"><span>degree.py · chunk 1</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-k">import</span> json, sys
+<span class="tok-k">from</span> collections <span class="tok-k">import</span> Counter
+<span class="tok-k">from</span> pathlib <span class="tok-k">import</span> Path
+
+path = Path(<span class="tok-s">"graphify-out/graph.json"</span>)
+<span class="tok-k">try</span>:
+    graph = json.loads(path.read_text(encoding=<span class="tok-s">"utf-8"</span>))
+<span class="tok-k">except</span> FileNotFoundError:
+    sys.exit(<span class="tok-s">f"{path} not found — run 'graphify update .' (or kg_extract.py) first"</span>)
+<span class="tok-k">except</span> json.JSONDecodeError <span class="tok-k">as</span> exc:
+    sys.exit(<span class="tok-s">f"{path} is corrupt: {exc} — rebuild the graph"</span>)</code></pre></div>
+
+    <p><strong>Chunk 2 — count degrees.</strong> <em>What</em>: one Counter, incremented from both ends of every edge. <em>Why</em>: degree (edge count per node) is the cheapest centrality proxy — O(E) instead of betweenness's O(V×E) — and on small graphs it finds the same god node.</p>
+    <div class="code-card"><div class="code-head"><span>degree.py · chunk 2</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code>degree = Counter()
+<span class="tok-k">for</span> edge <span class="tok-k">in</span> graph[<span class="tok-s">"edges"</span>]:
+    degree[edge[<span class="tok-s">"source"</span>]] += <span class="tok-n">1</span>
+    degree[edge[<span class="tok-s">"target"</span>]] += <span class="tok-n">1</span>
+
+<span class="tok-f">print</span>(<span class="tok-s">"top nodes by degree:"</span>)
+<span class="tok-k">for</span> node_id, deg <span class="tok-k">in</span> degree.most_common(<span class="tok-n">5</span>):
+    <span class="tok-f">print</span>(<span class="tok-s">f"  {deg:3d}  {node_id}"</span>)
+
+<span class="tok-c"># On orderflow, shared.db functions top the list — the god node,</span>
+<span class="tok-c"># found with 6 lines of stdlib.</span></code></pre></div>
+  </div>
+
+  <div class="tab-panel" data-tabgroup="gj" data-tabname="js">
+    <p><strong>Chunk 1 — load defensively.</strong> Same contract: missing file and corrupt JSON get different, actionable messages.</p>
+    <div class="code-card"><div class="code-head"><span>degree.mjs · chunk 1</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-k">import</span> { readFileSync } <span class="tok-k">from</span> <span class="tok-s">"node:fs"</span>;
+
+<span class="tok-k">const</span> path = <span class="tok-s">"graphify-out/graph.json"</span>;
+<span class="tok-k">let</span> graph;
+<span class="tok-k">try</span> {
+  graph = JSON.parse(readFileSync(path, <span class="tok-s">"utf8"</span>));
+} <span class="tok-k">catch</span> (err) {
+  <span class="tok-k">const</span> hint = err.code === <span class="tok-s">"ENOENT"</span>
+    ? <span class="tok-s">"run 'graphify update .' (or kg_extract.py) first"</span>
+    : <span class="tok-s">`corrupt JSON: ${err.message} — rebuild the graph`</span>;
+  console.error(<span class="tok-s">`${path}: ${hint}`</span>);
+  process.exit(<span class="tok-n">1</span>);
+}</code></pre></div>
+
+    <p><strong>Chunk 2 — count degrees.</strong> A Map instead of a Counter; the logic is identical.</p>
+    <div class="code-card"><div class="code-head"><span>degree.mjs · chunk 2</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-k">const</span> degree = <span class="tok-k">new</span> Map();
+<span class="tok-k">const</span> bump = (id) =&gt; degree.set(id, (degree.get(id) ?? <span class="tok-n">0</span>) + <span class="tok-n">1</span>);
+<span class="tok-k">for</span> (<span class="tok-k">const</span> edge <span class="tok-k">of</span> graph.edges) { bump(edge.source); bump(edge.target); }
+
+<span class="tok-k">const</span> top = [...degree.entries()].sort((a, b) =&gt; b[<span class="tok-n">1</span>] - a[<span class="tok-n">1</span>]).slice(<span class="tok-n">0</span>, <span class="tok-n">5</span>);
+console.log(<span class="tok-s">"top nodes by degree:"</span>);
+<span class="tok-k">for</span> (<span class="tok-k">const</span> [id, deg] <span class="tok-k">of</span> top) console.log(<span class="tok-s">`  ${String(deg).padStart(3)}  ${id}`</span>);</code></pre></div>
+  </div>
+
+  <div class="checkpoint"><span class="box-label">🔎 What Just Happened?</span>
+  <p>You treated <code>graph.json</code> as what it is: a plain data file you can build tooling on. Degree counting found the same god node the report names, using O(E) arithmetic instead of O(V×E) centrality — a tradeoff you'll see matter enormously at scale in M11. Every downstream system in this course (the M08 enrichment hook, the M09 MCP server, the M11 freshness gate) starts exactly like this: load, index, answer.</p></div>
+</section>
+
+<section class="section" id="lab">
+  <h2>Hands-on lab</h2>
+  <p>Run <code>labs/M04-graphify-end-to-end/</code> now. The four steps:</p>
+  <ol>
+    <li><strong>Build</strong> — <code>graphify update .</code> on orderflow; match the expected log shape (nodes/edges/communities, "no LLM needed").</li>
+    <li><strong>Read all three artifacts</strong> — find the three communities and the god node in <code>graph.html</code>; check <code>GRAPH_REPORT.md</code> names the same ones; peek at <code>graph.json</code>.</li>
+    <li><strong>Query</strong> — <code>graphify path "post_invoice" "decode_jwt"</code> and a dependency query on <code>DatabasePool</code>; verify both against the ground-truth edge list in <code>sample-project/README.md</code>. On a 15-file repo you can check the graph by hand — that's the whole point of the repo.</li>
+    <li><strong>The honest measurement</strong> — ask your assistant a structural question with and without the graph, record real token counts, and keep the number: expect a small multiple, not 71.5×, because orderflow is far below the ~500-file floor. You will reuse this measurement in the capstone.</li>
+  </ol>
+  <p>No install available? Every step has an offline path via <code>labs/shared_tools/kg_extract.py</code>.</p>
+</section>
+
+<section class="section" id="quiz">
+  <h2>Knowledge check</h2>
+
+  <div class="quiz-question" data-q="1">
+    <h4>1. Which part of a Graphify run costs LLM tokens?</h4>
+    <div class="quiz-option" data-correct="false">The tree-sitter code pass</div>
+    <div class="quiz-option" data-correct="true">Only the optional semantic pass over docs, papers, and images — the code pass is deterministic and free</div>
+    <div class="quiz-option" data-correct="false">Every pass — building any graph requires LLM extraction</div>
+    <div class="quiz-option" data-correct="false">Only community detection</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="2">
+    <h4>2. An agent needs to query the graph mid-task, programmatically. Which artifact does it consume?</h4>
+    <div class="quiz-option" data-correct="false"><code>graph.html</code></div>
+    <div class="quiz-option" data-correct="false"><code>GRAPH_REPORT.md</code></div>
+    <div class="quiz-option" data-correct="true"><code>graph.json</code> — the machine-readable graph that MCP servers load and scripts parse</div>
+    <div class="quiz-option" data-correct="false">The <code>cache/</code> directory</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="3">
+    <h4>3. What did Graphify's own LongMemEval-S benchmark show against dense vector RAG?</h4>
+    <div class="quiz-option" data-correct="false">Graphify beat RAG decisively on both accuracy and recall</div>
+    <div class="quiz-option" data-correct="true">A tie on QA accuracy (76% vs 76%) and a slight loss on recall@10 (0.844 vs 0.848) — its real edge is ingest cost and zero-hallucination structure, not retrieval superiority</div>
+    <div class="quiz-option" data-correct="false">RAG failed to complete the benchmark</div>
+    <div class="quiz-option" data-correct="false">The benchmark only measured token counts, not accuracy</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="4">
+    <h4>4. Your repo has 80 files. What does this module's evidence suggest about adopting Graphify today?</h4>
+    <div class="quiz-option" data-correct="false">Adopt immediately — savings scale down linearly</div>
+    <div class="quiz-option" data-correct="true">Probably skip for now: below the ~500-file floor, graph construction and maintenance overhead exceeds savings that don't exist yet — measure before adopting</div>
+    <div class="quiz-option" data-correct="false">Adopt only the graph.html artifact</div>
+    <div class="quiz-option" data-correct="false">Graphify refuses to run on repos under 500 files</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="5">
+    <h4>5. The 71.5× token-reduction figure was measured on…</h4>
+    <div class="quiz-option" data-correct="true">A single favorable run: a 52-file corpus (Karpathy's repos, 5 papers, 4 diagrams), one architecture question — ~123K tokens naive vs ~1.7K with the graph. Replications land at 6.8×–49×, and 7.3× on a from-scratch real codebase</div>
+    <div class="quiz-option" data-correct="false">The median of hundreds of enterprise codebases</div>
+    <div class="quiz-option" data-correct="false">VS Code's 10,000-file monorepo</div>
+    <div class="quiz-option" data-correct="false">A synthetic corpus with no real code</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="6">
+    <h4>6. Leiden clustering on a legacy Java monolith groups the payment module with the logging utilities. Most likely explanation?</h4>
+    <div class="quiz-option" data-correct="false">The payment code secretly implements logging</div>
+    <div class="quiz-option" data-correct="true">Community-detection noise: in legacy monoliths, modules cluster around shared infrastructure singletons (logging, telemetry) they all reference — treat clusters as hypotheses, not verdicts</div>
+    <div class="quiz-option" data-correct="false">The graph is hallucinated by the LLM pass</div>
+    <div class="quiz-option" data-correct="false">Leiden cannot run on Java code</div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="summary">
+  <h2>Module summary</h2>
+  <div class="summary-grid">
+    <div class="summary-card"><h4>One command, one graph</h4><p><code>uv tool install graphifyy && graphify install</code>, then <code>/graphify .</code> — code parsed free and deterministically; only docs/images cost tokens.</p></div>
+    <div class="summary-card"><h4>Three artifacts, three consumers</h4><p>graph.json (machines), graph.html (humans), GRAPH_REPORT.md (both). They can desync — a production concern M11 owns.</p></div>
+    <div class="summary-card"><h4>Architecture, rediscovered</h4><p>Leiden communities ≈ subsystems; god nodes = concentrated blast radius. Both are hypotheses to verify, especially in legacy monoliths.</p></div>
+    <div class="summary-card"><h4>Honest numbers</h4><p>71.5× is a ceiling case. Plan around 6.8×–49× (7.3× from-scratch), remember the ~500-file floor, and note the accuracy tie with vector RAG — the product is determinism + ingest cost.</p></div>
+  </div>
+  <p><strong>What we built on orderflow</strong>: a complete graph build with all three artifacts, hand-verified against the repo's ground-truth edge list, plus a six-line god-node detector over graph.json.</p>
+  <p><strong>Next module preview</strong>: Graphify is one point in a fast-moving design space. M05 maps the rest — CodeGraph's SQLite-and-watchers architecture (with the best benchmark table in the field), okf-rs's Markdown-bundle bet, and the cloud tools — and gives you the comparison axes to evaluate any tool that launches next month.</p>
+</section>
+
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul class="ref-list">
+    <li>Graphify — GitHub repository, <code>BENCHMARKS.md</code>, and docs (<a href="https://graphify.net/index.html" rel="noopener">graphify.net</a>)</li>
+    <li>PyPI: <code>graphifyy</code> · install docs for uv/pipx/pip · <code>/graphify</code> skill registration</li>
+    <li>Level Up Coding (Andrus) — scrutiny of the 70× token-reduction claims; corpus-topology dependence</li>
+    <li>LongMemEval-S and LOCOMO benchmark figures — Graphify vendor-reported, blind-validated</li>
+    <li>Course lab: <code>labs/M04-graphify-end-to-end/</code> · offline fallback: <code>labs/shared_tools/kg_extract.py</code></li>
+  </ul>
+  <div class="prevnext">
+    <a href="M03-tree-sitter-parsing.html"><span class="dir">← Previous</span> M03 · Parsing Code into Graphs with tree-sitter</a>
+    <a href="M05-tool-landscape.html" style="text-align:right;"><span class="dir">Next →</span> M05 · The Tool Landscape</a>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.closest('.code-card').querySelector('pre');
+      var text = pre.innerText;
+      function done() { btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); }
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, done); }
+      else { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); done(); }
+    });
+  });
+
+  document.querySelectorAll('.code-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var group = tab.getAttribute('data-tabgroup'), name = tab.getAttribute('data-tab');
+      document.querySelectorAll('.code-tab[data-tabgroup="' + group + '"]').forEach(function (t) { t.classList.toggle('active', t === tab); });
+      document.querySelectorAll('.tab-panel[data-tabgroup="' + group + '"]').forEach(function (p) { p.classList.toggle('active', p.getAttribute('data-tabname') === name); });
+    });
+  });
+
+  document.querySelectorAll('.quiz-question').forEach(function (q) {
+    var fb = q.querySelector('.quiz-feedback');
+    q.querySelectorAll('.quiz-option').forEach(function (opt) {
+      opt.setAttribute('tabindex', '0'); opt.setAttribute('role', 'button');
+      function answer() {
+        if (q.dataset.answered) return;
+        q.dataset.answered = '1';
+        var correct = opt.getAttribute('data-correct') === 'true';
+        opt.classList.add(correct ? 'correct' : 'incorrect');
+        if (!correct) q.querySelectorAll('.quiz-option[data-correct="true"]').forEach(function (c) { c.classList.add('correct'); });
+        fb.textContent = (correct ? '✅ Correct. ' : '❌ Not quite. ') + explain(q);
+        fb.classList.add('show', correct ? 'good' : 'bad');
+      }
+      opt.addEventListener('click', answer);
+      opt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); answer(); } });
+    });
+  });
+  function explain(q) {
+    var map = {
+      '1': 'The log says it directly: "Re-extracting code files (no LLM needed)". Docs/papers/images are the separate /graphify --update pass — the only one that costs tokens or can hallucinate.',
+      '2': 'graph.html is for eyes, GRAPH_REPORT.md for orientation; graph.json is the persistent machine layer that M09\'s MCP server and your scripts consume.',
+      '3': 'Graphify\'s own BENCHMARKS.md: 76%/0.844 vs 76%/0.848 under identical models, embedders, and budgets. The reframe: buy it for determinism and $1.40-class ingest costs, not retrieval wins.',
+      '4': 'The ~500-file floor: below it, construction + maintenance overhead outweighs savings. The right move is to measure a real task on your repo first.',
+      '5': 'Ceiling case: 52 curated files, one favorable architecture query, ~123K → ~1.7K tokens. Corpus topology decides your number; replications ran 6.8×–49×.',
+      '6': 'Documented failure mode: shared infrastructure utilities create dense edges that drag unrelated modules into one cluster in legacy codebases.'
+    };
+    return map[q.getAttribute('data-q')] || '';
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.sidebar-nav a'));
+  var targets = links.map(function (l) { return document.getElementById(l.getAttribute('href').slice(1)); }).filter(Boolean);
+  function spy() {
+    var pos = window.scrollY + 120, active = targets[0];
+    targets.forEach(function (t) { if (t.offsetTop <= pos) active = t; });
+    links.forEach(function (l) { l.classList.toggle('active', l.getAttribute('href') === '#' + active.id); });
+  }
+  window.addEventListener('scroll', spy, { passive: true }); spy();
+
+  function timeline(steps) {
+    var raf = null, start = null, elapsed = 0, done = {};
+    function frame(ts) {
+      if (start === null) start = ts - elapsed;
+      elapsed = ts - start;
+      steps.forEach(function (s, i) { if (elapsed >= s.at && !done[i]) { done[i] = true; s.fn(); } });
+      if (elapsed < steps[steps.length - 1].at + 400) raf = requestAnimationFrame(frame); else raf = null;
+    }
+    return {
+      play: function () { if (reduced) return; if (!raf) raf = requestAnimationFrame(frame); },
+      pause: function () { if (raf) { cancelAnimationFrame(raf); raf = null; } },
+      restart: function (resetFn) { this.pause(); start = null; elapsed = 0; done = {}; resetFn(); this.play(); }
+    };
+  }
+  function show(id, on) { var el = document.getElementById(id); if (el) el.style.opacity = on ? '1' : '0'; }
+  function fadeSetup(ids) { ids.forEach(function (id) { var el = document.getElementById(id); if (el) { el.style.transition = 'opacity .5s'; show(id, false); } }); }
+  function caption(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; }
+  var anims = {};
+
+  /* PIPELINE_FLOW */
+  (function () {
+    var ids = ['pf-ts', 'pf-llm', 'pf-dot', 'pf-a1', 'pf-a2', 'pf-a3', 'pf-lines'];
+    function reset() { fadeSetup(ids); caption('anim-pipe-caption', 'One folder in; two passes with very different cost models; three views of one graph out.'); }
+    reset();
+    var tl = timeline([
+      { at: 200, fn: function () { show('pf-dot', 1); } },
+      { at: 700, fn: function () { show('pf-ts', 1); caption('anim-pipe-caption', 'Code goes through tree-sitter: $0, deterministic, cannot hallucinate…'); } },
+      { at: 1500, fn: function () { show('pf-llm', 1); caption('anim-pipe-caption', '…docs and images go through the optional LLM pass: costs tokens, can err.'); } },
+      { at: 2400, fn: function () { show('pf-lines', 1); show('pf-a1', 1); } },
+      { at: 2900, fn: function () { show('pf-a2', 1); } },
+      { at: 3400, fn: function () { show('pf-a3', 1); caption('anim-pipe-caption', 'Three artifacts, three consumers — and in M11, one desync risk.'); } }
+    ]);
+    anims.pipe = { play: tl.play.bind(tl), pause: tl.pause.bind(tl), restart: function () { tl.restart(reset); } };
+  })();
+
+  /* COMMUNITY_MAP */
+  (function () {
+    var groups = { b: ['cm-b1', 'cm-b2', 'cm-b3'], o: ['cm-o1', 'cm-o2'], n: ['cm-n1'] };
+    var colors = { b: '#6366F1', o: '#F97316', n: '#06B6D4' };
+    var god = document.getElementById('cm-god-c');
+    var pulseTimer = null;
+    function setStroke(ids, color) { ids.forEach(function (id) { var c = document.getElementById(id); if (c) c.querySelector('circle').setAttribute('stroke', color); }); }
+    function reset() {
+      Object.keys(groups).forEach(function (k) { setStroke(groups[k], '#94A3B8'); });
+      show('cm-label', 0); var l = document.getElementById('cm-label'); if (l) l.style.transition = 'opacity .5s';
+      if (pulseTimer) { clearInterval(pulseTimer); pulseTimer = null; }
+      if (god) god.setAttribute('r', '28');
+      caption('anim-comm-caption', 'Press play: Leiden clustering colors the subsystems; the god node pulses.');
+    }
+    reset();
+    var tl = timeline([
+      { at: 300, fn: function () { setStroke(groups.b, colors.b); caption('anim-comm-caption', 'Community 1: billing (app, invoice, webhooks)…'); } },
+      { at: 1100, fn: function () { setStroke(groups.o, colors.o); caption('anim-comm-caption', '…community 2: orders (orders, metrics)…'); } },
+      { at: 1900, fn: function () { setStroke(groups.n, colors.n); caption('anim-comm-caption', '…community 3: notifications. No docs consulted — edges only.'); } },
+      { at: 2700, fn: function () {
+          show('cm-label', 1);
+          caption('anim-comm-caption', 'shared/db.py bridges all three: the god node. Changes here have maximum blast radius.');
+          if (!reduced && god) {
+            var grow = true;
+            pulseTimer = setInterval(function () { god.setAttribute('r', grow ? '32' : '28'); grow = !grow; }, 450);
+            setTimeout(function () { if (pulseTimer) { clearInterval(pulseTimer); pulseTimer = null; god.setAttribute('r', '28'); } }, 4000);
+          }
+      } }
+    ]);
+    anims.comm = { play: tl.play.bind(tl), pause: tl.pause.bind(tl), restart: function () { tl.restart(reset); } };
+  })();
+
+  /* BENCHMARK_BARS */
+  (function () {
+    var bars = [ { id: 'bb-r1', h: 200 }, { id: 'bb-r2', h: 137 }, { id: 'bb-r3', h: 40 }, { id: 'bb-r4', h: 37 } ];
+    function reset() {
+      bars.forEach(function (b) { var r = document.getElementById(b.id); if (r) { r.style.transition = 'all .7s ease-out'; r.setAttribute('height', '0'); r.setAttribute('y', '240'); } });
+      show('bb-note', 0); var n = document.getElementById('bb-note'); if (n) n.style.transition = 'opacity .5s';
+      caption('anim-bench-caption', 'Four measurements of "the same" tool. The difference is what was measured.');
+    }
+    reset();
+    function grow(b) { var r = document.getElementById(b.id); if (r) { r.setAttribute('height', String(b.h)); r.setAttribute('y', String(240 - b.h)); } }
+    var tl = timeline([
+      { at: 300, fn: function () { grow(bars[0]); caption('anim-bench-caption', 'The poster number: 71.5× — one run, 52 curated files, one favorable query.'); } },
+      { at: 1200, fn: function () { grow(bars[1]); caption('anim-bench-caption', 'Replicated ceiling: 49× on daily coding in 500+ file repos.'); } },
+      { at: 2100, fn: function () { grow(bars[2]); grow(bars[3]); caption('anim-bench-caption', 'Replicated floor: 7.3× from-scratch real codebase; 6.8× on code review.'); } },
+      { at: 3000, fn: function () { show('bb-note', 1); } }
+    ]);
+    anims.bench = { play: tl.play.bind(tl), pause: tl.pause.bind(tl), restart: function () { tl.restart(reset); } };
+  })();
+
+  document.querySelectorAll('.animation-controls button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var a = anims[btn.getAttribute('data-anim')], act = btn.getAttribute('data-act');
+      if (a && a[act]) a[act]();
+    });
+  });
+})();
+</script>
+</body>
+</html>

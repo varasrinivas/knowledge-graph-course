@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M10 — The Hybrid Context Stack · Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-primary:#0A1628; --bg-secondary:#111D33; --bg-card:#162033; --bg-surface:#1A2740;
+  --text-primary:#E8ECF1; --text-secondary:#94A3B8; --text-muted:#64748B;
+  --accent-primary:#D4A843; --accent-hover:#E5BC5A; --accent-muted:rgba(212,168,67,0.15);
+  --success:#10B981; --success-bg:rgba(16,185,129,0.1);
+  --warning:#F59E0B; --warning-bg:rgba(245,158,11,0.1);
+  --error:#F43F5E; --error-bg:rgba(244,63,94,0.1);
+  --info:#3B82F6; --info-bg:rgba(59,130,246,0.1);
+  --track-overview:#D4A843; --track-foundations:#6366F1; --track-structural:#8B5CF6;
+  --track-narrative:#06B6D4; --track-serving:#F97316; --track-production:#22C55E; --track-capstone:#D4A843;
+  --track-color:var(--track-serving);
+  --code-bg:#0D1117; --code-border:#21262D; --code-text:#C9D1D9; --code-comment:#8B949E;
+  --code-keyword:#FF7B72; --code-string:#A5D6FF; --code-function:#D2A8FF; --code-number:#79C0FF;
+  --transition-fast:150ms; --transition-normal:300ms; --transition-slow:500ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg-primary);color:var(--text-primary);font-family:'Source Sans 3',sans-serif;font-size:1.05rem;line-height:1.7}
+h1,h2,h3,h4{font-family:'Bricolage Grotesque',sans-serif;line-height:1.25}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.5rem;font-weight:700;margin:0 0 1rem;padding-top:.5rem}
+h3{font-size:1.25rem;font-weight:600;margin:1.75rem 0 .75rem}
+p{margin:0 0 1rem}
+a{color:var(--accent-primary)}
+ul,ol{margin:0 0 1rem 1.5rem}
+li{margin-bottom:.4rem}
+strong{font-weight:600}
+code{font-family:'JetBrains Mono',monospace;font-size:.9rem;background:var(--bg-surface);padding:.1em .35em;border-radius:4px;color:var(--code-text)}
+.page-container{max-width:1200px;margin:0 auto;padding:2rem;display:grid;grid-template-columns:240px 1fr;gap:3rem}
+.sidebar-nav{position:sticky;top:2rem;height:calc(100vh - 4rem);overflow-y:auto;font-family:'Bricolage Grotesque',sans-serif;font-size:.85rem;font-weight:600}
+.sidebar-nav .nav-title{color:var(--track-color);text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;margin-bottom:.75rem}
+.sidebar-nav a{display:block;color:var(--text-secondary);text-decoration:none;padding:.35rem .6rem;border-left:2px solid var(--code-border);transition:all var(--transition-fast)}
+.sidebar-nav a:hover{color:var(--text-primary);border-left-color:var(--track-color)}
+.content{max-width:800px;min-width:0}
+.section{margin-bottom:4rem}
+.course-header{background:var(--bg-secondary);border:1px solid var(--code-border);border-radius:16px;padding:2rem;margin-bottom:3rem}
+.course-kicker{font-family:'Bricolage Grotesque',sans-serif;font-size:.8rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+.track-badge{display:inline-block;font-family:'Bricolage Grotesque',sans-serif;font-size:.78rem;font-weight:700;color:var(--track-color);border:1px solid var(--track-color);border-radius:999px;padding:.15rem .75rem;margin:.75rem 0}
+.header-meta{display:flex;flex-wrap:wrap;gap:1.25rem;color:var(--text-secondary);font-size:.9rem;margin-top:1rem}
+.progress-bar{height:4px;background:var(--bg-surface);border-radius:2px;overflow:hidden;margin:1rem 0 .35rem}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--track-color),var(--accent-primary));border-radius:2px;transition:width var(--transition-slow)}
+.progress-label{font-size:.8rem;color:var(--text-muted)}
+.objectives{background:var(--bg-card);border-radius:12px;padding:1.5rem}
+.objectives .skill{font-family:'Bricolage Grotesque',sans-serif;font-size:.78rem;font-weight:700;color:var(--track-color)}
+.analogy-box{background:var(--accent-muted);border-left:4px solid var(--accent-primary);border-radius:0 8px 8px 0;padding:1.5rem;margin:1.5rem 0}
+.analogy-box::before{content:'💡 Everyday Analogy';font-family:'Bricolage Grotesque',sans-serif;font-weight:700;color:var(--accent-primary);display:block;margin-bottom:.5rem}
+.tech-def-box{background:var(--info-bg);border-left:4px solid var(--info);border-radius:0 8px 8px 0;padding:1.5rem;margin:1.5rem 0}
+.tech-def-box::before{content:'📐 Technical Definition';font-family:'Bricolage Grotesque',sans-serif;font-weight:700;color:var(--info);display:block;margin-bottom:.5rem}
+.callout{border-left:4px solid;border-radius:0 8px 8px 0;padding:1.5rem;margin:1.5rem 0}
+.callout .box-label{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;display:block;margin-bottom:.5rem}
+.callout-warning{background:var(--warning-bg);border-left-color:var(--warning)}
+.callout-warning .box-label{color:var(--warning)}
+.callout-why{background:var(--success-bg);border-left-color:var(--success)}
+.callout-why .box-label{color:var(--success)}
+.callout-cost{background:var(--warning-bg);border-left-color:var(--accent-primary)}
+.callout-cost .box-label{color:var(--accent-primary)}
+.bridge{font-style:italic;color:var(--text-secondary);border-top:1px dashed var(--code-border);border-bottom:1px dashed var(--code-border);padding:.9rem 0;margin:2rem 0}
+.checkpoint{background:var(--success-bg);border:1px solid var(--success);border-radius:12px;padding:1.25rem 1.5rem;margin:1.5rem 0}
+.checkpoint .box-label{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;color:var(--success);display:block;margin-bottom:.5rem}
+.term-tooltip{position:relative;color:var(--accent-primary);cursor:help;border-bottom:1px dashed var(--accent-primary)}
+.term-tooltip .tooltip-content{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--accent-primary);border-radius:8px;padding:.75rem 1rem;font-size:.85rem;color:var(--text-primary);width:280px;opacity:0;pointer-events:none;transition:opacity var(--transition-fast);z-index:10;font-style:normal;font-weight:400;line-height:1.5}
+.term-tooltip:hover .tooltip-content,.term-tooltip:focus .tooltip-content{opacity:1}
+.code-wrap{background:var(--code-bg);border:1px solid var(--code-border);border-radius:10px;margin:1.25rem 0;position:relative;overflow:hidden}
+.code-wrap pre{padding:1.1rem 1.25rem;overflow-x:auto}
+.code-wrap code{background:none;padding:0;font-size:.85rem;line-height:1.6;color:var(--code-text);display:block;white-space:pre}
+.code-title{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text-muted);padding:.5rem 1.25rem;border-bottom:1px solid var(--code-border)}
+.copy-btn{position:absolute;top:.4rem;right:.5rem;background:var(--bg-card);border:1px solid var(--code-border);color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:.7rem;border-radius:6px;padding:.25rem .6rem;cursor:pointer;transition:all var(--transition-fast)}
+.copy-btn:hover{border-color:var(--accent-primary);color:var(--accent-primary)}
+.tok-c{color:var(--code-comment)} .tok-s{color:var(--code-string)} .tok-k{color:var(--code-keyword)} .tok-f{color:var(--code-function)} .tok-n{color:var(--code-number)}
+.code-tabs{display:flex;gap:0;border-bottom:2px solid var(--code-border);margin-top:1.25rem}
+.code-tab{padding:.5rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:.8rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-muted);transition:all var(--transition-fast);background:none;border-top:none;border-left:none;border-right:none}
+.code-tab.active{color:var(--accent-primary);border-bottom-color:var(--accent-primary)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.animation-container{background:var(--bg-secondary);border:1px solid var(--code-border);border-radius:12px;padding:2rem;margin:2rem 0;position:relative;min-height:300px}
+.anim-title{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:.85rem;color:var(--track-color);text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem}
+.animation-controls{display:flex;gap:.5rem;position:absolute;bottom:1rem;right:1rem}
+.animation-controls button{background:var(--bg-card);border:1px solid var(--code-border);color:var(--text-primary);width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all var(--transition-fast)}
+.animation-controls button:hover{border-color:var(--accent-primary);color:var(--accent-primary)}
+.anim-caption{font-size:.85rem;color:var(--text-secondary);min-height:2.4em;margin-top:1rem;padding-right:9rem}
+.quiz-question{background:var(--bg-card);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.quiz-question h3{margin-top:0}
+.quiz-option{padding:.75rem 1rem;margin:.5rem 0;border:1px solid var(--code-border);border-radius:8px;cursor:pointer;transition:all var(--transition-fast)}
+.quiz-option:hover{border-color:var(--accent-primary)}
+.quiz-option.correct{border-color:var(--success);background:var(--success-bg)}
+.quiz-option.incorrect{border-color:var(--error);background:var(--error-bg)}
+.quiz-feedback{margin-top:.75rem;padding:.75rem;border-radius:8px;font-size:.9rem;display:none}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:.92rem}
+th,td{border:1px solid var(--code-border);padding:.6rem .8rem;text-align:left;vertical-align:top}
+th{background:var(--bg-card);font-family:'Bricolage Grotesque',sans-serif;font-weight:600}
+.table-scroll{overflow-x:auto}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0}
+.summary-card{background:var(--bg-card);border:1px solid var(--code-border);border-radius:12px;padding:1.1rem 1.25rem}
+.summary-card h4{color:var(--track-color);font-size:.95rem;margin-bottom:.4rem}
+.summary-card p{font-size:.9rem;color:var(--text-secondary);margin:0}
+.next-prev{display:flex;justify-content:space-between;gap:1rem;margin-top:3rem}
+.next-prev a{flex:1;background:var(--bg-card);border:1px solid var(--code-border);border-radius:12px;padding:1rem 1.25rem;text-decoration:none;transition:border-color var(--transition-fast)}
+.next-prev a:hover{border-color:var(--track-color)}
+.next-prev .dir{font-size:.75rem;color:var(--text-muted);display:block;font-family:'Bricolage Grotesque',sans-serif}
+/* animation stages */
+.anim-stage{position:relative;height:260px;overflow:hidden}
+.actor{position:absolute;background:var(--bg-card);border:1.5px solid var(--code-border);border-radius:10px;padding:.55rem .8rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text-primary);transition:all .5s ease;text-align:center}
+.actor.lit{border-color:var(--track-color);box-shadow:0 0 14px rgba(249,115,22,.35)}
+.actor.lit-green{border-color:var(--success);box-shadow:0 0 14px rgba(16,185,129,.3)}
+.actor.lit-cyan{border-color:var(--track-narrative);box-shadow:0 0 14px rgba(6,182,212,.3)}
+.actor.lit-violet{border-color:var(--track-structural);box-shadow:0 0 14px rgba(139,92,246,.3)}
+.actor.dim{opacity:.35}
+.meter{position:absolute;width:150px;height:10px;background:var(--bg-surface);border-radius:5px;overflow:hidden;border:1px solid var(--code-border)}
+.meter i{display:block;height:100%;width:0;background:var(--success);transition:width .8s ease;border-radius:5px}
+.meter-label{position:absolute;font-size:.65rem;font-family:'JetBrains Mono',monospace;color:var(--text-muted)}
+.flow-line{position:absolute;height:2px;background:var(--code-border);transition:background .5s ease}
+.flow-line.lit{background:var(--track-color)}
+.branch-label{position:absolute;font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--text-muted);transition:color .4s}
+.branch-label.lit{color:var(--track-color)}
+@media (max-width:900px){
+  .page-container{grid-template-columns:1fr;padding:1rem}
+  .sidebar-nav{position:static;height:auto;margin-bottom:1.5rem}
+  .summary-grid{grid-template-columns:1fr}
+  .anim-caption{padding-right:0}
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .actor,.meter i,.flow-line,.progress-fill{transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+<nav class="sidebar-nav" aria-label="Module sections">
+  <div class="nav-title">M10 · Hybrid Stack</div>
+  <a href="#objectives">Learning Objectives</a>
+  <a href="#three-layers">Three Layers, Not Competitors</a>
+  <a href="#failure-triggers">Failure-Driven Adoption</a>
+  <a href="#staged-pipeline">The Staged Query Pipeline</a>
+  <a href="#router">The Router Pattern</a>
+  <a href="#evidence">The Evidence</a>
+  <a href="#matrix">The Decision Matrix</a>
+  <a href="#roles">MCP vs RAG vs OKF</a>
+  <a href="#hands-on">Hands-On: Route 10 Queries</a>
+  <a href="#quiz">Knowledge Check</a>
+  <a href="#summary">Module Summary</a>
+  <a href="#references">References</a>
+</nav>
+<main class="content">
+
+<header class="course-header">
+  <div class="course-kicker">Knowledge Graphs for AI Agents</div>
+  <span class="track-badge">Track 4 — Serving &amp; Architecture</span>
+  <h1>M10 · The Hybrid Context Stack</h1>
+  <div class="progress-bar" role="progressbar" aria-valuenow="11" aria-valuemin="0" aria-valuemax="14" aria-label="Course progress: module 11 of 14"><div class="progress-fill" style="width:79%"></div></div>
+  <div class="progress-label">Module 11 of 14</div>
+  <div class="header-meta">
+    <span>⏱ Estimated time: 45 minutes</span>
+    <span>📋 Prerequisites: M02 (RAG limits), M04 (structural graphs), M07 (OKF bundles), M09 (serving)</span>
+    <span>🎚 Level: Advanced</span>
+  </div>
+</header>
+
+<section class="section" id="objectives">
+  <h2>Learning Objectives</h2>
+  <div class="objectives">
+    <p class="skill">SKILL LEVEL: ADVANCED</p>
+    <ul>
+      <li>Assign each context layer its owned territory: structural graph = what the code <em>is</em>; OKF = what engineers <em>know</em>; vector RAG = the unstructured remainder.</li>
+      <li>Apply the two failure triggers — multi-hop reasoning failure and tribal-knowledge sprawl — to decide which layer (if any) a system needs next.</li>
+      <li>Trace one query through the three-stage pipeline (narrative orientation → structural traversal → semantic search) and account for its token budget.</li>
+      <li>Build a router that classifies queries as canonical, structural, or exploratory, and dispatches them to the right layer with fallbacks.</li>
+      <li>Cite the production evidence — the ERPNext case study — and explain why accuracy gains are a better signal than token-reduction multiples.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="three-layers">
+  <h2>Three Layers, Not Three Competitors</h2>
+  <p>The viral framing of 2026 — "Graphify kills RAG," "OKF kills vector databases" — is backwards, and you have spent nine modules accumulating the evidence to see why. Graphify's own benchmarks (M04) showed it <em>tying</em> dense vector RAG on QA accuracy and slightly losing on recall. OKF's own spec (M06) ships no search layer at all. Neither of these things is trying to replace retrieval. They are specialized layers that sit <em>alongside</em> a vector index, each justified only by a specific failure mode.</p>
+  <div class="analogy-box">
+    <p><strong>BEFORE:</strong> Think about how you'd research an unfamiliar city before moving there. You'd use the street map to understand how districts connect. You'd read a local's guide for the things no map shows — which neighborhoods are quiet, why the old town floods in spring. And you'd search the city's newspaper archive for anything else that comes up.</p>
+    <p><strong>PAIN:</strong> Now imagine being told to choose ONE. Navigate with only the newspaper archive and you'll piece together street layouts from decade-old traffic reports. Use only the map and you'll never learn the flood story. Each source answers a class of question the others structurally cannot.</p>
+    <p><strong>MAPPING:</strong> The structural graph is the street map — precise, verifiable connections. The OKF bundle is the local's guide — curated, narrative, explains <em>why</em>. Vector RAG is the newspaper archive — vast, unstructured, searchable by theme. The 2026 architecture question was never "which one wins?" It is "which layer owns which context?"</p>
+  </div>
+  <div class="tech-def-box">
+    <p>A <strong>hybrid context stack</strong> is an agent architecture in which three retrieval mechanisms coexist, each owning a distinct knowledge class: (1) a <strong>vector RAG</strong> index over unstructured text — docs, tickets, Slack threads, the long tail; (2) a <strong>structural graph</strong> — deterministic, AST-extracted call graphs, class hierarchies, imports and exports; (3) a <strong>narrative layer</strong> (OKF) — curated Markdown concepts capturing architecture, schemas, playbooks, and intent. In one sentence: <em>Graphify extracts what the code is, OKF curates what engineers know, and vector RAG searches the unstructured remainder.</em></p>
+  </div>
+
+  <div class="animation-container" id="anim-stack">
+    <div class="anim-title">Animation · THREE_LAYER_STACK — one agent, three feeds</div>
+    <div class="anim-stage" aria-label="Animated diagram: three context sources — vector RAG, structural graph, and OKF narrative — each light up feeding one agent">
+      <div class="actor" id="st-agent" style="left:50%;transform:translateX(-50%);top:8px;width:190px">🤖 AI coding agent<br>context assembly</div>
+      <div class="actor" id="st-rag" style="left:2%;top:120px;width:29%">🔎 VECTOR RAG<br><span style="color:var(--text-muted)">docs · tickets · Slack<br>long-tail text</span></div>
+      <div class="actor" id="st-graph" style="left:35.5%;top:120px;width:29%">🗺 STRUCTURAL<br><span style="color:var(--text-muted)">AST call graphs<br>imports · hierarchies</span></div>
+      <div class="actor" id="st-okf" style="right:2%;top:120px;width:29%">📚 OKF NARRATIVE<br><span style="color:var(--text-muted)">architecture · schemas<br>playbooks · intent</span></div>
+    </div>
+    <div class="anim-caption" id="st-cap">Press play: three questions, three different layers answering.</div>
+    <div class="animation-controls">
+      <button data-anim="stack" data-act="play" aria-label="Play three layer stack animation">▶</button>
+      <button data-anim="stack" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="stack" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <h3 id="capability-breakdown">The capability breakdown</h3>
+  <div class="table-scroll"><table>
+    <tr><th></th><th>Vector RAG</th><th>Structural graph</th><th>OKF narrative</th></tr>
+    <tr><td>Owns</td><td>Unstructured long tail</td><td>What the code IS</td><td>What engineers KNOW</td></tr>
+    <tr><td>Retrieval</td><td>Probabilistic (nearest-neighbor)</td><td>Deterministic (edge traversal)</td><td>Deterministic (exact file)</td></tr>
+    <tr><td>Best question</td><td>"Themes in churn interviews?"</td><td>"What calls <code>verify_token</code>?"</td><td>"Why does billing route through a webhook?"</td></tr>
+    <tr><td>Fails at</td><td>Multi-hop structure, canonical truth</td><td>Business intent, the <em>why</em></td><td>Uncurated bulk, thematic search</td></tr>
+    <tr><td>Ingest cost</td><td>Embedding + re-indexing</td><td>Zero-LLM AST parse</td><td>Curation labor (M08's pipeline)</td></tr>
+  </table></div>
+  <div class="callout-warning callout">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"The graph replaces my vector index."</strong> — On head-to-head QA accuracy, graph retrieval <em>tied</em> dense RAG (76% vs 76% on LongMemEval-S) and slightly lost on recall. Its wins are determinism and ingest cost, not retrieval quality. Evaluate it as a RAG replacement and you'll maintain graphs for problems you don't have.</p>
+    <p><strong>"OKF is a smarter RAG."</strong> — OKF has no retrieval at all. It's a format. At scale something must still search it — often the same retrieval machinery RAG already provides, now pointed at something worth retrieving from.</p>
+    <p><strong>"More layers = better agent."</strong> — Every layer is maintenance: hooks, lint, freshness gates (M11). A layer with no failure mode justifying it is pure overhead.</p>
+  </div>
+</section>
+
+<section class="section" id="failure-triggers">
+  <h2>Failure-Driven Adoption: The Two Triggers</h2>
+  <p>Here is the discipline that separates architecture from hype-chasing: <strong>you add a layer when — and only when — you have observed a concrete failure mode that layer addresses.</strong> Not because a benchmark impressed you, not because a launch post went viral, and not because of vague dissatisfaction with your current RAG setup.</p>
+  <p>That last one deserves numbers. Industry surveys found that <strong>72% of enterprise RAG deployments underdelivered or failed outright in year one</strong> — but the dominant causes were poor chunking strategies, outdated vector indices, and inappropriate embedding models, <em>not</em> the absence of a graph. Adding a knowledge graph to a flawed retrieval pipeline gives you a flawed retrieval pipeline with higher operational overhead. Fix the pipeline first; as Atlan's guidance puts it: <em>"RAG first, graph when depth becomes a bottleneck."</em></p>
+
+  <div class="animation-container" id="anim-tree">
+    <div class="anim-title">Animation · DECISION_TREE — symptom before tool</div>
+    <div class="anim-stage" aria-label="Animated decision tree: an underperforming agent branches to multi-hop failure triggering a structural graph, or tribal knowledge sprawl triggering OKF">
+      <div class="actor" id="dt-root" style="left:50%;transform:translateX(-50%);top:6px;width:250px">Does your coding agent underperform?</div>
+      <div class="branch-label" id="dt-lbl-l" style="left:14%;top:72px">sifting multi-file code<br>dependencies &amp; calls</div>
+      <div class="branch-label" id="dt-lbl-r" style="right:12%;top:72px">loss of tribal context<br>across team silos</div>
+      <div class="actor" id="dt-sym-l" style="left:6%;top:118px;width:38%">Multi-Hop Reasoning Failure</div>
+      <div class="actor" id="dt-sym-r" style="right:6%;top:118px;width:38%">Knowledge Sprawl Failure</div>
+      <div class="actor" id="dt-fix-l" style="left:6%;top:186px;width:38%">TRIGGER → add a structural graph<br><span style="color:var(--text-muted)">(AST edges: Graphify / CodeGraph)</span></div>
+      <div class="actor" id="dt-fix-r" style="right:6%;top:186px;width:38%">TRIGGER → add Google OKF<br><span style="color:var(--text-muted)">(curated narrative spec)</span></div>
+    </div>
+    <div class="anim-caption" id="dt-cap">Press play to walk both diagnostic branches.</div>
+    <div class="animation-controls">
+      <button data-anim="tree" data-act="play" aria-label="Play decision tree animation">▶</button>
+      <button data-anim="tree" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="tree" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <h3 id="trigger1">Trigger 1 — multi-hop reasoning failures → add the structural graph</h3>
+  <p>This failure appears when an answer requires linking facts across multiple files that are never co-located in one text chunk. The symptom sounds like: your agent cannot answer <em>"What breaks in the API layer if I alter the schema in <code>db/migrations/04_users.sql</code>?"</em> It retrieves the migration file (keyword-rich, semantically close) but misses the foreign-key references, interface implementations, and cross-file calls that make up the actual answer.</p>
+  <p>Why can't better prompting fix it? Because vector RAG embeds text blocks <em>independently</em>. The relationship between the migration and the API handler was never captured in vector space — there is nothing for a better prompt or a bigger context window to recover. M02 called this the structural blind spot; the fix is the layer whose entire job is relationships: the AST graph you built in Track 2.</p>
+  <h3 id="trigger2">Trigger 2 — tribal-knowledge sprawl → add OKF</h3>
+  <p>This failure appears when critical institutional context is fragmented across Slack channels, outdated wikis, and unwritten developer memory. The symptom is subtler and nastier: the agent generates <em>syntactically valid</em> code that violates internal architectural guidelines, calls deprecated internal APIs, or ignores domain-specific business logic. Nothing crashes. Reviews catch it — sometimes.</p>
+  <p>Why can't the structural graph fix it? Because AST parsers inspect source code, and business intent isn't in the source. No parse of <code>webhooks.py</code> reveals that the team decided (ADR-001) never to make billing settlement block on notifications. That knowledge lives in prose — which is exactly what OKF's concept files are for, in a shape agents reliably parse.</p>
+  <div class="callout-why callout">
+    <span class="box-label">✅ Why It Matters</span>
+    <p>The triggers keep you honest in both directions. orderflow's 15 files will never produce a multi-hop failure a single context window can't absorb — so a structural graph there is ceremony (below the ~500-file floor from M04). A 3,000-file monorepo with three teams and a rotating on-call absolutely will — and there the graph pays for itself weekly. Same tool, opposite verdicts, decided by observed failure, not fashion.</p>
+  </div>
+</section>
+
+<section class="section" id="staged-pipeline">
+  <h2>The Staged Query Pipeline</h2>
+  <p>When a system has earned all three layers, how do they compose at query time? Not as alternatives the agent picks between at random — as <strong>stages, ordered from cheapest-and-most-curated to broadest-and-noisiest</strong>. Follow one real query through: <em>"What breaks if I modify <code>UserService.py</code>?"</em></p>
+
+  <div class="animation-container" id="anim-pipe">
+    <div class="anim-title">Animation · STAGED_PIPELINE — one query, three stages, a running meter</div>
+    <div class="anim-stage" aria-label="Animated pipeline: a query descends through OKF orientation, graph traversal, and vector search stages while a token meter increments">
+      <div class="actor" id="pp-q" style="left:50%;transform:translateX(-50%);top:4px;width:300px">"What breaks if I modify UserService.py?"</div>
+      <div class="actor" id="pp-s1" style="left:4%;top:64px;width:92%">STAGE 1 · OKF progressive disclosure — read module narrative &amp; owner specs <b>(~2K tokens)</b></div>
+      <div class="actor" id="pp-s2" style="left:4%;top:128px;width:92%">STAGE 2 · Graph traversal — walk calls / imports / inherits edges <b>(zero LLM cost)</b></div>
+      <div class="actor" id="pp-s3" style="left:4%;top:192px;width:92%">STAGE 3 · Vector / sparse search — Slack incidents, issues, PR comments <b>(only the remainder)</b></div>
+      <div class="meter" id="pp-meter" style="right:4%;top:34px"><i id="pp-fill"></i></div>
+      <div class="meter-label" style="right:4%;top:50px">tokens: <span id="pp-tok">0</span></div>
+    </div>
+    <div class="anim-caption" id="pp-cap">Press play to run the query through the stack.</div>
+    <div class="animation-controls">
+      <button data-anim="pipe" data-act="play" aria-label="Play staged pipeline animation">▶</button>
+      <button data-anim="pipe" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="pipe" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <p>Walk the stages in prose, because the ordering logic is the lesson:</p>
+  <ol>
+    <li><strong>Stage 1 — narrative orientation (~2K tokens).</strong> The agent reads the OKF catalog's entry for the target: what UserService is, who owns it, which modules relate. This is progressive disclosure from M09 — a curated 2K-token orientation instead of a 50-file exploration. Output: the specific nodes worth investigating.</li>
+    <li><strong>Stage 2 — structural traversal (zero LLM cost).</strong> With targets identified, the agent queries the graph: callers, implementers, transitive dependents. Deterministic answers from the M09 server; the LLM spends nothing acquiring them and everything reasoning about them.</li>
+    <li><strong>Stage 3 — the unstructured remainder.</strong> Whatever the curated layers can't answer — "did we have an incident last time someone touched this?" — goes to vector/sparse search over Slack logs, GitHub issues, PR comments. RAG does what RAG is actually for: the long tail.</li>
+  </ol>
+  <div class="checkpoint"><span class="box-label">🔎 What Just Happened?</span>
+    <p>Each stage <em>narrows</em> the next stage's work. The narrative layer told us where to look; the graph told us exactly what's connected; search only had to cover what neither curated layer could know. Reverse the order and stage 3 runs first over everything — which is the M00 exploration problem all over again, with extra infrastructure.</p>
+  </div>
+</section>
+
+<section class="section" id="router">
+  <h2>The Router Pattern</h2>
+  <p>The staged pipeline suits deep investigations. But plenty of agent traffic is single questions, and those deserve a cheaper dispatch: a <strong>router</strong> that classifies each query and sends it straight to the layer that owns it. A canonical question — <em>"What is the SLA for Severity-1 incidents?"</em> — routes to a deterministic OKF read. A structural one — <em>"who calls this?"</em> — routes to the graph server. An exploratory one — <em>"what are common themes in churn interviews?"</em> — falls back to vector search.</p>
+  <p>Let's build the skeleton, in three chunks. <strong>Chunk 1 — classification.</strong> What: decide the query class. Why: the class determines cost and failure characteristics — a canonical query answered probabilistically is how the stale-WAU disaster of M02 happened. Gotcha: keyword rules look naive but are transparent and debuggable; teams often run rules first with an LLM-classifier fallback, not the reverse.</p>
+  <div class="code-tabs" role="tablist">
+    <button class="code-tab active" role="tab" data-target="r1-py">Python</button>
+    <button class="code-tab" role="tab" data-target="r1-js">Node.js</button>
+  </div>
+  <div class="tab-panel active" id="r1-py">
+  <div class="code-wrap"><div class="code-title">router.py — classify</div><pre><code>STRUCTURAL_CUES = ("who calls", "what calls", "depends on", "call graph",
+                   "imports", "blast radius", "what breaks", "cycle")
+CANONICAL_CUES  = ("definition of", "canonical", "sla", "policy",
+                   "runbook", "how do we compute", "what is our")
+
+def classify(query: str) -> str:
+    q = query.lower()
+    if any(cue in q for cue in STRUCTURAL_CUES):
+        return "structural"
+    if any(cue in q for cue in CANONICAL_CUES):
+        return "canonical"
+    return "exploratory"          # default: the broad, noisy layer</code></pre></div>
+  </div>
+  <div class="tab-panel" id="r1-js">
+  <div class="code-wrap"><div class="code-title">router.mjs — classify</div><pre><code>const STRUCTURAL_CUES = ["who calls", "what calls", "depends on", "call graph",
+                         "imports", "blast radius", "what breaks", "cycle"];
+const CANONICAL_CUES  = ["definition of", "canonical", "sla", "policy",
+                         "runbook", "how do we compute", "what is our"];
+
+function classify(query) {
+  const q = query.toLowerCase();
+  if (STRUCTURAL_CUES.some(c => q.includes(c))) return "structural";
+  if (CANONICAL_CUES.some(c => q.includes(c)))  return "canonical";
+  return "exploratory";          // default: the broad, noisy layer
+}</code></pre></div>
+  </div>
+  <p><strong>Chunk 2 — dispatch with fallbacks.</strong> What: send each class to its layer, and fall through when a layer misses. Why: the M09 server returns a graceful miss ("not in graph — try grep") precisely so a router can catch it and degrade to search instead of failing. Gotcha: log every route decision — when the router misroutes (it will), the log is how you tune the cues.</p>
+  <div class="code-tabs" role="tablist">
+    <button class="code-tab active" role="tab" data-target="r2-py">Python</button>
+    <button class="code-tab" role="tab" data-target="r2-js">Node.js</button>
+  </div>
+  <div class="tab-panel active" id="r2-py">
+  <div class="code-wrap"><div class="code-title">router.py — dispatch</div><pre><code>import logging
+log = logging.getLogger("router")
+
+def route(query: str) -> dict:
+    kind = classify(query)
+    log.info("route=%s query=%r", kind, query)
+    try:
+        if kind == "structural":
+            answer = graph_query(query)          # M09 MCP tools
+            if "error" in answer:                # graceful miss -> degrade
+                log.warning("graph miss, falling back to search")
+                return {"layer": "vector", "answer": vector_search(query)}
+            return {"layer": "graph", "answer": answer}
+        if kind == "canonical":
+            return {"layer": "okf", "answer": read_concept(query)}  # exact file
+        return {"layer": "vector", "answer": vector_search(query)}
+    except Exception as exc:
+        log.error("layer failed: %s — degrading to vector search", exc)
+        return {"layer": "vector", "answer": vector_search(query)}</code></pre></div>
+  </div>
+  <div class="tab-panel" id="r2-js">
+  <div class="code-wrap"><div class="code-title">router.mjs — dispatch</div><pre><code>async function route(query) {
+  const kind = classify(query);
+  console.error(`route=${kind} query=${JSON.stringify(query)}`);
+  try {
+    if (kind === "structural") {
+      const answer = await graphQuery(query);      // M09 MCP tools
+      if (answer.error) {                          // graceful miss -> degrade
+        console.error("graph miss, falling back to search");
+        return { layer: "vector", answer: await vectorSearch(query) };
+      }
+      return { layer: "graph", answer };
+    }
+    if (kind === "canonical")
+      return { layer: "okf", answer: await readConcept(query) };  // exact file
+    return { layer: "vector", answer: await vectorSearch(query) };
+  } catch (exc) {
+    console.error(`layer failed: ${exc} — degrading to vector search`);
+    return { layer: "vector", answer: await vectorSearch(query) };
+  }
+}</code></pre></div>
+  </div>
+  <p><strong>Chunk 3 — what the leaf functions are.</strong> Nothing new: <code>graph_query</code> wraps the M09 MCP tools; <code>read_concept</code> is a python-frontmatter read of the matching bundle file (M06); <code>vector_search</code> is whatever retrieval you already had. The router adds no storage of its own — it is pure traffic control over layers you built in earlier modules.</p>
+  <div class="checkpoint"><span class="box-label">🔎 What Just Happened?</span>
+    <p>You turned three independent layers into one system with ~40 lines of dispatch. Note the asymmetry of the fallbacks: everything degrades <em>toward</em> vector search (broad, probabilistic, always available) and <em>never</em> toward OKF (exact answers only — a fuzzy fallback pretending to be canonical is precisely the M02 disaster).</p>
+  </div>
+</section>
+
+<section class="section" id="evidence">
+  <h2>The Evidence</h2>
+  <p>Does the assembled stack actually help? Two data points frame the answer — one for the upside, one for the cost of not having it.</p>
+  <h3 id="erpnext">The ERPNext case study</h3>
+  <p>The best production-shaped benchmark in the corpus ran on <strong>ERPNext</strong>, an open-source enterprise repository of over <strong>1,000,000 lines</strong> of Python and JavaScript — real scale, not a 52-file demo. Evaluations used Claude Opus 4.8, capped at 14 turns per task:</p>
+  <ul>
+    <li><strong>Baseline agent</strong> (vector RAG / grep exploration): <strong>70.8%</strong> key-fact coverage.</li>
+    <li><strong>Graphify + OKF hybrid pipeline</strong>: <strong>82.0%</strong> key-fact coverage, averaging ~140,000 tokens per query session.</li>
+  </ul>
+  <p>Sit with what an <strong>11.2-percentage-point</strong> improvement means on a million-line codebase: roughly one in nine facts the baseline agent <em>missed or got wrong</em>, the hybrid agent got right. Missed facts are wrong refactors, broken callers, violated conventions. That accuracy delta is a far more reliable indicator of production value than any synthetic token-reduction multiple — token savings tell you the agent was <em>cheaper</em>; fact coverage tells you it was <em>right</em>.</p>
+  <h3 id="hallucination">The cost of retrieval-only</h3>
+  <p>On the other side of the ledger: research into legal-domain RAG systems — a field with high-stakes, multi-document questions much like large codebases — found standard retrieval tools hallucinate in <strong>17% to 33% of complex queries</strong>, because retrieval alone fails to model multi-document logic. That is the gap the structural and narrative layers exist to close: not making search better, but removing whole question classes from search's jurisdiction.</p>
+  <div class="callout-cost callout">
+    <span class="box-label">💰 The Honesty Rule, applied</span>
+    <p>Notice which number this module leads with: an accuracy gain measured on a 1M-LOC repo with a stated model and turn cap — not a 71.5× token multiple from a favorable 52-file corpus. When you evaluate this architecture for your own team, replicate the ERPNext <em>shape</em>: your repo, a fixed task set, fact-coverage scoring, before and after. M04 taught you why: token multiples are corpus-topology-dependent; correctness deltas are what your users experience.</p>
+  </div>
+</section>
+
+<section class="section" id="matrix">
+  <h2>The Decision Matrix</h2>
+  <p>Locate your codebase's shape and your observed failure mode; the cell tells you what to add next. (No observed failure → the answer is always "nothing yet.")</p>
+  <div class="table-scroll"><table>
+    <tr><th>Environment</th><th>Multi-hop failures observed</th><th>Tribal-knowledge failures observed</th><th>No concrete failures yet</th></tr>
+    <tr><td><strong>Monolith</strong> (&lt;500 files)</td><td>Usually fits in context — verify before adding a graph (below the payoff floor)</td><td>Add a small OKF bundle; curation cost is low at this size</td><td>RAG-only is fine; fix chunking first</td></tr>
+    <tr><td><strong>Microservices</strong></td><td>Add the structural graph — cross-service call chains are exactly what chunks never co-locate</td><td>Add OKF — ownership boundaries and contracts are narrative knowledge</td><td>Keep RAG; add contract concepts opportunistically</td></tr>
+    <tr><td><strong>Monorepo</strong> (1000s of files)</td><td>Structural graph, with M11's freshness ops from day one</td><td>OKF with lint + governance (type drift arrives with team count)</td><td>Instrument agent failures first; adopt from data</td></tr>
+  </table></div>
+  <p>The matrix encodes this module's whole argument: the environment sets the <em>cost</em> of each layer, the failure mode sets the <em>value</em>, and you adopt when value exceeds cost — never on hype.</p>
+</section>
+
+<section class="section" id="roles">
+  <h2>MCP vs RAG vs OKF: One Metric, Three Roles</h2>
+  <p>A final source of confusion to dissolve: MCP, RAG, and OKF get name-dropped together so often that they blur. They occupy different positions in the timeline of a question. <strong>OKF is knowledge written down in advance.</strong> <strong>MCP is the live connection to systems at question time.</strong> <strong>RAG is on-the-spot retrieval over what nobody curated.</strong></p>
+  <p>orderflow's WAU metric shows all three in one story. The <em>definition</em> of weekly active users — 7-day window, completed orders, testers excluded — lives in an OKF concept file, written once, versioned in git (M06). When an agent must <em>compute</em> this week's WAU, the definition doesn't run queries: the agent calls a database tool over <strong>MCP</strong> to execute the SQL against the live warehouse. And when someone asks <em>"have we ever debated changing the WAU window?"</em> — that discussion lives in old Slack threads and PR comments, which is <strong>RAG</strong>'s territory.</p>
+  <p>One more composition worth knowing: OKF bundles can themselves be <em>RAG targets</em>. Once a bundle grows past what an agent browses by hand, a search layer indexes it — and clean, structured Markdown with explicit links is far better material to index than PDFs chopped into arbitrary chunks. The honest picture isn't "OKF instead of RAG"; it's <em>"RAG, pointed at something worth retrieving from."</em></p>
+  <div class="bridge">You can now assign any piece of knowledge to its layer and any question to its route. Time to prove it on ten real queries.</div>
+</section>
+
+<section class="section" id="hands-on">
+  <h2>Hands-On: Route 10 Queries</h2>
+  <p><strong>What you'll do:</strong> act as the router. For each orderflow query, pick the layer that should own it. Immediate feedback per pick — this exercise is embedded (no lab folder). <strong>Time:</strong> 15 min.</p>
+
+  <div class="quiz-question"><h3>Q1. "Who calls <code>verify_token</code>, directly and transitively?"</h3>
+    <div class="quiz-option" data-correct="1" data-explain="Pure structure: reverse-edge traversal, deterministic, one explore call.">Structural graph</div>
+    <div class="quiz-option" data-correct="0" data-explain="Chunks embed files independently — cross-file caller chains are exactly what similarity search can't assemble.">Vector RAG</div>
+    <div class="quiz-option" data-correct="0" data-explain="A concept file describes billing's role; it doesn't enumerate live call edges.">OKF bundle</div>
+    <div class="quiz-feedback" role="status"></div></div>
+
+  <div class="quiz-question"><h3>Q2. "What is the canonical definition of weekly active users?"</h3>
+    <div class="quiz-option" data-correct="0" data-explain="Probabilistic retrieval of a canonical fact is the M02 stale-WAU disaster.">Vector RAG</div>
+    <div class="quiz-option" data-correct="1" data-explain="Canonical, curated, repeatedly needed → the exact concept file, deterministically.">OKF bundle</div>
+    <div class="quiz-option" data-correct="0" data-explain="The graph knows metrics.py exists and who calls it — not what the metric MEANS.">Structural graph</div>
+    <div class="quiz-feedback" role="status"></div></div>
+
+  <div class="quiz-question"><h3>Q3. "What were the recurring complaints in last quarter's support tickets?"</h3>
+    <div class="quiz-option" data-correct="1" data-explain="Thematic exploration over a large uncurated corpus — RAG's home turf.">Vector RAG</div>
+    <div class="quiz-option" data-correct="0" data-explain="Nobody curates a concept file per ticket; that defeats the format's premise.">OKF bundle</div>
+    <div class="quiz-option" data-correct="0" data-explain="Tickets have no AST.">Structural graph</div>
+    <div class="quiz-feedback" role="status"></div></div>
+
+  <div class="quiz-question"><h3>Q4. "What breaks if <code>orders_fact</code> gains a column?"</h3>
+    <div class="quiz-option" data-correct="1" data-explain="Impact analysis = transitive dependents = graph traversal (with the OKF table concept as useful orientation first — the staged pipeline).">Structural graph</div>
+    <div class="quiz-option" data-correct="0" data-explain="A useful stage-1 orientation, but the dependent-enumeration itself is edge traversal.">OKF bundle</div>
+    <div class="quiz-option" data-correct="0" data-explain="Multi-hop structural impact is the canonical trigger-1 failure for RAG.">Vector RAG</div>
+    <div class="quiz-feedback" role="status"></div></div>
+
+  <div class="quiz-question"><h3>Q5. "Why is the event bus in-process instead of a broker?"</h3>
+    <div class="quiz-option" data-correct="1" data-explain="Intent and rationale — ADR territory, curated into the narrative layer.">OKF bundle</div>
+    <div class="quiz-option" data-correct="0" data-explain="The AST shows THAT events.py exists; never WHY it was chosen.">Structural graph</div>
+    <div class="quiz-option" data-correct="0" data-explain="Might find the ADR by luck — but a curated decision deserves deterministic lookup.">Vector RAG</div>
+    <div class="quiz-feedback" role="status"></div></div>
+
+  <div class="quiz-question"><h3>Q6. "Is there a dependency cycle anywhere in services/?"</h3>
+    <div class="quiz-option" data-correct="1" data-explain="graph_cycles — a whole-graph algorithm no text search can run.">Structural graph</div>
+    <div class="quiz-option" data-correct="0" data-explain="Cycles are emergent graph properties; no document states them.">Vector RAG</div>
+    <div class="quiz-option" data-correct="0" data-explain="Unless someone documented a cycle (they didn't), the bundle can't know.">OKF bundle</div>
+    <div class="quiz-feedback" role="status"></div></div>
+
+  <div class="quiz-question"><h3>Q7. "What's our runbook for rotating the payments signing key?"</h3>
+    <div class="quiz-option" data-correct="1" data-explain="A runbook is canonical operational knowledge — exact retrieval, no similarity threshold. 90% similar is a failed key rotation.">OKF bundle</div>
+    <div class="quiz-option" data-correct="0" data-explain="Retrieving a similar-but-wrong procedure is worse than finding none.">Vector RAG</div>
+    <div class="quiz-option" data-correct="0" data-explain="Runbooks aren't in the AST.">Structural graph</div>
+    <div class="quiz-feedback" role="status"></div></div>
+
+  <div class="quiz-question"><h3>Q8. "Did anyone discuss rate-limiting webhooks before? What was decided?"</h3>
+    <div class="quiz-option" data-correct="1" data-explain="Undocumented past discussion → the long tail: Slack, PRs, issues. If a decision WAS reached, promote it to a concept file (M08).">Vector RAG</div>
+    <div class="quiz-option" data-correct="0" data-explain="If it were in the bundle you'd read it — the premise is that nobody curated it.">OKF bundle</div>
+    <div class="quiz-option" data-correct="0" data-explain="Discussions don't parse into call edges.">Structural graph</div>
+    <div class="quiz-feedback" role="status"></div></div>
+
+  <div class="quiz-question"><h3>Q9. "Which functions does <code>advance_order</code> reach in two hops?"</h3>
+    <div class="quiz-option" data-correct="1" data-explain="Forward traversal with depth 2 — graph_path/graph_callees territory.">Structural graph</div>
+    <div class="quiz-option" data-correct="0" data-explain="Two-hop reachability is precisely what independent chunks cannot express.">Vector RAG</div>
+    <div class="quiz-option" data-correct="0" data-explain="Concepts summarize dependencies at service granularity, not per-function hops.">OKF bundle</div>
+    <div class="quiz-feedback" role="status"></div></div>
+
+  <div class="quiz-question"><h3>Q10. "Summarize how our architecture docs describe the notifications service."</h3>
+    <div class="quiz-option" data-correct="1" data-explain="It's a curated-narrative read — the concept file plus its links IS the answer. (Reading raw docs/ via search is the fallback if no bundle existed.)">OKF bundle</div>
+    <div class="quiz-option" data-correct="0" data-explain="Workable without a bundle — but with one, the deterministic read wins on cost and freshness.">Vector RAG</div>
+    <div class="quiz-option" data-correct="0" data-explain="The graph gives edges, not prose descriptions.">Structural graph</div>
+    <div class="quiz-feedback" role="status"></div></div>
+
+  <div class="checkpoint"><span class="box-label">✅ Checkpoint</span>
+    <p>8+ correct: you route like the architecture intends. The pattern to internalize — <em>structure → graph, canon → bundle, everything undocumented → search</em> — plus one refinement: deep investigations (Q4) legitimately use stages in sequence, not a single layer.</p>
+  </div>
+</section>
+
+<section class="section" id="quiz">
+  <h2>Knowledge Check</h2>
+
+  <div class="quiz-question">
+    <h3>1. What is the correct one-sentence division of labor across the three layers?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="Backwards on two counts — the graph is code structure, and OKF holds curated knowledge, not raw text.">RAG extracts code, the graph searches text, OKF stores embeddings</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct — the module's central sentence.">The graph extracts what the code is, OKF curates what engineers know, RAG searches the unstructured remainder</div>
+    <div class="quiz-option" data-correct="0" data-explain="They are complements with distinct territories, not redundant backups.">All three answer the same questions with different accuracy</div>
+    <div class="quiz-option" data-correct="0" data-explain="OKF has no retrieval engine at all — it's a format.">OKF replaces both once the bundle is complete</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>2. Your agent writes syntactically valid code that keeps using a deprecated internal API. Which trigger fired, and what do you add?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="Multi-hop failure looks like missed cross-file dependencies — this is valid code violating unwritten rules.">Multi-hop reasoning failure → add a structural graph</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. The deprecation is institutional knowledge no AST contains — curate it into OKF where agents reliably parse it.">Tribal-knowledge sprawl → add OKF</div>
+    <div class="quiz-option" data-correct="0" data-explain="72% of RAG failures trace to pipeline quality — but this failure class isn't retrievable text at all; it was never written down.">Bad chunking → fix the RAG pipeline</div>
+    <div class="quiz-option" data-correct="0" data-explain="There IS a concrete observed failure here — the discipline says act on it.">No failure observed → add nothing</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>3. Why does the staged pipeline put OKF orientation BEFORE graph traversal?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="Stage order isn't about accuracy — both curated layers are deterministic.">The bundle is more accurate than the graph</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. ~2K tokens of narrative identify WHICH nodes matter, so traversal starts from the right targets instead of exploring blind — each stage narrows the next.">Cheap narrative orientation identifies the targets, so the structural stage traverses from the right nodes</div>
+    <div class="quiz-option" data-correct="0" data-explain="Graph queries cost zero LLM tokens — they're the cheap stage.">Graph queries are too expensive to run first</div>
+    <div class="quiz-option" data-correct="0" data-explain="No such constraint exists — MCP tools are available any time.">MCP servers must warm up before answering</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>4. In the ERPNext study, why is the 70.8% → 82.0% key-fact result a better adoption signal than a 71.5× token multiple?</h3>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. Accuracy on a 1M-LOC repo measures whether the agent was RIGHT — the thing users experience; token multiples measure cost on a corpus that may resemble nothing you run, and vary wildly with topology.">Fact coverage measures correctness at production scale; token multiples are corpus-topology-dependent cost figures</div>
+    <div class="quiz-option" data-correct="0" data-explain="It used ~140K tokens per session — substantial, and worth it for the accuracy.">The hybrid used almost no tokens</div>
+    <div class="quiz-option" data-correct="0" data-explain="Percentage points and multiples measure different quantities; bigger numbers aren't better evidence.">Percentages are always more trustworthy than multiples</div>
+    <div class="quiz-option" data-correct="0" data-explain="ERPNext is 1M+ lines — the opposite of a toy corpus, which is why it's cited.">The ERPNext corpus was smaller and easier</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>5. In the router, why do all failures degrade toward vector search and never toward OKF?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="Speed isn't the reason — bundle reads are fast.">Vector search is faster than reading a concept file</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. OKF's value IS exactness; a fuzzy fallback masquerading as a canonical answer recreates the stale-definition failure. Vector search is honestly probabilistic — the safe direction to degrade.">A probabilistic fallback pretending to be canonical is the M02 disaster; degrading to an honestly-fuzzy layer is safe</div>
+    <div class="quiz-option" data-correct="0" data-explain="Bundles handle concurrent reads fine — they're files.">OKF bundles can't handle the load</div>
+    <div class="quiz-option" data-correct="0" data-explain="The graph does return misses ('try grep') — and the router catches them and degrades to search.">The graph never returns misses</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>6. "72% of enterprise RAG deployments underdelivered in year one." What does this module conclude from that?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="Opposite of the lesson — most failures traced to chunking, stale indices, and embedding choices.">RAG is obsolete; replace it with graphs</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct: 'RAG first, graph when depth becomes a bottleneck.' A graph bolted onto a flawed pipeline is a flawed pipeline with more overhead.">Fix the retrieval pipeline first; add a graph only when a depth failure is actually observed</div>
+    <div class="quiz-option" data-correct="0" data-explain="The failures were real; the diagnosis just points at pipeline quality, not missing graphs.">The surveys are wrong</div>
+    <div class="quiz-option" data-correct="0" data-explain="OKF addresses tribal knowledge, not chunking quality.">Adding OKF fixes failing RAG</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+</section>
+
+<section class="section" id="summary">
+  <h2>Module Summary</h2>
+  <div class="summary-grid">
+    <div class="summary-card"><h4>Layers, not competitors</h4><p>Graph = what the code is. OKF = what engineers know. RAG = the unstructured remainder. Graph retrieval TIED dense RAG on accuracy — its wins are determinism and ingest cost.</p></div>
+    <div class="summary-card"><h4>Failure-driven adoption</h4><p>Multi-hop failures → structural graph. Tribal-knowledge sprawl → OKF. No observed failure → add nothing. 72% of RAG failures are pipeline quality, not missing graphs.</p></div>
+    <div class="summary-card"><h4>The staged pipeline</h4><p>OKF orientation (~2K tokens) → graph traversal (zero LLM cost) → vector search for the remainder. Each stage narrows the next.</p></div>
+    <div class="summary-card"><h4>The evidence</h4><p>ERPNext, 1M+ LOC: 70.8% → 82.0% key-fact coverage (~140K tokens/session). Accuracy deltas beat token multiples as adoption signals. Retrieval-only hallucinates 17–33% on complex multi-document queries.</p></div>
+  </div>
+  <p><strong>What we built on orderflow:</strong> a router dispatching canonical → bundle, structural → graph server, exploratory → search — with all failures degrading toward the honestly-probabilistic layer.</p>
+  <p><strong>Next module preview:</strong> the stack works — on the day you built it. M11 is about every day after: silent hook failures, artifact desync, the scale wall, and the observability that separates a production system from a demo that hasn't failed yet.</p>
+</section>
+
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul>
+    <li>"Graphify, OKF, or Both? Beyond RAG for Codebases" — the three-layer framing and decision matrix (Towards AI, Jul 2026)</li>
+    <li>Graphify BENCHMARKS.md — LongMemEval-S / LOCOMO head-to-head results</li>
+    <li>Atlan — "Knowledge Graphs vs RAG" (2026): "RAG first, graph when depth becomes a bottleneck"</li>
+    <li>Prism Labs — "Beyond Vector Embeddings in 2026" (chunk co-location)</li>
+    <li>ERPNext hybrid-pipeline evaluation (1M+ LOC case study)</li>
+    <li>Course modules: M02 (RAG limits), M06–M08 (OKF), M09 (serving)</li>
+  </ul>
+  <nav class="next-prev" aria-label="Module navigation">
+    <a href="M09-serving-graphs-mcp.html"><span class="dir">← Previous</span>M09 · Serving Graphs over MCP</a>
+    <a href="M11-drift-staleness-observability.html" style="text-align:right"><span class="dir">Next →</span>M11 · Drift, Staleness &amp; Observability</a>
+  </nav>
+</section>
+
+</main>
+</div>
+<script>
+(function(){
+"use strict";
+var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+document.querySelectorAll('.code-wrap').forEach(function(w){
+  var btn=document.createElement('button');
+  btn.className='copy-btn'; btn.textContent='copy'; btn.setAttribute('aria-label','Copy code to clipboard');
+  btn.addEventListener('click',function(){
+    var code=w.querySelector('code');
+    if(navigator.clipboard){ navigator.clipboard.writeText(code.innerText).then(function(){ btn.textContent='copied!'; setTimeout(function(){btn.textContent='copy';},1400); }); }
+  });
+  w.appendChild(btn);
+});
+
+document.querySelectorAll('.code-tabs').forEach(function(tabs){
+  tabs.querySelectorAll('.code-tab').forEach(function(tab){
+    tab.addEventListener('click',function(){
+      tabs.querySelectorAll('.code-tab').forEach(function(t){t.classList.remove('active');});
+      tab.classList.add('active');
+      var p=tabs.nextElementSibling;
+      while(p && p.classList.contains('tab-panel')){ p.classList.remove('active'); p=p.nextElementSibling; }
+      var panel=document.getElementById(tab.dataset.target);
+      if(panel) panel.classList.add('active');
+    });
+  });
+});
+
+document.querySelectorAll('pre code').forEach(function(c){
+  var h=c.innerHTML;
+  h=h.replace(/(^|\n)(\s*)(#[^\n]*)/g,'$1$2<span class="tok-c">$3<\/span>');
+  h=h.replace(/(\/\/[^\n<]*)/g,'<span class="tok-c">$1<\/span>');
+  h=h.replace(/(&quot;[^&]*?&quot;|'[^'\n]*'|`[^`]*`)/g,'<span class="tok-s">$1<\/span>');
+  h=h.replace(/\b(def|class|import|from|return|if|else|elif|for|while|try|except|raise|with|as|const|let|var|function|await|async|new|export|None|True|False|null|true|false|not|in)\b/g,'<span class="tok-k">$1<\/span>');
+  c.innerHTML=h;
+});
+
+document.querySelectorAll('.quiz-question').forEach(function(q){
+  q.querySelectorAll('.quiz-option').forEach(function(opt){
+    opt.setAttribute('tabindex','0'); opt.setAttribute('role','button');
+    function answer(){
+      if(q.dataset.answered) return; q.dataset.answered='1';
+      var correct=opt.dataset.correct==='1';
+      opt.classList.add(correct?'correct':'incorrect');
+      if(!correct){ var right=q.querySelector('.quiz-option[data-correct="1"]'); if(right) right.classList.add('correct'); }
+      var fb=q.querySelector('.quiz-feedback');
+      fb.style.display='block';
+      fb.style.background=correct?'var(--success-bg)':'var(--error-bg)';
+      fb.textContent=(correct?'✅ ':'❌ ')+(opt.dataset.explain||'');
+    }
+    opt.addEventListener('click',answer);
+    opt.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); answer(); }});
+  });
+});
+
+function Stepper(steps, interval){
+  this.steps=steps; this.interval=interval||1600; this.i=0; this.timer=null;
+  this.apply=function(){ this.steps[this.i](); };
+  this.play=function(){
+    if(reduced){ this.i=this.steps.length-1; this.apply(); return; }
+    if(this.timer) return;
+    var self=this;
+    this.timer=setInterval(function(){ self.i=(self.i+1)%self.steps.length; self.apply(); },this.interval);
+  };
+  this.pause=function(){ clearInterval(this.timer); this.timer=null; };
+  this.restart=function(){ this.pause(); this.i=0; this.apply(); this.play(); };
+}
+var anims={};
+document.querySelectorAll('.animation-controls button').forEach(function(btn){
+  btn.addEventListener('click',function(){ var a=anims[btn.dataset.anim]; if(a) a[btn.dataset.act](); });
+});
+
+/* THREE_LAYER_STACK */
+(function(){
+  var agent=document.getElementById('st-agent'), rag=document.getElementById('st-rag'),
+      g=document.getElementById('st-graph'), okf=document.getElementById('st-okf'),
+      cap=document.getElementById('st-cap');
+  function clear(){ [rag,g,okf].forEach(function(x){ x.classList.remove('lit','lit-green','lit-cyan','lit-violet','dim'); }); }
+  var steps=[
+    function(){ clear(); agent.classList.add('lit'); cap.textContent='One agent, three context feeds — each owning a different knowledge class.'; },
+    function(){ clear(); g.classList.add('lit-violet'); rag.classList.add('dim'); okf.classList.add('dim'); cap.textContent='"Who calls verify_token?" → the STRUCTURAL layer answers from AST edges — deterministic, zero LLM cost.'; },
+    function(){ clear(); okf.classList.add('lit-cyan'); rag.classList.add('dim'); g.classList.add('dim'); cap.textContent='"Why is the event bus in-process?" → the NARRATIVE layer answers from a curated ADR concept.'; },
+    function(){ clear(); rag.classList.add('lit-green'); g.classList.add('dim'); okf.classList.add('dim'); cap.textContent='"Themes in old support tickets?" → VECTOR RAG searches the uncurated long tail — its actual job.'; }
+  ];
+  anims.stack=new Stepper(steps,2000);
+})();
+
+/* DECISION_TREE */
+(function(){
+  var root=document.getElementById('dt-root');
+  var ll=document.getElementById('dt-lbl-l'), lr=document.getElementById('dt-lbl-r');
+  var sl=document.getElementById('dt-sym-l'), sr=document.getElementById('dt-sym-r');
+  var fl=document.getElementById('dt-fix-l'), fr=document.getElementById('dt-fix-r');
+  var cap=document.getElementById('dt-cap');
+  function clear(){ [root,sl,sr,fl,fr].forEach(function(x){x.classList.remove('lit','lit-green','lit-violet','lit-cyan','dim');}); [ll,lr].forEach(function(x){x.classList.remove('lit');}); }
+  var steps=[
+    function(){ clear(); root.classList.add('lit'); cap.textContent='Start from an OBSERVED failure — never from a benchmark or a launch post.'; },
+    function(){ clear(); ll.classList.add('lit'); sl.classList.add('lit-violet'); cap.textContent='Symptom: answers requiring facts across many files keep failing → multi-hop reasoning failure.'; },
+    function(){ clear(); sl.classList.add('dim'); fl.classList.add('lit-violet'); cap.textContent='Trigger 1 → add the structural graph. Relationships were never captured in vector space; prompting cannot recover them.'; },
+    function(){ clear(); lr.classList.add('lit'); sr.classList.add('lit-cyan'); cap.textContent='Symptom: valid code that violates unwritten conventions → tribal-knowledge sprawl.'; },
+    function(){ clear(); sr.classList.add('dim'); fr.classList.add('lit-cyan'); cap.textContent='Trigger 2 → add OKF. ASTs cannot extract business intent; curate it where agents can parse it.'; },
+    function(){ clear(); cap.textContent='No observed failure? Add NOTHING. Layers without failure modes are complexity without performance.'; }
+  ];
+  anims.tree=new Stepper(steps,2100);
+})();
+
+/* STAGED_PIPELINE */
+(function(){
+  var q=document.getElementById('pp-q'), s1=document.getElementById('pp-s1'),
+      s2=document.getElementById('pp-s2'), s3=document.getElementById('pp-s3');
+  var fill=document.getElementById('pp-fill'), tok=document.getElementById('pp-tok'), cap=document.getElementById('pp-cap');
+  function clear(){ [q,s1,s2,s3].forEach(function(x){x.classList.remove('lit','lit-cyan','lit-violet','lit-green','dim');}); }
+  var steps=[
+    function(){ clear(); q.classList.add('lit'); fill.style.width='0%'; tok.textContent='0'; cap.textContent='The query arrives. Which layer first? The cheapest curated one.'; },
+    function(){ clear(); s1.classList.add('lit-cyan'); fill.style.width='15%'; tok.textContent='~2,000'; cap.textContent='Stage 1: OKF narrative orientation — module role, owner, related concepts. Output: the nodes worth investigating.'; },
+    function(){ clear(); s2.classList.add('lit-violet'); fill.style.width='17%'; tok.textContent='~2,300'; cap.textContent='Stage 2: graph traversal from those targets — callers, dependents, cycles. Deterministic; the LLM pays almost nothing.'; },
+    function(){ clear(); s3.classList.add('lit-green'); fill.style.width='34%'; tok.textContent='~5,000+'; cap.textContent='Stage 3: vector/sparse search covers ONLY the remainder — incidents, PR chatter. Each stage narrowed the next.'; }
+  ];
+  anims.pipe=new Stepper(steps,2100);
+})();
+
+Object.keys(anims).forEach(function(k){ anims[k].apply(); });
+})();
+</script>
+</body>
+</html>

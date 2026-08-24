@@ -1,0 +1,23 @@
+Loading graph C:\Users\vara\AppData\Local\Temp\claude\D--work-ai-workspace-tutorials-repo-knowledge-graph\3efc69ec-fcc9-4eb4-9845-975e2d9e1288\scratchpad\commons-lang-graph.json ...
+  10648 nodes, 40309 edges
+Reading corpus C:\Users\vara\AppData\Local\Temp\claude\D--work-ai-workspace-tutorials-repo-knowledge-graph\3efc69ec-fcc9-4eb4-9845-975e2d9e1288\scratchpad\commons-lang ...
+  624 Java files, ~2,168,986 tokens total
+
+who calls ...?           files baseline tok graph tok reduction multiple
+--------------------------------------------------------------------------
+length                      66      730,326     6,262     99.1%   116.6x
+isEmpty                     69      776,428     4,335     99.4%   179.1x
+getInstance                 33      220,396     4,814     97.8%    45.8x
+format                      58      484,544     3,307     99.3%   146.5x
+clone                       37      455,336     3,040     99.3%   149.8x
+indexOf                     29      547,484     2,690     99.5%   203.5x
+intValue                    47      351,702     2,990     99.1%   117.6x
+getMessage                  33      205,004     4,920     97.6%    41.7x
+--------------------------------------------------------------------------
+AGGREGATE                  372    3,771,220    32,358     99.1%   116.5x
+
+HOW TO READ THIS (the Honesty Rule):
+  * These are PER-QUESTION multiples for pure structural lookups — the same class of number as okf-rs's published ~400x per query.
+  * SESSION-level savings are far lower (replications: 6.8x-49x; CodeGraph task benchmarks: OkHttp 645 files -> 13%, Django ~3,000 -> 36%, VS Code ~10,000 -> 78%) because sessions also spend tokens on reasoning, edits, and non-structural reads that a graph cannot remove.
+  * Repo size here: 624 files. The exploration burden (files opened per question: 46 avg) grows with the haystack — compare your runs across repo sizes.
+  * Baseline assumes the agent confirms EVERY grep hit — the honest floor for a CORRECT answer, not what a lazy (and wrong) agent spends.

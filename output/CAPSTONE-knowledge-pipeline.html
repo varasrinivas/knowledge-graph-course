@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capstone — Build a Self-Updating Knowledge Graph Pipeline | Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0A1628;
+  --bg-secondary: #111D33;
+  --bg-card: #162033;
+  --bg-surface: #1A2740;
+  --text-primary: #E8ECF1;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --accent-primary: #D4A843;
+  --accent-hover: #E5BC5A;
+  --accent-muted: rgba(212, 168, 67, 0.15);
+  --success: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --error: #F43F5E;
+  --error-bg: rgba(244, 63, 94, 0.1);
+  --info: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.1);
+  --track-overview: #D4A843;
+  --track-foundations: #6366F1;
+  --track-structural: #8B5CF6;
+  --track-narrative: #06B6D4;
+  --track-serving: #F97316;
+  --track-production: #22C55E;
+  --track-capstone: #D4A843;
+  --track-color: #D4A843; /* Capstone — Gold */
+  --code-bg: #0D1117;
+  --code-border: #21262D;
+  --code-text: #C9D1D9;
+  --code-comment: #8B949E;
+  --code-keyword: #FF7B72;
+  --code-string: #A5D6FF;
+  --code-function: #D2A8FF;
+  --code-number: #79C0FF;
+  --animation-speed: 1;
+  --transition-fast: 150ms;
+  --transition-normal: 300ms;
+  --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Source Sans 3', sans-serif; font-size: 1.05rem; line-height: 1.7; }
+.page-container { max-width: 1200px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: 240px 1fr; gap: 3rem; }
+.sidebar-nav { position: sticky; top: 2rem; height: calc(100vh - 4rem); overflow-y: auto; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: 0.85rem; }
+.sidebar-nav h3 { color: var(--track-color); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
+.sidebar-nav ul { list-style: none; }
+.sidebar-nav li { margin: 0.35rem 0; }
+.sidebar-nav a { color: var(--text-secondary); text-decoration: none; display: block; padding: 0.3rem 0.6rem; border-left: 2px solid transparent; border-radius: 0 6px 6px 0; transition: all var(--transition-fast); }
+.sidebar-nav a:hover { color: var(--text-primary); border-left-color: var(--track-color); background: var(--bg-card); }
+.sidebar-nav .nav-sub a { padding-left: 1.4rem; font-weight: 400; font-size: 0.8rem; }
+.content { max-width: 800px; min-width: 0; }
+.section { margin-bottom: 4rem; }
+h1, h2, h3, h4 { font-family: 'Bricolage Grotesque', sans-serif; }
+h1 { font-weight: 700; font-size: 2rem; line-height: 1.25; margin-bottom: 0.5rem; }
+h2 { font-weight: 700; font-size: 1.5rem; margin: 2.5rem 0 1rem; padding-top: 0.5rem; border-top: 1px solid var(--code-border); }
+h3 { font-weight: 600; font-size: 1.25rem; margin: 1.75rem 0 0.75rem; }
+h4 { font-weight: 600; font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem 1.4rem; }
+li { margin-bottom: 0.4rem; }
+a { color: var(--accent-primary); }
+.course-header { grid-column: 1 / -1; margin-bottom: 1rem; }
+.course-kicker { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 0.9rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.course-kicker .track-name { color: var(--track-color); }
+.header-meta { display: flex; flex-wrap: wrap; gap: 1.25rem; color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.75rem; }
+.header-meta span strong { color: var(--text-primary); }
+.progress-bar { height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; margin: 1rem 0; }
+.progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--track-color), var(--accent-primary)); border-radius: 2px; transition: width var(--transition-slow); }
+.progress-label { font-size: 0.8rem; color: var(--text-muted); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; }
+.analogy-box, .tech-def-box, .callout { border-radius: 0 8px 8px 0; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid; }
+.analogy-box { background: var(--accent-muted); border-left-color: var(--accent-primary); }
+.analogy-box::before { content: '💡 Everyday Analogy'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--accent-primary); display: block; margin-bottom: 0.5rem; }
+.tech-def-box { background: var(--info-bg); border-left-color: var(--info); }
+.tech-def-box::before { content: '📐 Technical Definition'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--info); display: block; margin-bottom: 0.5rem; }
+.callout .box-label { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: 0.5rem; }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-info { background: var(--info-bg); border-left-color: var(--info); }
+.callout-info .box-label { color: var(--info); }
+.callout-checkpoint { background: var(--success-bg); border-left-color: var(--success); }
+.callout-checkpoint .box-label { color: var(--success); }
+.callout p:last-child, .analogy-box p:last-child, .tech-def-box p:last-child { margin-bottom: 0; }
+.code-block { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 10px; margin: 1.25rem 0; overflow: hidden; }
+.code-block-header { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; background: var(--bg-secondary); border-bottom: 1px solid var(--code-border); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); }
+.copy-btn { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; padding: 0.25rem 0.7rem; border-radius: 6px; cursor: pointer; transition: all var(--transition-fast); }
+.copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.code-block pre { padding: 1rem 1.25rem; overflow-x: auto; }
+.code-block code { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; color: var(--code-text); }
+code.inline { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 5px; padding: 0.1rem 0.4rem; color: var(--code-string); white-space: nowrap; }
+.tok-c { color: var(--code-comment); font-style: italic; }
+.tok-k { color: var(--code-keyword); }
+.tok-s { color: var(--code-string); }
+.tok-f { color: var(--code-function); }
+.tok-n { color: var(--code-number); }
+.table-wrap { overflow-x: auto; margin: 1.25rem 0; }
+table.data { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+table.data th, table.data td { border: 1px solid var(--code-border); padding: 0.6rem 0.9rem; text-align: left; vertical-align: top; }
+table.data th { background: var(--bg-secondary); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; }
+table.data td { background: var(--bg-card); color: var(--text-secondary); }
+table.data td strong { color: var(--text-primary); }
+.term-tooltip { position: relative; color: var(--accent-primary); cursor: help; border-bottom: 1px dashed var(--accent-primary); }
+.term-tooltip .tooltip-content { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--accent-primary); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--text-primary); width: 280px; opacity: 0; pointer-events: none; transition: opacity var(--transition-fast); z-index: 10; line-height: 1.5; }
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+.animation-container { background: var(--bg-secondary); border: 1px solid var(--code-border); border-radius: 12px; padding: 2rem; margin: 2rem 0; position: relative; min-height: 300px; }
+.anim-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--track-color); margin-bottom: 1rem; }
+.animation-controls { display: flex; gap: 0.5rem; position: absolute; bottom: 1rem; right: 1rem; }
+.animation-controls button { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-primary); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all var(--transition-fast); }
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.anim-caption { font-size: 0.85rem; color: var(--text-muted); min-height: 2.4em; margin-top: 1rem; max-width: 85%; }
+/* ARCH_FLOW */
+.arch { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6rem; align-items: stretch; }
+.arch-node { background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 10px; padding: 0.7rem 0.6rem; font-size: 0.72rem; color: var(--text-secondary); text-align: center; transition: all var(--transition-normal); position: relative; }
+.arch-node strong { display: block; font-family: 'Bricolage Grotesque', sans-serif; color: var(--text-primary); font-size: 0.78rem; margin-bottom: 0.2rem; }
+.arch-node.lit { border-color: var(--track-color); box-shadow: 0 0 14px rgba(212,168,67,0.3); color: var(--text-primary); }
+.arch-node.gate { border-style: dashed; }
+.arch-node.gate.blocked { border-color: var(--error); box-shadow: 0 0 14px rgba(244,63,94,0.35); }
+.arch-packet { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: opacity var(--transition-normal); }
+.arch-node.lit .arch-packet { opacity: 1; }
+.arch-row-label { grid-column: 1 / -1; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--text-muted); margin-top: 0.4rem; }
+/* FRESHNESS_GATE */
+.gate-lane { display: flex; align-items: center; gap: 0.6rem; margin: 0.9rem 0; }
+.gate-step { background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 8px; padding: 0.5rem 0.8rem; font-size: 0.75rem; color: var(--text-secondary); flex: 1; text-align: center; transition: all var(--transition-normal); }
+.gate-step.lit { border-color: var(--track-color); color: var(--text-primary); }
+.gate-step.pass { border-color: var(--success); box-shadow: 0 0 10px rgba(16,185,129,0.3); }
+.gate-step.fail { border-color: var(--error); box-shadow: 0 0 10px rgba(244,63,94,0.35); color: var(--text-primary); }
+.gate-lane-label { font-family: 'Bricolage Grotesque', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); width: 110px; flex: none; }
+/* PHASES progress */
+.phase-bars { display: grid; gap: 0.55rem; }
+.phase-bar { display: grid; grid-template-columns: 190px 1fr; gap: 0.8rem; align-items: center; font-size: 0.78rem; color: var(--text-secondary); }
+.phase-bar .pb-track { background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 6px; height: 18px; overflow: hidden; }
+.phase-bar .pb-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--track-color), var(--accent-hover)); transition: width 800ms ease; }
+.phase-bar.done { color: var(--text-primary); }
+/* Steps */
+.step { border: 1px solid var(--code-border); border-left: 3px solid var(--track-color); border-radius: 10px; background: var(--bg-secondary); padding: 1.25rem 1.5rem; margin: 1.5rem 0; }
+.step h4 { margin-top: 0; color: var(--text-primary); }
+.step .step-meta { font-size: 0.8rem; color: var(--text-muted); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+.output-block { background: #05090f; border: 1px solid var(--code-border); border-radius: 8px; padding: 0.8rem 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--success); margin: 0.8rem 0; white-space: pre-wrap; }
+.output-block.err { color: var(--error); }
+/* Quiz */
+.quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.quiz-question h4 { margin-top: 0; }
+.quiz-option { padding: 0.75rem 1rem; margin: 0.5rem 0; border: 1px solid var(--code-border); border-radius: 8px; cursor: pointer; transition: all var(--transition-fast); font-size: 1rem; }
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-option[aria-disabled="true"] { cursor: default; }
+.quiz-feedback { margin-top: 0.75rem; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; display: none; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); color: var(--success); }
+.quiz-feedback.bad { background: var(--error-bg); color: var(--error); }
+.quiz-score { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--accent-primary); margin-top: 1rem; }
+.cheat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin: 1.25rem 0; }
+.cheat-card { background: var(--bg-card); border: 1px solid var(--code-border); border-left: 3px solid var(--track-color); border-radius: 10px; padding: 1rem 1.2rem; font-size: 0.9rem; color: var(--text-secondary); }
+.cheat-card strong { color: var(--text-primary); font-family: 'Bricolage Grotesque', sans-serif; display: block; margin-bottom: 0.3rem; }
+.module-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; border-top: 1px solid var(--code-border); padding-top: 1.5rem; }
+.module-nav a { flex: 1; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 10px; padding: 1rem 1.25rem; text-decoration: none; color: var(--text-primary); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; transition: all var(--transition-fast); }
+.module-nav a:hover { border-color: var(--track-color); }
+.module-nav .dir { display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.module-nav .next { text-align: right; }
+.bridge { font-style: italic; color: var(--text-secondary); border-left: 3px solid var(--track-color); padding: 0.5rem 1.25rem; margin: 1.75rem 0; }
+.stars { color: var(--accent-primary); letter-spacing: 0.15em; }
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; padding: 1rem; }
+  .sidebar-nav { position: fixed; bottom: 0; left: 0; right: 0; top: auto; height: auto; z-index: 100; background: var(--bg-secondary); border-top: 1px solid var(--code-border); padding: 0.5rem 1rem; }
+  .sidebar-nav ul { display: flex; gap: 0.25rem; overflow-x: auto; }
+  .sidebar-nav .nav-sub { display: none; }
+  .sidebar-nav h3 { display: none; }
+  .sidebar-nav a { white-space: nowrap; }
+  .content { padding-bottom: 4rem; }
+  .arch { grid-template-columns: repeat(2, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+
+<header class="course-header">
+  <div class="course-kicker">Knowledge Graphs for AI Agents · <span class="track-name">Capstone</span></div>
+  <h1>Capstone — Build a Self-Updating Knowledge Graph Pipeline</h1>
+  <div class="progress-bar" role="progressbar" aria-valuenow="14" aria-valuemin="1" aria-valuemax="14" aria-label="Course progress: module 14 of 14"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label">Module 14 of 14 — the final build</div>
+  <div class="header-meta">
+    <span>⏱ <strong>~2–3 hours</strong></span>
+    <span>Difficulty: <strong class="stars">★★★★☆</strong> (12–18 steps)</span>
+    <span>🔗 Prerequisites: <strong>M01–M12</strong> — this module reuses your lab solutions from M01, M06/M07, M08, M09, and M11</span>
+  </div>
+</header>
+
+<nav class="sidebar-nav" aria-label="Module sections">
+  <h3>On this page</h3>
+  <ul>
+    <li><a href="#brief">Project Brief</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#files">File Structure</a></li>
+    <li><a href="#build">The Build</a></li>
+    <li class="nav-sub"><a href="#phase-1">Phase 1 · Baseline</a></li>
+    <li class="nav-sub"><a href="#phase-2">Phase 2 · Structural</a></li>
+    <li class="nav-sub"><a href="#phase-3">Phase 3 · Narrative</a></li>
+    <li class="nav-sub"><a href="#phase-4">Phase 4 · Self-updating</a></li>
+    <li class="nav-sub"><a href="#phase-5">Phase 5 · Serving</a></li>
+    <li class="nav-sub"><a href="#phase-6">Phase 6 · Monitoring</a></li>
+    <li class="nav-sub"><a href="#phase-7">Phase 7 · Honest writeup</a></li>
+    <li><a href="#tests">Test Cases</a></li>
+    <li><a href="#extensions">Going Further</a></li>
+    <li><a href="#quiz">Final Knowledge Check</a></li>
+    <li><a href="#summary">Completion</a></li>
+    <li><a href="#references">References</a></li>
+  </ul>
+</nav>
+
+<main class="content">
+
+<section class="section" id="brief">
+  <h2 id="brief-h">Project Brief</h2>
+  <p>You are the platform engineer for <strong>orderflow</strong>, the B2B order-tracking system you have been graphing all course. Your team runs several AI agents against the repo daily, and two chronic problems finally boiled over. First, the token bill: every agent session starts with the same archaeology — grep for callers, open files, trace imports — re-deriving structure that has not changed in weeks. Second, and worse: last month an agent answered a revenue question using the <em>stale WAU definition</em> from an old paragraph in <code class="inline">docs/architecture.md</code> — "any API call in 7 days, no tester exclusion" — instead of the canonical computation in <code class="inline">services/orders/metrics.py</code>. Nothing crashed. The number was confidently, quietly wrong, and finance caught it three weeks later.</p>
+  <p>Your job in this capstone is to build the complete fix — the full three-layer context system this course taught, with the maintenance machinery that keeps it honest:</p>
+  <ul>
+    <li>A <strong>structural layer</strong>: a deterministic code graph (Track 2)</li>
+    <li>A <strong>narrative layer</strong>: a curated OKF bundle with a canonical WAU concept (Track 3)</li>
+    <li>A <strong>serving layer</strong>: an MCP server answering structural questions in one tool call (Track 4)</li>
+    <li>A <strong>self-updating pipeline</strong>: a diff-scoped enrichment hook (Track 3)</li>
+    <li>A <strong>freshness gate</strong>: CI that catches a stale graph within one commit (Track 5)</li>
+  </ul>
+  <p>This is a BUILD module: roughly 80% lab, 20% concept. Everything you need already exists in your <code class="inline">labs/</code> folder — the point is wiring your own M01, M06/M07, M08, M09, and M11 solutions into one system, then <strong>sabotaging it deliberately</strong> and proving your defenses catch the failure. The full lab packet mirrors this page at <code class="inline">labs/CAPSTONE-knowledge-pipeline/README.md</code>.</p>
+
+  <div class="analogy-box">
+    <p><strong>Before</strong> modern aviation, a pilot's "preflight check" was looking at the plane and deciding it seemed fine — and planes crashed for reasons a checklist would have caught. <strong>The pain</strong>: every individual system could work while the aircraft as a whole was unairworthy, because nobody verified the connections between systems. <strong>The mapping</strong>: you have built five working components across ten labs. A capstone is the airworthiness test — not "does each part run" but "does the hook actually feed the graph the server actually serves, and does the gate actually block when one link silently fails?" The sabotage steps below are your checklist items; a system you have never watched fail is a demo, not infrastructure.</p>
+  </div>
+</section>
+
+<section class="section" id="architecture">
+  <h2 id="architecture-h">Architecture — What You're Assembling</h2>
+
+  <div class="tech-def-box">
+    <p>The finished system is a <strong>context pipeline</strong>: every <code class="inline">git commit</code> triggers a diff-scoped refresh of two artifacts — the structural <code class="inline">graph.json</code> (extracted, zero-LLM) and the narrative <code class="inline">knowledge/</code> bundle (concept files with cross-links). An <span class="term-tooltip" tabindex="0">MCP server<span class="tooltip-content">A Model Context Protocol server — a small process exposing typed tools (here: graph queries) to any MCP-aware agent over stdio.</span></span> serves both to agents. A CI <strong>freshness gate</strong> compares artifact timestamps against <code class="inline">git log -1</code> and blocks any pipeline that would let an agent trust a stale map.</p>
+  </div>
+
+  <div class="animation-container" id="anim-arch" role="img" aria-label="Animated architecture: a commit flows through the enrichment hook into the graph and bundle, which the MCP server serves to the agent, while the CI freshness gate watches the artifacts.">
+    <div class="anim-title">The pipeline — commit → hook → artifacts → server → agent, gated by CI</div>
+    <div class="arch" id="arch">
+      <div class="arch-node" id="an-commit"><span class="arch-packet">📝</span><strong>git commit</strong>developer changes webhooks.py</div>
+      <div class="arch-node" id="an-hook"><span class="arch-packet">⚙️</span><strong>post-commit hook</strong>diff-scoped: only billing rescanned</div>
+      <div class="arch-node" id="an-artifacts"><span class="arch-packet">🗺️</span><strong>graph.json + knowledge/</strong>structural + narrative refreshed, lint gate</div>
+      <div class="arch-node" id="an-mcp"><span class="arch-packet">🔌</span><strong>MCP server</strong>graph_callers · explore · restart after rebuild!</div>
+      <div class="arch-node" id="an-agent"><span class="arch-packet">🤖</span><strong>agent</strong>one tool call, flat context</div>
+      <div class="arch-row-label">CI lane, guarding every step:</div>
+      <div class="arch-node gate" id="an-gate" style="grid-column: 1 / -1"><strong>freshness_gate.py + okf lint</strong>artifact timestamps vs git log -1 · counts cross-check · exit 1 blocks the pipeline</div>
+    </div>
+    <p class="anim-caption" id="arch-caption">Press play to trace one commit through the system.</p>
+    <div class="animation-controls">
+      <button type="button" aria-label="Play animation" data-anim="arch" data-act="play">▶</button>
+      <button type="button" aria-label="Pause animation" data-anim="arch" data-act="pause">⏸</button>
+      <button type="button" aria-label="Restart animation" data-anim="arch" data-act="restart">↻</button>
+    </div>
+  </div>
+
+  <div class="callout callout-why">
+    <span class="box-label">✅ Why this shape and not another</span>
+    <p>Each layer earns its place by a failure mode you observed in the course: multi-hop questions failing → structural graph (M01/M04). Tribal knowledge and stale definitions → curated narrative concepts (M06–M08). Exploration burning the context window → one-call MCP serving (M09). Silent drift → the gate (M11). Remove any one and a specific, named failure returns. That is the M10 discipline: layers justified by failure modes, never by fashion.</p>
+  </div>
+</section>
+
+<section class="section" id="files">
+  <h2 id="files-h">File Structure</h2>
+  <div class="code-block"><div class="code-block-header"><span>where everything lands (inside labs/sample-project/)</span><button type="button" class="copy-btn">Copy</button></div><pre><code>sample-project/                      <span class="tok-c"># your working repo (git init'd in Phase 4)</span>
+  graphify-out/
+    graph.json                       <span class="tok-c"># structural layer — regenerated by the hook</span>
+  knowledge/                         <span class="tok-c"># narrative layer — refreshed by the hook</span>
+    index.md                         <span class="tok-c"># the agent's pre-flight read</span>
+    log.md                           <span class="tok-c"># what the bundle KNOWS changed (≠ git log)</span>
+    services/                        <span class="tok-c"># billing / orders / notifications concepts</span>
+    analytics/                       <span class="tok-c"># orders_fact + weekly_active_users concepts</span>
+  .git/hooks/post-commit             <span class="tok-c"># M08 hook — diff-scoped, loud on failure</span>
+  ci/
+    freshness_gate.py                <span class="tok-c"># M11 gate (copied in, Phase 6)</span>
+    ci.sh                            <span class="tok-c"># gate + lint, exit 1 on either failure</span>
+  BASELINE.md                        <span class="tok-c"># your before/after measurements</span>
+  NOTES.md                           <span class="tok-c"># god node analysis + the honest writeup</span></code></pre></div>
+</section>
+
+<section class="section" id="build">
+  <h2 id="build-h">The Build — Seven Phases, Eighteen Steps</h2>
+
+  <div class="animation-container" id="anim-phases" role="img" aria-label="Animated progress bars for the seven capstone phases filling in sequence.">
+    <div class="anim-title">Phase map — where the 2–3 hours go</div>
+    <div class="phase-bars" id="phase-bars">
+      <div class="phase-bar" data-w="12"><span>1 · Baseline (steps 1–2)</span><div class="pb-track"><div class="pb-fill"></div></div></div>
+      <div class="phase-bar" data-w="15"><span>2 · Structural layer (3–5)</span><div class="pb-track"><div class="pb-fill"></div></div></div>
+      <div class="phase-bar" data-w="20"><span>3 · Narrative layer (6–8)</span><div class="pb-track"><div class="pb-fill"></div></div></div>
+      <div class="phase-bar" data-w="18"><span>4 · Self-updating (9–11)</span><div class="pb-track"><div class="pb-fill"></div></div></div>
+      <div class="phase-bar" data-w="12"><span>5 · Serving (12–13)</span><div class="pb-track"><div class="pb-fill"></div></div></div>
+      <div class="phase-bar" data-w="13"><span>6 · Monitoring (14–16)</span><div class="pb-track"><div class="pb-fill"></div></div></div>
+      <div class="phase-bar" data-w="10"><span>7 · Honest writeup (17–18)</span><div class="pb-track"><div class="pb-fill"></div></div></div>
+    </div>
+    <p class="anim-caption" id="phases-caption">Press play to preview the effort distribution.</p>
+    <div class="animation-controls">
+      <button type="button" aria-label="Play animation" data-anim="phases" data-act="play">▶</button>
+      <button type="button" aria-label="Pause animation" data-anim="phases" data-act="pause">⏸</button>
+      <button type="button" aria-label="Restart animation" data-anim="phases" data-act="restart">↻</button>
+    </div>
+  </div>
+
+  <h3 id="phase-1">Phase 1 — Baseline Measurement (steps 1–2)</h3>
+  <p>You cannot claim an improvement you never measured. Before any tooling, establish what agent work costs on the bare repo.</p>
+
+  <div class="step">
+    <div class="step-meta">Step 1</div>
+    <h4>Ask the three questions, cold</h4>
+    <p><em>What &amp; why:</em> with NO graph, no bundle, no MCP server registered, ask your coding agent these three questions and record, for each, the number of files it reads and (if your client shows it) tokens consumed:</p>
+    <ul>
+      <li><strong>Q1</strong> — "Who calls <code class="inline">decode_jwt</code>, directly and transitively?"</li>
+      <li><strong>Q2</strong> — "What breaks if <code class="inline">orders_fact</code> gains a column?"</li>
+      <li><strong>Q3</strong> — "What is the canonical weekly-active-users definition?"</li>
+    </ul>
+    <p>Watch Q3 especially: there is a deliberately stale definition in <code class="inline">docs/architecture.md</code>, and a cold agent may well retrieve it — reproducing the incident from the brief on your own machine.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 2</div>
+    <h4>Record the numbers</h4>
+    <p><em>What &amp; why:</em> create <code class="inline">BASELINE.md</code> with one row per question: files read, tokens (or your best proxy), and whether the answer was correct. This table gets its "after" columns in Phase 5.</p>
+    <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p>Three rows, each with reads + tokens + a correctness verdict. If Q3 came back with the stale definition, note it — that row is the whole business case.</p></div>
+  </div>
+
+  <h3 id="phase-2">Phase 2 — The Structural Layer (steps 3–5)</h3>
+
+  <div class="step">
+    <div class="step-meta">Step 3</div>
+    <h4>Generate the graph</h4>
+    <p><em>What &amp; why:</em> the structural layer is deterministic extraction — zero LLM calls, zero hallucination risk in the structural pass (M03). Use Graphify if installed, or the course's pure-Python extractor:</p>
+    <div class="code-block"><div class="code-block-header"><span>bash — either path works</span><button type="button" class="copy-btn">Copy</button></div><pre><code><span class="tok-c"># with Graphify installed (M04):</span>
+cd labs/sample-project
+graphify update .
+
+<span class="tok-c"># offline fallback — same repo, same edges:</span>
+python ../shared_tools/kg_extract.py . --out graphify-out/graph.json</code></pre></div>
+    <div class="output-block">Rebuilt: 36 nodes, 22 edges -&gt; graphify-out/graph.json
+  nodes: {'class': 4, 'function': 18, 'module': 14}
+  edges: {'EXTRACTED': 9, 'INFERRED': 13}</div>
+    <p><em>Troubleshooting:</em> <code class="inline">graphify: command not found</code> → uv/pipx bin dir not on PATH; use the fallback and continue — every later phase works with either.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 4</div>
+    <h4>Verify against ground truth</h4>
+    <p><em>What &amp; why:</em> orderflow is deliberately small enough to check by hand — that is <em>why</em> the course uses it. Open <code class="inline">sample-project/README.md</code> and confirm every listed relationship appears in your graph: <code class="inline">verify_token → decode_jwt</code> (EXTRACTED), webhooks → <code class="inline">mark_paid</code> + <code class="inline">publish</code>, worker → <code class="inline">subscribe</code>, orders → <code class="inline">DatabasePool.execute</code>.</p>
+    <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p>All ground-truth edges present; provenance tags make sense (same-module resolutions EXTRACTED, cross-module bare-name matches INFERRED). If an edge is missing, your extractor skipped a file — check for syntax errors in your local copies.</p></div>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 5</div>
+    <h4>Find the communities and the god node</h4>
+    <p><em>What &amp; why:</em> load <code class="inline">graph.json</code> (or reuse your M01 solution) and compute in-degree per module. Then write one paragraph in <code class="inline">NOTES.md</code>: what does it mean for refactoring risk that one module tops the list?</p>
+    <div class="code-block"><div class="code-block-header"><span>python — quick in-degree tally</span><button type="button" class="copy-btn">Copy</button></div><pre><code><span class="tok-k">import</span> json
+<span class="tok-k">from</span> collections <span class="tok-k">import</span> Counter
+g = json.load(<span class="tok-f">open</span>(<span class="tok-s">"graphify-out/graph.json"</span>))
+indeg = Counter(e[<span class="tok-s">"target"</span>].split(<span class="tok-s">":"</span>)[<span class="tok-n">1</span>].rsplit(<span class="tok-s">"."</span>, <span class="tok-n">1</span>)[<span class="tok-n">0</span>] <span class="tok-k">for</span> e <span class="tok-k">in</span> g[<span class="tok-s">"edges"</span>])
+<span class="tok-f">print</span>(indeg.most_common(<span class="tok-n">3</span>))</code></pre></div>
+    <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p><code class="inline">shared.db</code> (with <code class="inline">shared.auth</code> and <code class="inline">shared.events</code> close behind) tops the list — the god node the architecture doc warned about. Your paragraph should connect high centrality to blast radius: everything transitively depends on it, so changes there need the widest testing.</p></div>
+  </div>
+
+  <h3 id="phase-3">Phase 3 — The Narrative Layer (steps 6–8)</h3>
+  <p class="bridge">The graph knows what the code IS. It cannot know that WAU excludes testers <em>on purpose</em>, or that the event bus was chosen over a broker in ADR-001. That intent lives in the bundle — what engineers KNOW, written once, curated (M06/M07).</p>
+
+  <div class="step">
+    <div class="step-meta">Step 6</div>
+    <h4>Complete the orderflow bundle</h4>
+    <p><em>What &amp; why:</em> finish your M07 bundle: <code class="inline">knowledge/index.md</code>, <code class="inline">log.md</code>, three Service concepts, plus the two analytics concepts from M06 (orders_fact, weekly_active_users). Keep the body structure identical across Service concepts — <code class="inline"># Responsibilities</code> then <code class="inline"># Dependencies</code> — consistency is what agents parse (M07).</p>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 7</div>
+    <h4>Lint until clean</h4>
+    <div class="code-block"><div class="code-block-header"><span>bash</span><button type="button" class="copy-btn">Copy</button></div><pre><code>python ../M06-okf-authoring/solution/validate.py knowledge</code></pre></div>
+    <div class="output-block">5 concepts valid, 0 errors</div>
+    <p><em>Troubleshooting:</em> YAML errors → check the <code class="inline">---</code> delimiters sit alone on their lines; missing-type errors name the exact file.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 8</div>
+    <h4>Make WAU an attested computation</h4>
+    <p><em>What &amp; why:</em> the spec's answer to the stale-definition incident is the <span class="term-tooltip" tabindex="0">attested computation<span class="tooltip-content">An OKF concept documenting the sanctioned, checkable WAY to compute a value — not just what the value means. The single source of truth for governed metrics.</span></span>: the concept must point at the code that IS the definition. Ensure <code class="inline">weekly_active_users.md</code> names <code class="inline">services/orders/metrics.py::weekly_active_users</code> as the source of truth and states the exclusion rule explicitly.</p>
+    <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p>Lint passes; every concept cross-links in BOTH directions (billing → notifications for publishes, notifications → billing for consumes). One-directional links are how bundles silently rot (M07).</p></div>
+  </div>
+
+  <h3 id="phase-4">Phase 4 — Self-Updating (steps 9–11)</h3>
+  <p class="bridge">A bundle nobody maintains is a wiki nobody reads — and a graph nobody rebuilds is a map that lies (M08, M11). This phase installs the machinery, then proves it fails LOUDLY, because the failure mode that kills these systems is the silent one.</p>
+
+  <div class="step">
+    <div class="step-meta">Step 9</div>
+    <h4>Install the hook</h4>
+    <div class="code-block"><div class="code-block-header"><span>bash</span><button type="button" class="copy-btn">Copy</button></div><pre><code>cd labs/sample-project
+git init -q &amp;&amp; git add -A &amp;&amp; git commit -qm <span class="tok-s">"baseline"</span>
+cp ../M08-enrichment-hook/solution/post-commit .git/hooks/post-commit
+<span class="tok-c"># macOS/Linux: chmod +x .git/hooks/post-commit</span></code></pre></div>
+    <p>Note what this hook deliberately does NOT do: no <code class="inline">nohup</code> (silently absent on Git-for-Windows — failure mechanism #1 from M11), no backgrounding, no silent resource-gated skips. Every failure prints and exits non-zero.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 10</div>
+    <h4>Trigger a real refresh</h4>
+    <p><em>What &amp; why:</em> simulate the M08 walkthrough — a new dependency appearing in billing. Add a comment (or a fake <code class="inline">fraud_check()</code> call) to <code class="inline">services/billing/webhooks.py</code> and commit.</p>
+    <div class="output-block">[enrich] changed: services/billing/webhooks.py -&gt; concept billing-service
+[enrich] refreshed Dependencies (4 edges) in billing-service.md
+[enrich] log.md updated
+[enrich] lint: 5 concepts valid, 0 errors</div>
+    <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p>The diff-scope worked: ONLY billing-service.md was refreshed (orders and notifications untouched), and log.md gained a dated entry. Diff-scoping is the entire cost model — full-repo rescans per commit are what make teams turn pipelines off (M08).</p></div>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 11</div>
+    <h4>Sabotage #1 — break the lint gate</h4>
+    <p><em>What &amp; why:</em> delete the <code class="inline">type:</code> line from any concept, then commit any code change. The hook must FAIL, non-zero, naming the file:</p>
+    <div class="output-block err">ERROR knowledge/services/billing-service.md: missing required field 'type'
+1 concepts valid, 1 errors
+[enrich] FAILED — bundle NOT updated. Fix before trusting the graph.</div>
+    <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p>Loud failure observed, then fixed. If the hook passed silently, your lint gate is decorative — exactly the "technically conformant, practically unreliable" trap the spec's leniency creates (M06/M11). Restore the <code class="inline">type:</code> field before continuing.</p></div>
+  </div>
+
+  <h3 id="phase-5">Phase 5 — Serving (steps 12–13)</h3>
+
+  <div class="step">
+    <div class="step-meta">Step 12</div>
+    <h4>Register the MCP server</h4>
+    <div class="code-block"><div class="code-block-header"><span>bash — selftest first, then register</span><button type="button" class="copy-btn">Copy</button></div><pre><code>cd ../M09-mcp-graph-server/solution
+python server.py --selftest        <span class="tok-c"># must print SELFTEST PASSED</span>
+claude mcp add orderflow-graph -- python /absolute/path/to/labs/M09-mcp-graph-server/solution/server.py</code></pre></div>
+    <p><em>Troubleshooting:</em> tool calls hang → something printed to stdout; stdio MCP servers must log to stderr only (M09).</p>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 13</div>
+    <h4>Re-ask the three questions</h4>
+    <p><em>What &amp; why:</em> repeat Q1–Q3 with the server registered and the bundle in place; append the "after" columns to <code class="inline">BASELINE.md</code>.</p>
+    <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p>Q1 and Q2 each answered in ONE tool call (<code class="inline">graph_callers</code> / <code class="inline">explore</code> — blast radius included). Q3 answered from ONE concept file, with the canonical tester-exclusion rule, because index.md routed the agent straight to the attested computation. The stale doc never entered context.</p></div>
+  </div>
+
+  <h3 id="phase-6">Phase 6 — Monitoring (steps 14–16)</h3>
+
+  <div class="animation-container" id="anim-gate" role="img" aria-label="Animation contrasting a fresh pipeline run that passes the gate with a stale run that gets blocked.">
+    <div class="anim-title">FRESHNESS_GATE — the check that makes it production, not demo</div>
+    <div class="gate-lane"><span class="gate-lane-label">Healthy run</span>
+      <div class="gate-step" id="g1a">commit + hook fires</div>
+      <div class="gate-step" id="g1b">graph.json regenerated</div>
+      <div class="gate-step" id="g1c">gate: mtime ≥ HEAD time</div>
+      <div class="gate-step" id="g1d">✅ exit 0 — agents may trust</div>
+    </div>
+    <div class="gate-lane"><span class="gate-lane-label">Silent failure</span>
+      <div class="gate-step" id="g2a">commit… hook never fires</div>
+      <div class="gate-step" id="g2b">graph.json unchanged</div>
+      <div class="gate-step" id="g2c">gate: predates HEAD by 1 commit</div>
+      <div class="gate-step" id="g2d">⛔ exit 1 — pipeline blocked</div>
+    </div>
+    <p class="anim-caption" id="gate-caption">Press play. The lower lane is the one that matters — it's the failure M11's four postmortems all share: green exit codes over a lying map.</p>
+    <div class="animation-controls">
+      <button type="button" aria-label="Play animation" data-anim="gate" data-act="play">▶</button>
+      <button type="button" aria-label="Pause animation" data-anim="gate" data-act="pause">⏸</button>
+      <button type="button" aria-label="Restart animation" data-anim="gate" data-act="restart">↻</button>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 14</div>
+    <h4>Install and pass the gate</h4>
+    <div class="code-block"><div class="code-block-header"><span>bash</span><button type="button" class="copy-btn">Copy</button></div><pre><code>mkdir -p ci &amp;&amp; cp ../M11-freshness-gate/solution/freshness_gate.py ci/
+python ci/freshness_gate.py . --max-age-commits 0 --cross-check</code></pre></div>
+    <div class="output-block">FRESH: graph.json generated at/after HEAD commit
+CROSS-CHECK OK: stored counts match a fresh extraction</div>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 15</div>
+    <h4>Sabotage #2 — commit without rebuilding</h4>
+    <div class="code-block"><div class="code-block-header"><span>bash — bypass the hook deliberately</span><button type="button" class="copy-btn">Copy</button></div><pre><code>git commit --allow-empty -qm <span class="tok-s">"commit without rebuilding the graph"</span> --no-verify
+python ci/freshness_gate.py . --max-age-commits 0</code></pre></div>
+    <div class="output-block err">STALE: graph.json predates HEAD by 1 commit(s)
+  fix: python ../shared_tools/kg_extract.py . --out graphify-out/graph.json
+  (then restart any MCP server holding the old graph)</div>
+    <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p>Exit 1, an actionable message, AND the reminder about the MCP startup cache — the fourth silent-failure mechanism from M11: a fresh graph on disk is still stale in a running server's memory until you bounce it. Fix by re-running the extractor and restarting the server.</p></div>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 16</div>
+    <h4>Wire ci.sh</h4>
+    <div class="code-block"><div class="code-block-header"><span>ci/ci.sh — the whole defense in four lines</span><button type="button" class="copy-btn">Copy</button></div><pre><code><span class="tok-c">#!/bin/sh</span>
+<span class="tok-k">set</span> -e
+python ci/freshness_gate.py . --max-age-commits <span class="tok-n">0</span> --cross-check
+python ../M06-okf-authoring/solution/validate.py knowledge</code></pre></div>
+    <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p><code class="inline">sh ci/ci.sh</code> exits 0 on the healthy repo, non-zero if EITHER the graph is stale or the bundle fails lint. This script is your answer to the 24-hour question — run it on a schedule and staleness cannot hide for more than one interval.</p></div>
+  </div>
+
+  <h3 id="phase-7">Phase 7 — The Honest Writeup (steps 17–18)</h3>
+
+  <div class="step">
+    <div class="step-meta">Step 17</div>
+    <h4>Compute your real multiple — and explain why it's small</h4>
+    <p><em>What &amp; why:</em> divide your Phase-1 token counts by Phase-5's. On a 15-file repo, expect a <strong>single-digit multiple</strong> — and write down in <code class="inline">NOTES.md</code> why that is the CORRECT, expected result, not a disappointment. orderflow sits far below the <strong>~500-file threshold</strong> where graph tooling pays for itself (M04, M11); the exploration a graph eliminates barely exists at this scale. The 71.5x headline was a ceiling case on a favorable 52-file corpus; independent replications landed at 6.8x–49x, 7.3x on a from-scratch real Python codebase, and savings scale with the size of the haystack — VS Code's 10,000 files saved 78%, OkHttp's 645 files saved 13% (M04/M05). Your small number on a tiny repo is the benchmark-literacy lesson, experienced firsthand.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-meta">Step 18</div>
+    <h4>Answer the defining question</h4>
+    <p><em>What &amp; why:</em> in <code class="inline">NOTES.md</code>, answer in specific mechanical terms: <strong>"How would I detect a stale graph within 24 hours?"</strong> Your answer should name the gate script, what it compares (artifact mtime + counts vs <code class="inline">git log -1</code>), where it runs (CI + a scheduled catch-up), what it does on failure (exit 1, actionable message, alert), and the MCP restart step. If you can write that paragraph, you have a production setup. If you cannot, you have a demo that hasn't failed yet — the M11 test, applied to your own work.</p>
+    <div class="callout callout-checkpoint"><span class="box-label">🎉 Final checkpoint</span><p>BASELINE.md has before/after rows; NOTES.md has the god-node paragraph, the honest multiple, and the 24-hour answer; both sabotages were caught loudly; ci.sh guards the repo. The system is airworthy. Course complete.</p></div>
+  </div>
+</section>
+
+<section class="section" id="tests">
+  <h2 id="tests-h">Test Cases</h2>
+  <p>Run all five. Three happy paths prove the layers work; the edge and failure cases prove the system degrades honestly — which this course has argued is the more important property.</p>
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>#</th><th>Type</th><th>Input</th><th>Expected</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1</strong></td><td>happy</td><td>MCP <code class="inline">graph_callers("decode_jwt")</code></td><td><code class="inline">["shared.auth.verify_token"]</code> — one call, no file reads</td></tr>
+      <tr><td><strong>2</strong></td><td>happy</td><td>MCP <code class="inline">explore("execute")</code></td><td>callers across billing AND orders; blast radius &gt; 3 — the god node's reach, quantified</td></tr>
+      <tr><td><strong>3</strong></td><td>happy</td><td>"What is the canonical WAU definition?" via the bundle</td><td>7-day window, completed orders, tester exclusion — from the concept file, citing metrics.py; the stale doc never surfaces</td></tr>
+      <tr><td><strong>4</strong></td><td>edge</td><td>MCP <code class="inline">graph_callers("stripe_sdk_call")</code></td><td>graceful <code class="inline">error: … not in graph — try grep</code>; the agent falls back to search, no crash. A graph that pretends to know external symbols is worse than one that says "not mine"</td></tr>
+      <tr><td><strong>5</strong></td><td>failure</td><td>commit with <code class="inline">--no-verify</code>, then <code class="inline">sh ci/ci.sh</code></td><td>freshness gate exits 1 naming the lagging artifact and the fix — the silent failure made loud</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="section" id="extensions">
+  <h2 id="extensions-h">Going Further (all OPTIONAL)</h2>
+  <ul>
+    <li><strong>Two-pass enrichment</strong> — add M08's citation pass: after refreshing a concept, cross-reference ADR-001 and the runbook, linking each dependency to the document that explains WHY it exists. Skipping the citation pass is how plausible-but-unverified descriptions creep in.</li>
+    <li><strong>Serve the bundle too</strong> — add a <code class="inline">concept(path)</code> MCP tool returning a concept file's body, so the narrative layer is one tool call away like the structural one.</li>
+    <li><strong>Build the M10 router</strong> — classify incoming questions (canonical / structural / exploratory) and dispatch to bundle read, graph query, or grep automatically.</li>
+    <li><strong>Comparison run</strong> — run okf-rs or CodeGraph over orderflow and diff their edges against kg_extract's using the M05 comparison axes.</li>
+    <li><strong>Export to Obsidian</strong> — render the bundle as a linked vault and walk your knowledge graph visually.</li>
+  </ul>
+</section>
+
+<section class="section" id="quiz">
+  <h2 id="quiz-h">Final Knowledge Check — the Whole Course</h2>
+  <p>Seven questions spanning all six tracks. This is the exam-shaped recap.</p>
+
+  <div class="quiz-question" data-q="1">
+    <h4>1. (Track 1) Why did the cold agent in Phase 1 risk answering Q3 with the stale WAU definition?</h4>
+    <div class="quiz-option" data-correct="false">The model was too small to understand the metric</div>
+    <div class="quiz-option" data-correct="true">Similarity-based retrieval surfaces keyword-dense text regardless of canonicity — probabilistic search is the wrong criterion for a canonical fact</div>
+    <div class="quiz-option" data-correct="false">The stale paragraph was longer than the correct code</div>
+    <div class="quiz-option" data-correct="false">Markdown files rank higher than Python files in search</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="2">
+    <h4>2. (Track 2) The structural pass of your extractor made zero LLM calls. What does that buy you?</h4>
+    <div class="quiz-option" data-correct="false">Faster answers, but with some hallucination risk</div>
+    <div class="quiz-option" data-correct="true">Determinism: identical source → identical graph, no API cost, and zero hallucination risk in extracted edges — which is why provenance tags can honestly say EXTRACTED</div>
+    <div class="quiz-option" data-correct="false">Better semantic understanding of what the code means</div>
+    <div class="quiz-option" data-correct="false">Automatic documentation of business intent</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="3">
+    <h4>3. (Track 3) Why must the enrichment hook scope its scan to the git diff?</h4>
+    <div class="quiz-option" data-correct="false">Full scans produce incorrect edges</div>
+    <div class="quiz-option" data-correct="false">The OKF spec forbids full-repository scans</div>
+    <div class="quiz-option" data-correct="true">Cost: a full-repo rescan per commit makes the pipeline too expensive to keep running — diff-scoping is what makes per-commit updates affordable</div>
+    <div class="quiz-option" data-correct="false">git hooks cannot see unchanged files</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="4">
+    <h4>4. (Track 4) Your MCP server's <code class="inline">explore</code> tool bundles callers + callees + blast radius into one call. What's the design rationale?</h4>
+    <div class="quiz-option" data-correct="false">MCP limits servers to a small number of tools</div>
+    <div class="quiz-option" data-correct="true">Tool-call overhead is context too — one composite answer keeps the agent's token budget for reasoning instead of a chain of round-trips</div>
+    <div class="quiz-option" data-correct="false">Composite answers are easier to cache on disk</div>
+    <div class="quiz-option" data-correct="false">Separate tools would require separate graph files</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="5">
+    <h4>5. (Track 5) In Step 15 the gate caught a stale graph — but M11 warns one more thing can STILL be stale after you regenerate. What?</h4>
+    <div class="quiz-option" data-correct="false">The git index</div>
+    <div class="quiz-option" data-correct="false">The bundle's log.md</div>
+    <div class="quiz-option" data-correct="true">A running MCP server's in-memory copy — it loaded graph.json at startup and has no hot-reload; restart it or the agent still queries the old graph</div>
+    <div class="quiz-option" data-correct="false">The .graphifyignore file</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="6">
+    <h4>6. (Honesty rule) Your Phase-7 multiple came out at 3x, not 71.5x. The correct interpretation is:</h4>
+    <div class="quiz-option" data-correct="false">The pipeline is broken; a correct setup always yields 70x+</div>
+    <div class="quiz-option" data-correct="true">Expected: token savings scale with repo size, orderflow is far below the ~500-file payoff floor, and the 71.5x figure was a ceiling case on a favorable corpus — replications landed at 6.8x–49x</div>
+    <div class="quiz-option" data-correct="false">The extractor missed most of the edges</div>
+    <div class="quiz-option" data-correct="false">MCP overhead consumed the savings</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="7">
+    <h4>7. (The defining question) What makes a knowledge-graph setup "production-grade" per this course?</h4>
+    <div class="quiz-option" data-correct="false">Benchmark numbers above 50x token reduction</div>
+    <div class="quiz-option" data-correct="false">Using all three layers plus a vector index</div>
+    <div class="quiz-option" data-correct="true">Its failure-detection story: a specific, mechanical answer to "how would I detect a stale graph within 24 hours" — gates, cross-checks, alerts, and server restarts you have watched fire</div>
+    <div class="quiz-option" data-correct="false">Automatic nightly full-repo rescans</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-score" id="quizScore" aria-live="polite"></div>
+</section>
+
+<section class="section" id="summary">
+  <h2 id="summary-h">Completion — What You Built, and What You Now Know</h2>
+  <div class="cheat-grid">
+    <div class="cheat-card"><strong>The system</strong>Structural graph + OKF bundle + diff-scoped hook + MCP serving + CI freshness gate — every layer justified by a failure mode you reproduced.</div>
+    <div class="cheat-card"><strong>The measurements</strong>A BASELINE.md with real before/after numbers, and the literacy to explain why they're small on a small repo.</div>
+    <div class="cheat-card"><strong>The sabotages</strong>A lint gate and a freshness gate you watched FAIL loudly — the difference between infrastructure and demo.</div>
+    <div class="cheat-card"><strong>The writeup</strong>A mechanical answer to the 24-hour staleness question, in your own words, about your own system.</div>
+  </div>
+  <p>The course's whole argument, compressed: <strong>agents don't need smarter models to stop wasting tokens — they need maps.</strong> Deterministic maps of what the code is, curated maps of what engineers know, served one tool call at a time, and monitored like the production infrastructure they are. You have now built each layer by hand, connected them, broken them, and caught the breakage. Whatever tools this fast-moving ecosystem ships next, that skill set — and the skepticism that comes with it — transfers.</p>
+  <p>🎓 <strong>Congratulations — you have completed Knowledge Graphs for AI Agents.</strong></p>
+</section>
+
+<section class="section" id="references">
+  <h2 id="references-h">References</h2>
+  <ul>
+    <li>Lab packet: <code class="inline">labs/CAPSTONE-knowledge-pipeline/README.md</code> — and the reused solutions in <code class="inline">labs/M01</code>, <code class="inline">M06</code>–<code class="inline">M09</code>, <code class="inline">M11</code></li>
+    <li>Graphify (github.com/safishamsi/graphify) · Google OKF spec (GoogleCloudPlatform/knowledge-catalog) · okf CLI (superops-team/okf) · okf-rs (jyjeanne/okf-rs) · CodeGraph</li>
+    <li>Course honesty sources: Graphify BENCHMARKS.md; independent replications (6.8x–49x; 7.3x from-scratch); the silent-hook postmortems and the ERPNext hybrid case study (70.8% → 82.0% key-fact coverage)</li>
+  </ul>
+  <div class="module-nav">
+    <a href="M12-structuring-projects-whats-next.html"><span class="dir">← Previous</span>M12 — Structuring Projects + What's Next</a>
+    <a class="next" href="CAPSTONE-2-java-token-benchmark.html"><span class="dir">Optional →</span>Capstone 2: Java Token Benchmark</a>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  requestAnimationFrame(function () {
+    document.getElementById('progressFill').style.width = '100%';
+  });
+
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.closest('.code-block').querySelector('pre');
+      var text = pre.textContent;
+      function done() { btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta); done();
+      }
+    });
+  });
+
+  function stepper(opts) {
+    var i = -1, timer = null, playing = false;
+    function tick() {
+      i++;
+      if (i >= opts.frames.length) { pause(); return; }
+      opts.frames[i]();
+      if (opts.caption && opts.captions[i]) opts.caption.textContent = opts.captions[i];
+    }
+    function play() {
+      if (playing) return;
+      if (i >= opts.frames.length - 1) { pause(); i = -1; opts.reset(); }
+      playing = true;
+      timer = setInterval(tick, opts.interval || 1400);
+    }
+    function pause() { playing = false; if (timer) { clearInterval(timer); timer = null; } }
+    function restart() { pause(); i = -1; opts.reset(); play(); }
+    if (reduced) {
+      opts.reset();
+      for (var k = 0; k < opts.frames.length; k++) opts.frames[k]();
+      if (opts.caption && opts.captions.length) opts.caption.textContent = opts.captions[opts.captions.length - 1];
+      return { play: function(){}, pause: function(){}, restart: function(){} };
+    }
+    return { play: play, pause: pause, restart: restart };
+  }
+
+  /* ARCH_FLOW */
+  var archIds = ['an-commit', 'an-hook', 'an-artifacts', 'an-mcp', 'an-agent', 'an-gate'];
+  var archCaption = document.getElementById('arch-caption');
+  function archReset() { archIds.forEach(function (id) { document.getElementById(id).classList.remove('lit'); }); }
+  var archCaptions = [
+    'A developer commits a change to billing/webhooks.py — nothing else in the repo moved.',
+    'The post-commit hook fires: diff-scoped, so ONLY billing is rescanned. No nohup, no silent skips — failures print and exit non-zero.',
+    'Both artifacts refresh: graph.json (deterministic, zero-LLM) and the billing-service concept + log.md. Lint gates the publish.',
+    'The MCP server serves the fresh graph — after a restart, because it caches graph.json at startup (M11 failure #4).',
+    'The agent asks graph_callers once. One tool call, ~15 tokens, flat context. No exploration tax.',
+    'And underneath it all: the CI gate compares artifact timestamps against git log -1 every run. Staleness cannot hide past one interval.'
+  ];
+  var archFrames = archIds.map(function (id) { return function () { document.getElementById(id).classList.add('lit'); }; });
+  var archAnim = stepper({ frames: archFrames, captions: archCaptions, caption: archCaption, reset: archReset, interval: 2100 });
+
+  /* PHASES */
+  var phaseBars = Array.prototype.slice.call(document.querySelectorAll('.phase-bar'));
+  var phasesCaption = document.getElementById('phases-caption');
+  var phaseCaptions = [
+    'Phase 1: measure before you build — three questions, cold.',
+    'Phase 2: the structural layer — extract, verify against ground truth, find the god node.',
+    'Phase 3: the narrative layer — the bundle, linted, with WAU as an attested computation. The biggest slice: curation is human work.',
+    'Phase 4: self-updating — install the hook, trigger it, then BREAK the lint gate on purpose.',
+    'Phase 5: serving — selftest, register, re-measure.',
+    'Phase 6: monitoring — the freshness gate, passed and then deliberately failed.',
+    'Phase 7: the honest writeup — your real multiple, and the 24-hour answer.'
+  ];
+  function phasesReset() { phaseBars.forEach(function (b) { b.classList.remove('done'); b.querySelector('.pb-fill').style.width = '0'; }); }
+  var phaseFrames = phaseBars.map(function (bar) {
+    return function () {
+      bar.classList.add('done');
+      bar.querySelector('.pb-fill').style.width = (parseInt(bar.getAttribute('data-w'), 10) * 4.5) + '%';
+    };
+  });
+  var phasesAnim = stepper({ frames: phaseFrames, captions: phaseCaptions, caption: phasesCaption, reset: phasesReset, interval: 1600 });
+
+  /* FRESHNESS_GATE */
+  var gateCaption = document.getElementById('gate-caption');
+  var gateSeq = [
+    { id: 'g1a', cls: 'lit', cap: 'Healthy lane: a commit lands and the hook fires…' },
+    { id: 'g1b', cls: 'lit', cap: '…graph.json regenerates, mtime advances…' },
+    { id: 'g1c', cls: 'lit', cap: '…the gate compares mtime against git log -1…' },
+    { id: 'g1d', cls: 'pass', cap: '…exit 0. Agents may trust the map.' },
+    { id: 'g2a', cls: 'lit', cap: 'Failure lane: a commit lands but the hook silently never fires (Windows nohup, allowlist drift, resource skip…).' },
+    { id: 'g2b', cls: 'lit', cap: 'graph.json unchanged. Every tool still reports success. The map is now lying.' },
+    { id: 'g2c', cls: 'lit', cap: 'The gate does arithmetic no exit code can fake: artifact mtime predates HEAD.' },
+    { id: 'g2d', cls: 'fail', cap: 'Exit 1 — pipeline blocked, fix printed. Detection within one commit, not one incident.' }
+  ];
+  function gateReset() {
+    gateSeq.forEach(function (s) { var el = document.getElementById(s.id); el.classList.remove('lit', 'pass', 'fail'); });
+  }
+  var gateFrames = gateSeq.map(function (s) {
+    return function () { document.getElementById(s.id).classList.add(s.cls); };
+  });
+  var gateAnim = stepper({ frames: gateFrames, captions: gateSeq.map(function (s) { return s.cap; }), caption: gateCaption, reset: gateReset, interval: 1900 });
+
+  var anims = { arch: archAnim, phases: phasesAnim, gate: gateAnim };
+  document.querySelectorAll('.animation-controls button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var a = anims[btn.getAttribute('data-anim')];
+      if (a) a[btn.getAttribute('data-act')]();
+    });
+  });
+
+  /* Quiz */
+  var whys = {
+    '1': 'M02: chunk-and-similarity retrieval is probabilistic; canonical facts need deterministic lookup — which is why Phase 3 made WAU an attested computation.',
+    '2': 'M03/M04: AST parsing is deterministic and free; only the optional doc/image pass involves an LLM and can hallucinate.',
+    '3': 'M08: diff-scoping IS the cost model. Teams that rescan everything per commit turn the pipeline off within a week.',
+    '4': 'M09: the explore composite exists so the token budget goes to reasoning, not tool-call round-trips.',
+    '5': 'M11 failure #4: MCP servers cache graph.json at startup with no hot-reload — fresh on disk, stale in memory.',
+    '6': 'M04/M05 + the honesty rule: savings scale with repo size; below ~500 files the tooling tax exceeds the savings. Your 3x is the lesson working.',
+    '7': 'M11\'s definitional test: production-grade is defined by the failure-detection story, not the benchmark story.'
+  };
+  var answered = 0, correct = 0;
+  var total = document.querySelectorAll('.quiz-question').length;
+  document.querySelectorAll('.quiz-question').forEach(function (q) {
+    q.dataset.why = whys[q.getAttribute('data-q')] || '';
+    var feedback = q.querySelector('.quiz-feedback');
+    q.querySelectorAll('.quiz-option').forEach(function (opt) {
+      opt.setAttribute('tabindex', '0');
+      opt.setAttribute('role', 'button');
+      function choose() {
+        if (q.dataset.done) return;
+        q.dataset.done = '1';
+        answered++;
+        var isRight = opt.getAttribute('data-correct') === 'true';
+        if (isRight) correct++;
+        opt.classList.add(isRight ? 'correct' : 'incorrect');
+        q.querySelectorAll('.quiz-option').forEach(function (o) {
+          o.setAttribute('aria-disabled', 'true');
+          if (o.getAttribute('data-correct') === 'true') o.classList.add('correct');
+        });
+        feedback.className = 'quiz-feedback show ' + (isRight ? 'good' : 'bad');
+        feedback.textContent = (isRight ? '✓ Correct. ' : '✗ Not quite — the highlighted answer is correct. ') + q.dataset.why;
+        if (answered === total) {
+          document.getElementById('quizScore').textContent = 'Final score: ' + correct + ' / ' + total +
+            (correct === total ? ' — flawless. Go build maps.' : ' — revisit the modules named in the feedback, then claim the win.');
+        }
+      }
+      opt.addEventListener('click', choose);
+      opt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); } });
+    });
+  });
+})();
+</script>
+</body>
+</html>

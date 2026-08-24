@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M12 — Structuring Projects So Agents Don't Get Lost + What's Next | Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Primary */
+  --bg-primary: #0A1628;
+  --bg-secondary: #111D33;
+  --bg-card: #162033;
+  --bg-surface: #1A2740;
+  /* Text */
+  --text-primary: #E8ECF1;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  /* Accent */
+  --accent-primary: #D4A843;
+  --accent-hover: #E5BC5A;
+  --accent-muted: rgba(212, 168, 67, 0.15);
+  /* Semantic */
+  --success: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --error: #F43F5E;
+  --error-bg: rgba(244, 63, 94, 0.1);
+  --info: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.1);
+  /* Track Signature Colors */
+  --track-overview: #D4A843;
+  --track-foundations: #6366F1;
+  --track-structural: #8B5CF6;
+  --track-narrative: #06B6D4;
+  --track-serving: #F97316;
+  --track-production: #22C55E;
+  --track-capstone: #D4A843;
+  --track-color: #22C55E; /* Track 5 — Production */
+  /* Code Editor */
+  --code-bg: #0D1117;
+  --code-border: #21262D;
+  --code-text: #C9D1D9;
+  --code-comment: #8B949E;
+  --code-keyword: #FF7B72;
+  --code-string: #A5D6FF;
+  --code-function: #D2A8FF;
+  --code-number: #79C0FF;
+  /* Animation */
+  --animation-speed: 1;
+  --transition-fast: 150ms;
+  --transition-normal: 300ms;
+  --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 3rem;
+}
+.sidebar-nav {
+  position: sticky;
+  top: 2rem;
+  height: calc(100vh - 4rem);
+  overflow-y: auto;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.sidebar-nav h3 { color: var(--track-color); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
+.sidebar-nav ul { list-style: none; }
+.sidebar-nav li { margin: 0.35rem 0; }
+.sidebar-nav a { color: var(--text-secondary); text-decoration: none; display: block; padding: 0.3rem 0.6rem; border-left: 2px solid transparent; border-radius: 0 6px 6px 0; transition: all var(--transition-fast); }
+.sidebar-nav a:hover { color: var(--text-primary); border-left-color: var(--track-color); background: var(--bg-card); }
+.sidebar-nav .nav-sub a { padding-left: 1.4rem; font-weight: 400; font-size: 0.8rem; }
+.content { max-width: 800px; min-width: 0; }
+.section { margin-bottom: 4rem; }
+.subsection { margin-bottom: 2.5rem; }
+h1, h2, h3, h4 { font-family: 'Bricolage Grotesque', sans-serif; }
+h1 { font-weight: 700; font-size: 2rem; line-height: 1.25; margin-bottom: 0.5rem; }
+h2 { font-weight: 700; font-size: 1.5rem; margin: 2.5rem 0 1rem; padding-top: 0.5rem; border-top: 1px solid var(--code-border); }
+h3 { font-weight: 600; font-size: 1.25rem; margin: 1.75rem 0 0.75rem; }
+h4 { font-weight: 600; font-size: 1.05rem; margin: 1.25rem 0 0.5rem; color: var(--text-secondary); }
+p { margin: 0 0 1rem; }
+strong { font-weight: 600; }
+ul, ol { margin: 0 0 1rem 1.4rem; }
+li { margin-bottom: 0.4rem; }
+a { color: var(--accent-primary); }
+/* Header */
+.course-header { grid-column: 1 / -1; margin-bottom: 1rem; }
+.course-kicker { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 0.9rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.course-kicker .track-name { color: var(--track-color); }
+.header-meta { display: flex; flex-wrap: wrap; gap: 1.25rem; color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.75rem; }
+.header-meta span strong { color: var(--text-primary); }
+.progress-bar { height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; margin: 1rem 0; }
+.progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--track-color), var(--accent-primary)); border-radius: 2px; transition: width var(--transition-slow); }
+.progress-label { font-size: 0.8rem; color: var(--text-muted); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; }
+/* Boxes */
+.analogy-box, .tech-def-box, .callout {
+  border-radius: 0 8px 8px 0;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  border-left: 4px solid;
+}
+.analogy-box { background: var(--accent-muted); border-left-color: var(--accent-primary); }
+.analogy-box::before { content: '💡 Everyday Analogy'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--accent-primary); display: block; margin-bottom: 0.5rem; }
+.tech-def-box { background: var(--info-bg); border-left-color: var(--info); }
+.tech-def-box::before { content: '📐 Technical Definition'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--info); display: block; margin-bottom: 0.5rem; }
+.callout .box-label { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: 0.5rem; }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-info { background: var(--info-bg); border-left-color: var(--info); }
+.callout-info .box-label { color: var(--info); }
+.callout-checkpoint { background: var(--success-bg); border-left-color: var(--success); }
+.callout-checkpoint .box-label { color: var(--success); }
+.callout p:last-child, .analogy-box p:last-child, .tech-def-box p:last-child { margin-bottom: 0; }
+/* Code */
+.code-block { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 10px; margin: 1.25rem 0; overflow: hidden; }
+.code-block-header { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; background: var(--bg-secondary); border-bottom: 1px solid var(--code-border); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); }
+.copy-btn { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; padding: 0.25rem 0.7rem; border-radius: 6px; cursor: pointer; transition: all var(--transition-fast); }
+.copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.code-block pre { padding: 1rem 1.25rem; overflow-x: auto; }
+.code-block code { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; color: var(--code-text); }
+code.inline { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 5px; padding: 0.1rem 0.4rem; color: var(--code-string); white-space: nowrap; }
+.tok-c { color: var(--code-comment); font-style: italic; }
+.tok-k { color: var(--code-keyword); }
+.tok-s { color: var(--code-string); }
+.tok-f { color: var(--code-function); }
+.tok-n { color: var(--code-number); }
+/* Tables */
+.table-wrap { overflow-x: auto; margin: 1.25rem 0; }
+table.data { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+table.data th, table.data td { border: 1px solid var(--code-border); padding: 0.6rem 0.9rem; text-align: left; vertical-align: top; }
+table.data th { background: var(--bg-secondary); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; color: var(--text-primary); }
+table.data td { background: var(--bg-card); color: var(--text-secondary); }
+table.data td strong { color: var(--text-primary); }
+/* Tooltip */
+.term-tooltip { position: relative; color: var(--accent-primary); cursor: help; border-bottom: 1px dashed var(--accent-primary); }
+.term-tooltip .tooltip-content { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--accent-primary); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--text-primary); width: 280px; opacity: 0; pointer-events: none; transition: opacity var(--transition-fast); z-index: 10; font-style: normal; line-height: 1.5; }
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+/* Animation container */
+.animation-container { background: var(--bg-secondary); border: 1px solid var(--code-border); border-radius: 12px; padding: 2rem; margin: 2rem 0; position: relative; min-height: 300px; }
+.anim-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--track-color); margin-bottom: 1rem; }
+.animation-controls { display: flex; gap: 0.5rem; position: absolute; bottom: 1rem; right: 1rem; }
+.animation-controls button { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-primary); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all var(--transition-fast); }
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.anim-caption { font-size: 0.85rem; color: var(--text-muted); min-height: 2.4em; margin-top: 1rem; max-width: 85%; }
+/* CONTEXT_BUDGET animation */
+.budget-track { background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 8px; height: 44px; display: flex; overflow: hidden; margin: 0.6rem 0; }
+.budget-seg { height: 100%; width: 0; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #08111f; font-weight: 600; white-space: nowrap; overflow: hidden; transition: width 700ms ease; }
+.budget-label { font-family: 'Bricolage Grotesque', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-top: 0.8rem; }
+.budget-scale { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--text-muted); }
+/* PATTERN_PICKER animation */
+.picker-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.5rem 1.2rem; align-items: center; }
+.picker-node { background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 8px; padding: 0.5rem 0.8rem; font-size: 0.8rem; color: var(--text-secondary); transition: all var(--transition-normal); }
+.picker-node.symptom { text-align: right; }
+.picker-node.pattern { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; color: var(--text-primary); }
+.picker-arrow { color: var(--text-muted); font-size: 1rem; opacity: 0.35; transition: all var(--transition-normal); }
+.picker-node.lit { border-color: var(--track-color); color: var(--text-primary); box-shadow: 0 0 12px rgba(34,197,94,0.25); }
+.picker-arrow.lit { opacity: 1; color: var(--track-color); }
+/* ROADMAP animation */
+.roadmap { position: relative; height: 210px; margin-top: 1rem; }
+.roadmap-line { position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: var(--code-border); }
+.roadmap-now { position: absolute; top: 12%; bottom: 12%; width: 2px; background: var(--accent-primary); opacity: 0.65; }
+.roadmap-now::after { content: 'today'; position: absolute; top: -1.2em; left: -1.1em; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--accent-primary); }
+.roadmap-ev { position: absolute; width: 150px; font-size: 0.72rem; color: var(--text-secondary); opacity: 0; transform: translateY(8px); transition: all 500ms ease; }
+.roadmap-ev .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--track-color); margin-bottom: 0.3rem; }
+.roadmap-ev.future .dot { background: transparent; border: 2px dashed var(--text-muted); }
+.roadmap-ev.on { opacity: 1; transform: translateY(0); }
+.roadmap-ev strong { color: var(--text-primary); display: block; font-size: 0.72rem; }
+.roadmap-zone { position: absolute; top: 8%; bottom: 8%; border-left: 1px dashed var(--text-muted); opacity: 0.5; }
+.roadmap-zone span { position: absolute; bottom: -1.4em; left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--text-muted); }
+/* Quiz */
+.quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.quiz-question h4 { margin-top: 0; color: var(--text-primary); }
+.quiz-option { padding: 0.75rem 1rem; margin: 0.5rem 0; border: 1px solid var(--code-border); border-radius: 8px; cursor: pointer; transition: all var(--transition-fast); font-size: 1rem; }
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-option[aria-disabled="true"] { cursor: default; }
+.quiz-feedback { margin-top: 0.75rem; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; display: none; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); color: var(--success); }
+.quiz-feedback.bad { background: var(--error-bg); color: var(--error); }
+.quiz-score { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--accent-primary); margin-top: 1rem; }
+/* Summary cheat sheet */
+.cheat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin: 1.25rem 0; }
+.cheat-card { background: var(--bg-card); border: 1px solid var(--code-border); border-left: 3px solid var(--track-color); border-radius: 10px; padding: 1rem 1.2rem; font-size: 0.9rem; color: var(--text-secondary); }
+.cheat-card strong { color: var(--text-primary); font-family: 'Bricolage Grotesque', sans-serif; display: block; margin-bottom: 0.3rem; }
+/* Module nav */
+.module-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; border-top: 1px solid var(--code-border); padding-top: 1.5rem; }
+.module-nav a { flex: 1; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 10px; padding: 1rem 1.25rem; text-decoration: none; color: var(--text-primary); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; transition: all var(--transition-fast); }
+.module-nav a:hover { border-color: var(--track-color); }
+.module-nav .dir { display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.module-nav .next { text-align: right; }
+/* Bridge */
+.bridge { font-style: italic; color: var(--text-secondary); border-left: 3px solid var(--track-color); padding: 0.5rem 1.25rem; margin: 1.75rem 0; }
+/* Responsive */
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; padding: 1rem; }
+  .sidebar-nav { position: fixed; bottom: 0; left: 0; right: 0; top: auto; height: auto; z-index: 100; background: var(--bg-secondary); border-top: 1px solid var(--code-border); padding: 0.5rem 1rem; }
+  .sidebar-nav ul { display: flex; gap: 0.25rem; overflow-x: auto; }
+  .sidebar-nav .nav-sub { display: none; }
+  .sidebar-nav h3 { display: none; }
+  .sidebar-nav a { white-space: nowrap; }
+  .content { padding-bottom: 4rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+
+<header class="course-header">
+  <div class="course-kicker">Knowledge Graphs for AI Agents · <span class="track-name">Track 5 — Production</span></div>
+  <h1>M12 — Structuring Projects So Agents Don't Get Lost <span style="color:var(--text-muted)">+ What's Next</span></h1>
+  <div class="progress-bar" role="progressbar" aria-valuenow="13" aria-valuemin="1" aria-valuemax="14" aria-label="Course progress: module 13 of 14"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label">Module 13 of 14</div>
+  <div class="header-meta">
+    <span>⏱ <strong>~45 minutes</strong></span>
+    <span>📶 <strong>Intermediate</strong></span>
+    <span>🔗 Prerequisites: <strong>M11 (Drift, Staleness &amp; Observability)</strong></span>
+  </div>
+</header>
+
+<nav class="sidebar-nav" aria-label="Module sections">
+  <h3>On this page</h3>
+  <ul>
+    <li><a href="#objectives">Objectives</a></li>
+    <li><a href="#root-problem">The Root Problem</a></li>
+    <li><a href="#patterns">The Six Patterns</a></li>
+    <li class="nav-sub"><a href="#pattern-1">1 · Layered CLAUDE.md</a></li>
+    <li class="nav-sub"><a href="#pattern-2">2 · Skills</a></li>
+    <li class="nav-sub"><a href="#pattern-3">3 · Subagents</a></li>
+    <li class="nav-sub"><a href="#pattern-4">4 · Deny rules</a></li>
+    <li class="nav-sub"><a href="#pattern-5">5 · Sparse worktrees</a></li>
+    <li class="nav-sub"><a href="#pattern-6">6 · Code intelligence</a></li>
+    <li><a href="#which-pattern">Which Pattern When</a></li>
+    <li><a href="#combined">The Combined Effect</a></li>
+    <li><a href="#whats-next">What's Next</a></li>
+    <li><a href="#exercise">Hands-On Exercise</a></li>
+    <li><a href="#quiz">Knowledge Check</a></li>
+    <li><a href="#summary">Summary</a></li>
+    <li><a href="#references">References</a></li>
+  </ul>
+</nav>
+
+<main class="content">
+
+<section class="section" id="objectives">
+  <h2 id="objectives-h">Learning Objectives</h2>
+  <p>Everything so far in this course was tooling: extractors, bundles, servers, gates. This closing module is about the <em>human-side</em> discipline that makes any of it work — how you structure a project so an agent finds the right context without drowning in the wrong context. By the end you will be able to:</p>
+  <ul>
+    <li>Explain why agent performance degrades as the context window fills, with real token arithmetic</li>
+    <li>Apply the six structuring patterns: layered CLAUDE.md files, skills, subagents, permission deny rules, sparse worktrees, and code-intelligence plugins</li>
+    <li>Choose the right pattern from an observed symptom, not from fashion</li>
+    <li>Connect these manual patterns to the automated graph tools from Tracks 2–4 — they are the same principle at two levels of automation</li>
+    <li>Evaluate the next generation of knowledge-graph tooling (OKF v0.2, trust systems, org-scale serving) with the skeptical toolkit this course gave you</li>
+  </ul>
+</section>
+
+<section class="section" id="root-problem">
+  <h2 id="root-problem-h">The Root Problem: Context Windows Fill Fast</h2>
+
+  <p>Here is the story this module — and honestly, this whole course — grew out of. A developer asks their coding agent to fix a session-timeout bug in authentication middleware. The fix is three lines. But before the agent gets there, it reads the entire logging system, the database migration history, half the API endpoints, and — for no discernible reason — the Terraform configs. The developer hits Escape at file 147.</p>
+
+  <p>The problem was not the model. The problem was the project structure: every convention, every build command, and every architectural decision had been dumped into one 340-line root <code class="inline">CLAUDE.md</code> file. The agent dutifully read all of it at startup, then spent the rest of its context budget exploring code that had nothing to do with authentication. That is what happens when you treat an AI agent like a junior developer who needs the full company handbook before fixing a typo. It doesn't. It needs <strong>the right context at the right time</strong>, not everything at once.</p>
+
+  <div class="tech-def-box">
+    <p>A <span class="term-tooltip" tabindex="0">context window<span class="tooltip-content">The maximum amount of text (measured in tokens) a model can consider at once — the prompt, every file it has read, every command output, and its own responses all share this budget.</span></span> is the model's entire working memory for a session. A typical agent context holds around <strong>200,000 tokens</strong>, and a <span class="term-tooltip" tabindex="0">token<span class="tooltip-content">The unit models read text in — roughly 4 characters of English on average. "authentication" is about 3 tokens; a 500-line source file is about 2,000.</span></span> is roughly 4 characters of text. Everything counts against it: every message you send, every file the agent reads, every command output, every instruction file loaded at startup, and every memory note.</p>
+  </div>
+
+  <p>Do the arithmetic and the problem stops being abstract. A 340-line root CLAUDE.md costs about <strong>1,200 tokens</strong> — loaded every single session, relevant or not. Reading one 500-line file costs about <strong>2,000 tokens</strong>. Exploring with grep and find adds more. In a large codebase you can burn through <strong>50,000 tokens before the agent writes a single line of code</strong>. And the damage is not just budgetary: as the context fills, the model's performance degrades. It starts forgetting earlier instructions, re-reads files it already saw, and makes mistakes it would not make with a clean context.</p>
+
+  <p>The solution is <em>not</em> a bigger context window. Bigger windows fill too — they just take longer, and they cost more per query while doing it. The solution is keeping irrelevant content out in the first place.</p>
+
+  <div class="animation-container" id="anim-budget" role="img" aria-label="Animated stacked bar showing what fills a 200,000-token context window before any code is written, and how the layered setup shrinks each segment.">
+    <div class="anim-title">CONTEXT_BUDGET — what fills 200K tokens before any code gets written</div>
+    <div class="budget-label" id="budget-label-top">Naive setup: one giant CLAUDE.md, raw exploration</div>
+    <div class="budget-track" id="budget-naive"></div>
+    <div class="budget-scale"><span>0</span><span>50K</span><span>100K</span><span>150K</span><span>200K</span></div>
+    <div class="budget-label">Structured setup: layered files, skills, subagents, deny rules</div>
+    <div class="budget-track" id="budget-structured"></div>
+    <div class="budget-scale"><span>0</span><span>50K</span><span>100K</span><span>150K</span><span>200K</span></div>
+    <p class="anim-caption" id="budget-caption">Press play to fill the bars.</p>
+    <div class="animation-controls">
+      <button type="button" aria-label="Play animation" data-anim="budget" data-act="play">▶</button>
+      <button type="button" aria-label="Pause animation" data-anim="budget" data-act="pause">⏸</button>
+      <button type="button" aria-label="Restart animation" data-anim="budget" data-act="restart">↻</button>
+    </div>
+  </div>
+
+  <div class="callout callout-why">
+    <span class="box-label">✅ Why It Matters</span>
+    <p>The before/after from the real case that opens this module: <strong>147 file reads, 3 failed attempts, 35 minutes</strong> versus <strong>~4 file reads in the main context, 1 successful attempt, 6 minutes</strong>. Same model, same bug, same three-line fix. The only variable was project structure. Every pattern below is one slice of that difference.</p>
+  </div>
+
+  <p class="bridge">You have seen this exact disease before — in M00 it was called the exploration tax, and Tracks 2–4 built machinery to cure it. This module is the manual, no-tooling-required version of the same cure. Keep that in mind as you read: each pattern is progressive disclosure, done by hand.</p>
+</section>
+
+<section class="section" id="patterns">
+  <h2 id="patterns-h">The Six Patterns</h2>
+
+  <h3 id="pattern-1">Pattern 1 — Layered CLAUDE.md files, not one giant root file</h3>
+
+  <div class="analogy-box">
+    <p><strong>Before</strong> a well-run restaurant opens, nobody hands every new dishwasher the full corporate operations binder — franchise accounting, marketing calendars, the recipe archive — and says "read this first." <strong>The pain</strong> is obvious: the dishwasher spends the shift reading about ad budgets, retains none of it, and still doesn't know where the detergent is. <strong>The mapping</strong>: a single root CLAUDE.md is the corporate binder. Layered CLAUDE.md files are the laminated one-page station guides — the dish station gets dish-station instructions, the grill gets grill instructions, and the two-paragraph company-wide rules ("wash hands, clock in") live in one small shared sheet everyone reads.</p>
+  </div>
+
+  <p>The mechanism that makes this work: the agent loads CLAUDE.md files <strong>from your current working directory up to the repository root</strong> at session start. Start the agent from a subdirectory and it loads that subdirectory's CLAUDE.md plus every parent's, up to the root — and nothing from sibling directories. That lookup path is the whole trick. Instead of one root file with everything, you split:</p>
+
+  <div class="code-block"><div class="code-block-header"><span>monorepo layout — one CLAUDE.md per package</span><button type="button" class="copy-btn">Copy</button></div><pre><code>monorepo/
+  CLAUDE.md                  <span class="tok-c"># repository-wide rules only (~40 lines)</span>
+  packages/
+    api/
+      CLAUDE.md              <span class="tok-c"># API-specific conventions</span>
+      .claude/skills/
+      src/
+    web/
+      CLAUDE.md              <span class="tok-c"># frontend-specific conventions</span>
+      .claude/skills/
+      src/
+    shared/
+      CLAUDE.md              <span class="tok-c"># shared library conventions</span>
+      src/</code></pre></div>
+
+  <p>Let's build the actual pair for orderflow, our running example. First the root file. Notice what it contains — structure and conventions that apply <em>everywhere</em> — and what it pointedly does not contain: nothing about FastAPI, nothing about the event bus, nothing any single service owns.</p>
+
+  <div class="code-block"><div class="code-block-header"><span>CLAUDE.md (orderflow root — repo-wide facts only)</span><button type="button" class="copy-btn">Copy</button></div><pre><code><span class="tok-k"># Repository Structure</span>
+This is a small monorepo with three services under services/:
+- services/billing: FastAPI billing API (invoices, payment webhooks)
+- services/orders: order lifecycle, orders_fact writes, WAU metric
+- services/notifications: event consumers
+Shared code lives in shared/ (auth, db pool, event bus).
+Run commands from the repo root; tests with `pytest`.
+
+<span class="tok-k"># Commit Conventions</span>
+- Prefix commits with the service name: "billing: fix webhook idempotency"
+- One commit per logical change; run tests before committing
+- The knowledge/ bundle is refreshed by the post-commit hook — do not edit
+  generated Dependencies sections by hand (see M08)</code></pre></div>
+
+  <p>And the billing service's own file, which only ever loads when you start the agent inside <code class="inline">services/billing/</code>:</p>
+
+  <div class="code-block"><div class="code-block-header"><span>services/billing/CLAUDE.md — stack specifics, loaded on demand</span><button type="button" class="copy-btn">Copy</button></div><pre><code><span class="tok-k"># Billing Service</span>
+FastAPI app in app.py. Domain logic in invoice.py, webhook handling in webhooks.py.
+
+<span class="tok-k">## Commands</span>
+- Run tests: `pytest services/billing`
+- Run dev server: `uvicorn services.billing.app:app --reload` (port 8001)
+
+<span class="tok-k">## Code Patterns</span>
+- Every route verifies auth via shared.auth.verify_token — never inline JWT logic
+- State changes publish events via shared.events.publish; consumers must stay isolated
+- Raise WebhookError for bad payloads; app.py maps it to HTTP 400</code></pre></div>
+
+  <p>The result in the original case: the agent loads <strong>80 lines of instructions instead of 340</strong>, and the authentication bug fix reads <strong>12 files instead of 147</strong> — before any of the other patterns are even applied. Use this pattern the moment you catch yourself scrolling past irrelevant sections of your root file, or when a teammate asks why the API instructions mention frontend conventions.</p>
+
+  <h3 id="pattern-2">Pattern 2 — Skills for on-demand knowledge</h3>
+
+  <p>Even a well-layered CLAUDE.md starts bloating, and the bloat always has the same shape: <em>procedures</em>. Testing patterns. Deploy checklists. Debugging runbooks. These are not facts the agent needs every session — they are instructions it needs when, and only when, a task calls for them. Loading a deploy checklist to fix a typo is the handbook problem all over again, one layer down.</p>
+
+  <div class="tech-def-box">
+    <p>A <span class="term-tooltip" tabindex="0">skill<span class="tooltip-content">A markdown file under .claude/skills/ with a name and description in frontmatter. The agent loads it only when the description matches the task, or when invoked explicitly as a slash command.</span></span> is a markdown file under <code class="inline">.claude/skills/</code> that loads <strong>on demand</strong>. The frontmatter's <code class="inline">description</code> tells the agent when the skill is relevant; the body carries the actual content. It can also be invoked explicitly as a slash command for repeatable workflows. Startup cost when the task doesn't match: zero tokens.</p>
+  </div>
+
+  <p>Here is the canonical example — testing patterns moved out of an API package's CLAUDE.md into a skill:</p>
+
+  <div class="code-block"><div class="code-block-header"><span>.claude/skills/api-testing/SKILL.md</span><button type="button" class="copy-btn">Copy</button></div><pre><code>---
+<span class="tok-f">name:</span> <span class="tok-s">api-testing</span>
+<span class="tok-f">description:</span> <span class="tok-s">Testing patterns for the API package. Use when writing or
+  modifying tests in packages/api/.</span>
+---
+<span class="tok-k">## Test Structure</span>
+Tests are in `src/__tests__/` mirroring the `src/` directory structure.
+
+<span class="tok-k">## Running Tests</span>
+- All tests: `npm test`
+- Single file: `npm test -- src/__tests__/routes/users.test.ts`
+
+<span class="tok-k">## Patterns</span>
+- Use `supertest` for HTTP assertions, not raw fetch
+- Always wrap database tests in a transaction that rolls back
+- Mock external services in `src/__tests__/mocks/`</code></pre></div>
+
+  <p>Now the behavior splits exactly the way you want: ask the agent to <em>"write tests for the auth middleware"</em> and it loads the skill, sees the transaction-rollback rule, and follows it. Ask it to <em>"fix the session timeout bug"</em> and the skill never loads, because testing isn't relevant. A skill invoked explicitly — say <code class="inline">/fix-pr-comments</code> — can hold a whole workflow: read PR review comments, apply the changes, run tests, push. The entire procedure lives in the skill, consuming zero context in the sessions that don't use it.</p>
+
+  <div class="callout callout-info">
+    <span class="box-label">📌 The placement rule</span>
+    <p>If it's a <strong>fact the agent needs every session</strong> (repo layout, commit format, "never inline JWT logic"), it goes in CLAUDE.md. If it's a <strong>procedure or reference material</strong> (how to run the test suite's watch mode, the deploy checklist), it becomes a skill. When a CLAUDE.md section has grown into a checklist, that's the signal it wants to be a skill.</p>
+  </div>
+
+  <h3 id="pattern-3">Pattern 3 — Subagents for isolated exploration</h3>
+
+  <p>Layered files and skills control what loads at startup. But exploration <em>during</em> the session still pollutes the context: ask "how does authentication work?" and the agent traces the login flow, session storage, token refresh, and logout — forty file reads whose contents sit in the main context forever after, long after the question is answered.</p>
+
+  <p>A <span class="term-tooltip" tabindex="0">subagent<span class="tooltip-content">A worker agent with its own separate context window. It performs a delegated task (like exploration) and returns only a summary to the main conversation; everything it read stays in its context and is discarded.</span></span> fixes this with the same isolation trick an OS uses for processes: it runs in its <strong>own context window</strong>, does the messy exploration there, and returns only a summary. The forty file reads happen — they just happen somewhere disposable. The main conversation receives a clean two-hundred-word explanation instead of forty files of raw content. You invoke it by asking:</p>
+
+  <div class="code-block"><div class="code-block-header"><span>prompt — delegate exploration to a subagent</span><button type="button" class="copy-btn">Copy</button></div><pre><code>Use a subagent to investigate how our authentication system handles
+session timeout and token refresh. Report back what files are involved
+and how the flow works.</code></pre></div>
+
+  <p>The second classic use is review: after the agent implements something, a subagent reviews the diff <em>with fresh eyes</em> — it sees only the change, not the implementation reasoning that produced it, which is exactly the bias you want a reviewer not to have.</p>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ The caveat that bites</span>
+    <p><strong>Subagent summaries lose detail.</strong> A summary that says "timeout logic is in the auth middleware" has dropped the line number your main agent now needs, so it may re-read a file the subagent already saw. That's usually still a bargain — one targeted re-read versus forty speculative reads — but don't expect exact line numbers or verbatim snippets to survive the summary boundary. If you need them, say so in the delegation prompt.</p>
+  </div>
+
+  <h3 id="pattern-4">Pattern 4 — Block reads of generated and vendored code</h3>
+
+  <p>Agents respect <code class="inline">.gitignore</code> by default, so <code class="inline">node_modules/</code> and <code class="inline">dist/</code> stay out of searches. But plenty of generated or vendored code is <em>checked in</em>: compiled protobuf definitions, vendored SDKs, generated GraphQL types. A search for "GraphQL resolvers" happily returns the 8,000-line generated schema, and the agent happily reads it — thousands of tokens of machine-written noise that answer nothing.</p>
+
+  <p>Permission <strong>deny rules</strong> make those files unreadable at the tool level:</p>
+
+  <div class="code-block"><div class="code-block-header"><span>.claude/settings.json — deny reads of generated code</span><button type="button" class="copy-btn">Copy</button></div><pre><code>{
+  <span class="tok-s">"permissions"</span>: {
+    <span class="tok-s">"deny"</span>: [
+      <span class="tok-s">"Read(./**/dist/**)"</span>,
+      <span class="tok-s">"Read(./**/build/**)"</span>,
+      <span class="tok-s">"Read(./**/*.generated.*)"</span>,
+      <span class="tok-s">"Read(./vendor/**)"</span>
+    ]
+  }
+}</code></pre></div>
+
+  <p>Now the search result still appears, but the Read tool returns permission denied — and the agent typically responds by asking where the source files are, which is exactly the redirect you wanted. Verify the current syntax against the docs for your agent version; the shape of the idea is stable even where the config keys evolve.</p>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ The tradeoff</span>
+    <p>Deny rules also block <strong>your own explicit requests</strong>. Ask the agent to "read src/schema.generated.ts" and it can't — you'll need to temporarily remove the rule. That is the price of a rule the agent can't talk itself around, and most days it's worth paying.</p>
+  </div>
+
+  <h3 id="pattern-5">Pattern 5 — Sparse worktrees for faster checkouts</h3>
+
+  <p>Agents can create <span class="term-tooltip" tabindex="0">git worktrees<span class="tooltip-content">Additional working directories attached to the same repository, letting parallel work happen on different branches without re-cloning.</span></span> for parallel or isolated work — and by default each worktree checks out the <em>entire</em> repository. In a monorepo that's pure waste: an API bugfix worktree does not need the frontend, the mobile app, or the data pipelines on disk.</p>
+
+  <p>Git's <span class="term-tooltip" tabindex="0">sparse-checkout<span class="tooltip-content">A git feature (2.25+) that writes only chosen directories to disk while keeping the rest in the index — a partial working copy of a full repository.</span></span> feature writes only chosen directories to disk, and a <code class="inline">worktree.sparsePaths</code> setting applies it to every worktree the agent creates:</p>
+
+  <div class="code-block"><div class="code-block-header"><span>packages/api/.claude/settings.json — sparse worktrees</span><button type="button" class="copy-btn">Copy</button></div><pre><code>{
+  <span class="tok-s">"worktree"</span>: {
+    <span class="tok-s">"sparsePaths"</span>: [
+      <span class="tok-s">".claude"</span>,
+      <span class="tok-s">"packages/api"</span>,
+      <span class="tok-s">"packages/shared"</span>
+    ]
+  }
+}</code></pre></div>
+
+  <p>Worktrees now contain only <code class="inline">.claude/</code>, the API package, its shared dependency, and root-level files. They're faster to create, smaller on disk, and — the context benefit — there is physically less repository for the agent to wander into. If the agent tries to read a file that isn't checked out, git errors and the agent asks what's available. Requires git 2.25 or newer (<code class="inline">git --version</code> to check). Reach for this when checkouts take more than ten seconds or you're spawning many parallel worktrees.</p>
+
+  <h3 id="pattern-6">Pattern 6 — Code intelligence plugins instead of file scanning</h3>
+
+  <p>The last pattern attacks the most common exploration query of all: <em>"where is this defined, and who uses it?"</em> Answered by scanning, that costs many grep calls plus reading every candidate file. Answered by a <span class="term-tooltip" tabindex="0">language server<span class="tooltip-content">A background process (LSP — Language Server Protocol) that maintains a live semantic index of a codebase: definitions, references, types. Editors use it for go-to-definition; agents can too.</span></span>, it costs one query:</p>
+
+  <div class="code-block"><div class="code-block-header"><span>install the LSP plugin, then ask</span><button type="button" class="copy-btn">Copy</button></div><pre><code>/plugin install typescript-lsp@claude-plugins-official
+
+<span class="tok-c"># "where is refreshAuthToken used?" now returns, instantly:</span>
+src/middleware/auth.ts:47
+src/routes/users.ts:103
+src/__tests__/auth.test.ts:22</code></pre></div>
+
+  <p><strong>Zero file reads.</strong> Exact file-and-line answers from the language server's live index. The plugin also surfaces type errors immediately after edits — no separate compile step — so mistakes get caught at edit time instead of test time. This pairs beautifully with Pattern 4: deny rules block the noise, code intelligence removes the need to scan what remains.</p>
+
+  <p class="bridge">If that "one query instead of N file reads" shape feels familiar, it should — it is exactly what the MCP graph server did in M09, with one difference: the LSP indexes <em>live semantics</em> for the language it serves, while your graph server indexes <em>whole-repo structure</em> plus docs plus narrative. They are complements, not rivals.</p>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"A bigger context window makes all this unnecessary."</strong> — No. Bigger windows fill too, degrade the same way as they fill, and cost more while doing it. Selection beats capacity; that has been true in every module of this course.</p>
+    <p><strong>"More instructions in CLAUDE.md = better-behaved agent."</strong> — Usually the opposite. Instructions compete for attention; 340 lines of everything means nothing stands out. The 40-line root file outperformed it.</p>
+    <p><strong>"Subagents are slower, so they waste resources."</strong> — The forty reads happen either way. The question is whether their bulk poisons your main context for the rest of the session. Isolation is the savings, not the latency.</p>
+    <p><strong>"Deny rules are redundant with .gitignore."</strong> — .gitignore only covers <em>untracked</em> junk. Checked-in generated code (protobuf stubs, generated types, vendored SDKs) sails straight past it; deny rules are the only fence.</p>
+  </div>
+</section>
+
+<section class="section" id="which-pattern">
+  <h2 id="which-pattern-h">Which Pattern When</h2>
+  <p>None of this is doctrine — a 50-file single-repo project needs almost none of it. The patterns pay off when a codebase outgrows any single person's head. Match the symptom you actually observe to the pattern that treats it:</p>
+
+  <div class="animation-container" id="anim-picker" role="img" aria-label="Animated flowchart matching six observed symptoms to the six structuring patterns.">
+    <div class="anim-title">PATTERN_PICKER — symptom → pattern</div>
+    <div class="picker-grid" id="picker-grid">
+      <div class="picker-node symptom" id="ps1">You scroll past irrelevant sections of your root CLAUDE.md</div><div class="picker-arrow" id="pa1">→</div><div class="picker-node pattern" id="pp1">1 · Layered CLAUDE.md</div>
+      <div class="picker-node symptom" id="ps2">A CLAUDE.md section has grown into a checklist; you keep pasting the same instructions</div><div class="picker-arrow" id="pa2">→</div><div class="picker-node pattern" id="pp2">2 · Skills</div>
+      <div class="picker-node symptom" id="ps3">"Investigate X" answers arrive with 30 files of baggage; reviews feel biased</div><div class="picker-arrow" id="pa3">→</div><div class="picker-node pattern" id="pp3">3 · Subagents</div>
+      <div class="picker-node symptom" id="ps4">The agent keeps reading generated or vendored code despite .gitignore</div><div class="picker-arrow" id="pa4">→</div><div class="picker-node pattern" id="pp4">4 · Deny rules</div>
+      <div class="picker-node symptom" id="ps5">Monorepo checkouts take &gt;10s; you spawn many parallel worktrees</div><div class="picker-arrow" id="pa5">→</div><div class="picker-node pattern" id="pp5">5 · Sparse worktrees</div>
+      <div class="picker-node symptom" id="ps6">Typed language, and the agent spends more time finding definitions than writing code</div><div class="picker-arrow" id="pa6">→</div><div class="picker-node pattern" id="pp6">6 · Code intelligence</div>
+    </div>
+    <p class="anim-caption" id="picker-caption">Press play to walk the pairs.</p>
+    <div class="animation-controls">
+      <button type="button" aria-label="Play animation" data-anim="picker" data-act="play">▶</button>
+      <button type="button" aria-label="Pause animation" data-anim="picker" data-act="pause">⏸</button>
+      <button type="button" aria-label="Restart animation" data-anim="picker" data-act="restart">↻</button>
+    </div>
+  </div>
+
+  <p>The goal is not to apply every pattern blindly. It's to recognize when context is getting cluttered — and reach for the one pattern that cleans up the specific clutter you've got.</p>
+</section>
+
+<section class="section" id="combined">
+  <h2 id="combined-h">The Combined Effect — and the Course Connection</h2>
+  <p>Run the opening story again with all six patterns in place. The developer starts the agent from <code class="inline">packages/api/</code>. It loads the 40-line root file plus the 50-line API file — 90 lines, not 340. Asked to fix the session-timeout bug, it dispatches a <em>subagent</em> to investigate the auth flow; twenty files get read in that disposable context, and the summary comes back: <em>timeout logic in src/middleware/auth.ts line 47, wrong comparison operator</em>. The main agent reads that one file, fixes the bug, writes a test (the api-testing skill loads now, because now it's relevant), runs it, and stops.</p>
+
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th></th><th>Before</th><th>After</th></tr></thead>
+    <tbody>
+      <tr><td><strong>File reads in main context</strong></td><td>147</td><td>~4</td></tr>
+      <tr><td><strong>Attempts</strong></td><td>3 failed, then success</td><td>1</td></tr>
+      <tr><td><strong>Wall-clock</strong></td><td>35 minutes</td><td>6 minutes</td></tr>
+      <tr><td><strong>Startup instruction load</strong></td><td>340 lines every session</td><td>~90 lines, task-relevant</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Now step back, because this is the point of putting this module at the end of a knowledge-graph course. Every one of these patterns is <strong>progressive disclosure done by hand</strong>. Layered CLAUDE.md files are a manual <code class="inline">index.md</code> hierarchy — read the level you're at, nothing else. Skills are concept files that load on demand. Subagents are the orchestrator-routes-to-a-scoped-reader pattern from M09. Deny rules are a hand-maintained <code class="inline">.graphifyignore</code>. Code intelligence is a live structural graph, scoped to one language.</p>
+  <p>The graph tools from Tracks 2–4 automate exactly this discipline: Graphify builds the map so nobody hand-writes it; OKF's index.md formalizes the layered-entry-point idea; the MCP server makes "one query instead of forty reads" a tool call instead of a delegation prompt. If you ever work in an environment where you can't install any of that tooling — you can still get most of the benefit with a text editor and these six habits. And if you <em>can</em> install the tooling, these habits are what make it actually pay off, because a perfectly-indexed repo behind a 340-line instruction file is still half-blind.</p>
+</section>
+
+<section class="section" id="whats-next">
+  <h2 id="whats-next-h">What's Next — the Road Ahead for the Ecosystem</h2>
+  <p>You are finishing this course roughly ninety days into this ecosystem's existence. Karpathy's LLM-wiki post, Graphify's launch, OKF v0.1, the integration toolkits, the first scrutiny wave — all of it happened inside one spring-to-summer window in 2026. So the honest closing move is not a victory lap; it's a map of what is genuinely unsettled, and the toolkit for judging whatever ships next.</p>
+
+  <div class="animation-container" id="anim-roadmap" role="img" aria-label="Animated timeline of the ecosystem's past 90 days extending into a future zone marked unproven, showing OKF v0.2 directions.">
+    <div class="anim-title">ROADMAP — 90 days behind, unproven road ahead</div>
+    <div class="roadmap" id="roadmap">
+      <div class="roadmap-line"></div>
+      <div class="roadmap-now" style="left:56%"></div>
+      <div class="roadmap-zone" style="left:56%; right:0"><span>unproven territory →</span></div>
+      <div class="roadmap-ev" style="left:0%; top:8%"><div class="dot"></div><strong>Apr 2026</strong>Karpathy's LLM-Wiki post; Graphify launches 48h later</div>
+      <div class="roadmap-ev" style="left:16%; top:58%"><div class="dot"></div><strong>Jun 12</strong>Google ships OKF v0.1 — one page, one required field</div>
+      <div class="roadmap-ev" style="left:31%; top:8%"><div class="dot"></div><strong>Jul 1</strong>Graphify↔OKF toolkit; 71.5x claim</div>
+      <div class="roadmap-ev" style="left:43%; top:58%"><div class="dot"></div><strong>Jul–Aug</strong>Scrutiny wave: 6.8–49x replications; silent-hook postmortems</div>
+      <div class="roadmap-ev future" style="left:60%; top:8%"><div class="dot"></div><strong>OKF v0.2</strong>provenance, verification, freshness as first-class fields</div>
+      <div class="roadmap-ev future" style="left:74%; top:58%"><div class="dot"></div><strong>Trust systems</strong>content hashing, tombstones, freshness gates as spec, not habit</div>
+      <div class="roadmap-ev future" style="left:87%; top:8%"><div class="dot"></div><strong>Org scale</strong>okf-server: REST/GraphQL over multi-repo graphs; LSP serving</div>
+    </div>
+    <p class="anim-caption" id="roadmap-caption">Press play to walk the timeline.</p>
+    <div class="animation-controls">
+      <button type="button" aria-label="Play animation" data-anim="roadmap" data-act="play">▶</button>
+      <button type="button" aria-label="Pause animation" data-anim="roadmap" data-act="pause">⏸</button>
+      <button type="button" aria-label="Restart animation" data-anim="roadmap" data-act="restart">↻</button>
+    </div>
+  </div>
+
+  <h3 id="v02">OKF v0.2: from format to trust system</h3>
+  <p>v0.1 deliberately standardized almost nothing: one required field, lenient consumers, no enforcement. The announced v0.2 direction adds what production teams discovered they were missing the hard way — <strong>provenance</strong> (who or what wrote this concept, from which sources), <strong>verification</strong> (has a human or a checker attested it), and <strong>freshness</strong> (is this claim current) as first-class representations. Notice that this is exactly the M11 story arriving in the spec itself: your repository and identity systems will still have to decide what counts as verified, but the format will at least have a place to write the answer down. The surrounding trust-system work — content hashing to detect tampering, tombstones so deleted concepts don't silently resurrect, freshness gates as a spec-level concept rather than a CI habit — is where the serious engineering attention is moving.</p>
+
+  <h3 id="org-scale">Serving at organization scale</h3>
+  <p>Everything you built in this course served <em>one repo to one agent</em>. The next frontier is org-wide: <code class="inline">okf-server</code>-style projects putting a REST + GraphQL API over multi-repository knowledge graphs, LSP-server modes so any editor can consume the graph (hover, go-to-definition, find-references backed by the bundle), interactive visualizers, and continuous indexing across hundreds of repos. The design questions are the ones you already know how to ask: who rebuilds, how staleness is detected, and whose lint gates a bundle before other teams' agents trust it — the same M08/M11 questions with more zeros.</p>
+
+  <h3 id="watch-list">The ecosystem watch list</h3>
+  <ul>
+    <li><strong>Gbrain</strong> — open-source agent-memory infrastructure (released by Y Combinator CEO Garry Tan): embeds saved context and retrieves by semantic similarity — "cases where similar decisions were made in the past." A vector layer purpose-built for agent memory rather than document search; watch how it pairs with OKF bundles.</li>
+    <li><strong>Kiso</strong> — a publishing engine that compiles an OKF bundle into a static site: HTML for humans, plus auto-generated <code class="inline">llms.txt</code> and sitemap for crawler-style agents, designed to run in CI on every merge so the published bundle never lags the source.</li>
+    <li><strong>ai-context-hooks</strong> — the interesting contrarian bet: instead of serving organized knowledge, it gives agents a path <em>back to the pre-knowledge context</em> — the meeting notes, chat threads, doubts, and unfinished discussions that existed before anyone wrote a concept file. OKF is the format after knowledge is organized; a context hook is the entry point before that happens.</li>
+  </ul>
+
+  <h3 id="open-problems">Open problems nobody has solved yet</h3>
+  <p>Three gaps deserve to be named plainly. First, <strong>there is no type registry</strong>: OKF's one required field is producer-defined and unvalidated, so multi-team bundles drift ("API Endpoint" here, "Route" there) with nothing but local lint rules holding the line. Second, <strong>links are untyped and unenforced</strong>: a cross-reference is a Markdown link whose meaning lives in surrounding prose, which caps how much formal graph reasoning — automated dependency traversal, provable impact analysis — an agent can safely do compared to an RDF/OWL-style knowledge graph with typed, validated edges. Whether the ecosystem grows typed links or decides prose-plus-leniency was the right trade is genuinely undecided. Third, <strong>there are no long-running production case studies</strong>: the spec is months old, and nobody has operated a thousand-file bundle under forty-commits-a-day load for a year. Every maintenance-cost claim you read, including this course's, extrapolates.</p>
+
+  <h3 id="evaluate">How to evaluate whatever ships next</h3>
+  <p>New tools in this space will arrive monthly. You now own a two-part evaluation kit. Part one, the <strong>M05 comparison axes</strong>: storage substrate (database vs Markdown), sync model (watchers vs hooks vs manual), provenance labeling (does it distinguish extracted from inferred?), local vs cloud, query surface (CLI / MCP / slash command), and multimodal reach. Part two, the <strong>M11 24-hour test</strong>: ask the vendor — or yourself — <em>"how would I detect, within 24 hours, that this thing's index has gone stale?"</em> If the answer isn't specific and mechanical, you're looking at a demo that hasn't failed yet. And always read the BENCHMARKS.md the way M04 taught you: vendor ceiling case vs replicated range, and what corpus topology the headline number quietly assumes.</p>
+</section>
+
+<section class="section" id="exercise">
+  <h2 id="exercise-h">Hands-On Exercise — Structure orderflow for Agents</h2>
+  <p><strong>What you'll build:</strong> the full six-pattern setup on the orderflow sample repo. <strong>Time:</strong> 25–35 minutes. <strong>Prerequisites:</strong> the labs environment from <code class="inline">labs/SETUP.md</code>; orderflow at <code class="inline">labs/sample-project/</code>.</p>
+
+  <h4>Step 1 — Write the layered CLAUDE.md pair</h4>
+  <p><em>What &amp; why:</em> the root file carries repo-wide facts; the billing file carries billing facts. Create <code class="inline">labs/sample-project/CLAUDE.md</code> and <code class="inline">labs/sample-project/services/billing/CLAUDE.md</code> using the two examples from Pattern 1 above (copy buttons provided).</p>
+  <p><em>Check:</em> root file under 25 lines, billing file mentions nothing about orders or notifications.</p>
+  <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p>Start your agent from <code class="inline">services/billing/</code> and ask "what are this repo's commit conventions and this service's error-handling pattern?" — it should answer both without reading any source files, because both facts are in the loaded instruction files.</p></div>
+
+  <h4>Step 2 — Move a procedure into a skill</h4>
+  <p><em>What &amp; why:</em> the bundle-maintenance procedure from M08 is a procedure, not a fact. Create <code class="inline">.claude/skills/bundle-maintenance/SKILL.md</code>:</p>
+  <div class="code-block"><div class="code-block-header"><span>.claude/skills/bundle-maintenance/SKILL.md</span><button type="button" class="copy-btn">Copy</button></div><pre><code>---
+<span class="tok-f">name:</span> <span class="tok-s">bundle-maintenance</span>
+<span class="tok-f">description:</span> <span class="tok-s">How to refresh and lint the orderflow OKF bundle. Use when
+  editing files under knowledge/ or when the post-commit hook fails.</span>
+---
+<span class="tok-k">## Refresh</span>
+python ../M08-enrichment-hook/solution/refresh_concepts.py .
+
+<span class="tok-k">## Lint (hard gate — never publish on failure)</span>
+python ../M06-okf-authoring/solution/validate.py knowledge
+
+<span class="tok-k">## Rules</span>
+- Never hand-edit generated Dependencies sections
+- Every refresh appends to log.md; check it in the same commit</code></pre></div>
+  <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p>Ask the agent to "refresh the knowledge bundle" — it should load this skill and run the two commands, in order, and refuse to continue if lint fails.</p></div>
+
+  <h4>Step 3 — Add deny rules</h4>
+  <p><em>What &amp; why:</em> <code class="inline">graphify-out/</code> is generated; agents should query it via the MCP server (M09), never read it raw into context. Add to <code class="inline">labs/sample-project/.claude/settings.json</code>:</p>
+  <div class="code-block"><div class="code-block-header"><span>.claude/settings.json</span><button type="button" class="copy-btn">Copy</button></div><pre><code>{
+  <span class="tok-s">"permissions"</span>: {
+    <span class="tok-s">"deny"</span>: [
+      <span class="tok-s">"Read(./graphify-out/**)"</span>,
+      <span class="tok-s">"Read(./**/__pycache__/**)"</span>
+    ]
+  }
+}</code></pre></div>
+  <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p>Ask the agent to read <code class="inline">graphify-out/graph.json</code> directly — the read should be denied. Ask it "who calls decode_jwt?" with the M09 server registered — it should answer via one tool call. Noise fenced, signal served.</p></div>
+
+  <h4>Step 4 — Delegate one exploration</h4>
+  <p><em>What &amp; why:</em> practice the isolation habit. Ask: <em>"Use a subagent to investigate how a payment webhook becomes a customer notification in this repo. Report the files and the event topics involved."</em></p>
+  <div class="callout callout-checkpoint"><span class="box-label">✅ Checkpoint</span><p>The answer names <code class="inline">webhooks.py</code>, <code class="inline">events.py</code>, <code class="inline">worker.py</code> and the <code class="inline">payment.settled</code> topic — and your main conversation contains a summary, not five files of source.</p></div>
+
+  <p><em>Troubleshooting:</em> skill not loading → check the <code class="inline">description</code> mentions the trigger words you're using; deny rule ignored → confirm the settings.json path is inside the directory you started the agent from; subagent returns too little → ask for specific artifacts (file paths, topic names) in the delegation prompt.</p>
+  <p>🎉 <strong>Done:</strong> orderflow now has hand-built progressive disclosure wrapped around its automated graph. That combination — habits plus tooling — is the finished state this course has been building toward. The capstone assembles all of it end-to-end.</p>
+</section>
+
+<section class="section" id="quiz">
+  <h2 id="quiz-h">Knowledge Check</h2>
+  <p>Six questions. Click an answer to get immediate feedback.</p>
+
+  <div class="quiz-question" data-q="1">
+    <h4>1. Your API package's CLAUDE.md contains both "routes live in src/routes/" and a 30-line release checklist. What should move, and where?</h4>
+    <div class="quiz-option" data-correct="false">The routes fact — facts belong in skills so they load on demand</div>
+    <div class="quiz-option" data-correct="true">The release checklist — it's a procedure, so it belongs in a skill that loads only when releasing</div>
+    <div class="quiz-option" data-correct="false">Both should move to the root CLAUDE.md so every session sees them</div>
+    <div class="quiz-option" data-correct="false">Neither — CLAUDE.md files have no size cost</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="2">
+    <h4>2. What does subagent isolation actually preserve?</h4>
+    <div class="quiz-option" data-correct="false">Wall-clock time — the subagent reads files faster than the main agent</div>
+    <div class="quiz-option" data-correct="true">The main context — the exploration's 40 file reads stay in the subagent's disposable context; only a summary returns</div>
+    <div class="quiz-option" data-correct="false">Exact line numbers — summaries are guaranteed lossless</div>
+    <div class="quiz-option" data-correct="false">Token spend — the subagent's reads are free</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="3">
+    <h4>3. You add <code class="inline">Read(./**/*.generated.*)</code> to your deny rules. What's the tradeoff to remember?</h4>
+    <div class="quiz-option" data-correct="false">Generated files disappear from search results entirely</div>
+    <div class="quiz-option" data-correct="false">The rule only works for files also in .gitignore</div>
+    <div class="quiz-option" data-correct="true">Your own explicit "read that generated file" requests are blocked too — you must temporarily lift the rule</div>
+    <div class="quiz-option" data-correct="false">It slows every read by adding a permission check round-trip</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="4">
+    <h4>4. "The agent spends more time finding where <code class="inline">refreshAuthToken</code> is used than writing code, and this is a TypeScript repo." Which pattern treats this symptom directly?</h4>
+    <div class="quiz-option" data-correct="false">Sparse worktrees — less code on disk means fewer places to look</div>
+    <div class="quiz-option" data-correct="false">Layered CLAUDE.md — document the function's callers in the package file</div>
+    <div class="quiz-option" data-correct="true">A code-intelligence (LSP) plugin — usage queries return exact file:line answers with zero file reads</div>
+    <div class="quiz-option" data-correct="false">Deny rules — block reads of files that don't contain the function</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="5">
+    <h4>5. What does the announced OKF v0.2 direction add that v0.1 deliberately left out?</h4>
+    <div class="quiz-option" data-correct="false">A mandatory type registry that rejects unknown types</div>
+    <div class="quiz-option" data-correct="true">First-class representation of provenance, verification, and freshness — the trust properties production teams were bolting on by hand</div>
+    <div class="quiz-option" data-correct="false">A built-in vector search engine, replacing RAG</div>
+    <div class="quiz-option" data-correct="false">A binary storage format for faster parsing</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="6">
+    <h4>6. A new codebase-knowledge tool launches next month with a "60x token savings" headline. Per this course, what are the first two things you check?</h4>
+    <div class="quiz-option" data-correct="false">GitHub stars and whether it's written in Rust</div>
+    <div class="quiz-option" data-correct="true">The benchmark's corpus topology vs replicated ranges, and whether there's a specific mechanical answer to "how would I detect its index going stale within 24 hours"</div>
+    <div class="quiz-option" data-correct="false">Whether it supports more languages than Graphify</div>
+    <div class="quiz-option" data-correct="false">Whether the vendor offers enterprise support</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-score" id="quizScore" aria-live="polite"></div>
+</section>
+
+<section class="section" id="summary">
+  <h2 id="summary-h">Module Summary</h2>
+  <div class="cheat-grid">
+    <div class="cheat-card"><strong>The root problem</strong>~200K tokens fill fast: 340-line instruction files, exploratory reads, command output. Degradation follows. Selection beats capacity.</div>
+    <div class="cheat-card"><strong>1 · Layered CLAUDE.md</strong>Root = repo-wide facts (~40 lines). Per-package files load cwd→root. 340 lines → ~90 relevant ones.</div>
+    <div class="cheat-card"><strong>2 · Skills</strong>Facts every session → CLAUDE.md. Procedures &amp; references → .claude/skills/, loaded on demand or by slash command.</div>
+    <div class="cheat-card"><strong>3 · Subagents</strong>Exploration in a disposable context; summary returns. Caveat: summaries lose line-level detail.</div>
+    <div class="cheat-card"><strong>4 · Deny rules</strong>Block reads of checked-in generated/vendored code. Caveat: blocks your explicit reads too.</div>
+    <div class="cheat-card"><strong>5 · Sparse worktrees</strong>worktree.sparsePaths checks out only needed packages. git 2.25+.</div>
+    <div class="cheat-card"><strong>6 · Code intelligence</strong>LSP plugins answer definition/usage queries with zero file reads; surfaces type errors at edit time.</div>
+    <div class="cheat-card"><strong>The connection</strong>All six = progressive disclosure by hand. Graphify/OKF/MCP automate the same principle.</div>
+    <div class="cheat-card"><strong>What's next</strong>OKF v0.2: provenance, verification, freshness. Trust systems, org-scale serving. No type registry, untyped links, no long-run case studies yet.</div>
+    <div class="cheat-card"><strong>Your evaluation kit</strong>M05 comparison axes + M11's 24-hour staleness test + M04's benchmark skepticism.</div>
+  </div>
+  <h3 id="what-we-built">What we built</h3>
+  <p>orderflow now carries a layered CLAUDE.md pair, a bundle-maintenance skill, deny rules fencing off generated artifacts, and a demonstrated subagent-delegation habit — the manual context discipline wrapped around the automated graph stack from earlier tracks.</p>
+  <h3 id="next-preview">Next: the Capstone</h3>
+  <p>Everything converges. In the capstone you play platform engineer for orderflow and assemble the complete system — structural graph, OKF bundle, self-updating hook, MCP serving, CI freshness gate — measure it honestly, sabotage it deliberately, and answer the course's defining question in writing. It is the course in miniature, built by you.</p>
+</section>
+
+<section class="section" id="references">
+  <h2 id="references-h">References</h2>
+  <ul>
+    <li>Sarath S — <em>How I Structure Claude Code Projects So Agents Don't Get Lost in Large Codebases</em> (the six patterns and the 147-file story)</li>
+    <li>Claude Code documentation — memory &amp; CLAUDE.md files, skills, subagents, permissions, worktrees (verify config syntax for your version at code.claude.com/docs)</li>
+    <li>Udaykiran Estari — <em>From Self-Updating OKF Wiki to Production Trust System</em> (OKF v0.2 provenance/verification/freshness direction)</li>
+    <li>okf-rs roadmap — Phase 4 "Ecosystem": okf-server REST/GraphQL, LSP serving, org-scale indexing (github.com/jyjeanne/okf-rs)</li>
+    <li>Ecosystem watch list: Gbrain (agent memory), Kiso (OKF static-site publishing), ai-context-hooks (pre-knowledge context)</li>
+    <li>Google Cloud — Open Knowledge Format specification v0.1 (GoogleCloudPlatform/knowledge-catalog)</li>
+  </ul>
+  <div class="module-nav">
+    <a href="M11-drift-staleness-observability.html"><span class="dir">← Previous</span>M11 — Drift, Staleness &amp; Observability</a>
+    <a class="next" href="CAPSTONE-knowledge-pipeline.html"><span class="dir">Next →</span>Capstone — Build a Self-Updating Knowledge Graph Pipeline</a>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Progress bar */
+  requestAnimationFrame(function () {
+    document.getElementById('progressFill').style.width = (13 / 14 * 100).toFixed(1) + '%';
+  });
+
+  /* Copy buttons */
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.closest('.code-block').querySelector('pre');
+      var text = pre.textContent;
+      function done() { btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta); done();
+      }
+    });
+  });
+
+  /* Generic stepped animation engine */
+  function stepper(opts) {
+    var i = -1, timer = null, playing = false;
+    function apply(n) {
+      for (var k = 0; k <= n && k < opts.frames.length; k++) opts.frames[k]();
+      if (opts.caption && n >= 0 && n < opts.captions.length) opts.caption.textContent = opts.captions[n];
+    }
+    function tick() {
+      i++;
+      if (i >= opts.frames.length) { pause(); return; }
+      opts.frames[i]();
+      if (opts.caption && opts.captions[i]) opts.caption.textContent = opts.captions[i];
+    }
+    function play() {
+      if (playing) return;
+      if (i >= opts.frames.length - 1) restart();
+      playing = true;
+      timer = setInterval(tick, opts.interval || 1100);
+    }
+    function pause() { playing = false; if (timer) { clearInterval(timer); timer = null; } }
+    function restart() { pause(); i = -1; opts.reset(); if (opts.caption) opts.caption.textContent = 'Playing…'; play(); }
+    if (reduced) { opts.reset(); apply(opts.frames.length - 1); if (opts.caption) opts.caption.textContent = opts.captions[opts.captions.length - 1] || ''; return { play: function(){}, pause: function(){}, restart: function(){} }; }
+    return { play: play, pause: pause, restart: restart };
+  }
+
+  /* CONTEXT_BUDGET */
+  var naiveTrack = document.getElementById('budget-naive');
+  var structTrack = document.getElementById('budget-structured');
+  var naiveSegs = [
+    { label: 'CLAUDE.md 1.2K', pct: 1.5, color: '#F59E0B' },
+    { label: 'exploration reads 96K', pct: 48, color: '#F43F5E' },
+    { label: 'grep/find output 22K', pct: 11, color: '#FB7185' },
+    { label: 'generated-file noise 24K', pct: 12, color: '#9F1239' },
+    { label: 'left for reasoning 57K', pct: 27.5, color: '#10B981' }
+  ];
+  var structSegs = [
+    { label: 'layered CLAUDE.md 0.4K', pct: 1, color: '#F59E0B' },
+    { label: 'targeted reads 8K', pct: 4, color: '#F43F5E' },
+    { label: 'subagent summary 1K', pct: 1.5, color: '#FB7185' },
+    { label: 'skill (on demand) 1K', pct: 1.5, color: '#8B5CF6' },
+    { label: 'left for reasoning 184K', pct: 92, color: '#10B981' }
+  ];
+  function buildSegs(track, segs) {
+    track.innerHTML = '';
+    return segs.map(function (s) {
+      var d = document.createElement('div');
+      d.className = 'budget-seg'; d.style.background = s.color; d.title = s.label;
+      d.textContent = s.label;
+      track.appendChild(d);
+      return { el: d, pct: s.pct };
+    });
+  }
+  var naiveEls, structEls;
+  function budgetReset() { naiveEls = buildSegs(naiveTrack, naiveSegs); structEls = buildSegs(structTrack, structSegs); }
+  budgetReset();
+  var budgetCaption = document.getElementById('budget-caption');
+  var budgetFrames = [];
+  var budgetCaptions = [
+    'Startup: the 340-line CLAUDE.md loads every session (1,200 tokens) — the structured root file costs a third of that.',
+    'Exploration: 147 speculative file reads ≈ 96K tokens vs ~4 targeted reads after a subagent scouted in its own context.',
+    'Search output piles on — grep and find results are context too.',
+    'Checked-in generated files (the .generated.ts trap) burn tokens answering nothing; deny rules fence them off entirely.',
+    'What remains for actual reasoning: 57K vs 184K tokens. Same window, opposite outcomes.'
+  ];
+  [0,1,2,3,4].forEach(function (idx) {
+    budgetFrames.push(function () {
+      naiveEls[idx].el.style.width = naiveEls[idx].pct + '%';
+      structEls[idx].el.style.width = structEls[idx].pct + '%';
+    });
+  });
+  var budgetAnim = stepper({ frames: budgetFrames, captions: budgetCaptions, caption: budgetCaption, reset: budgetReset, interval: 1700 });
+
+  /* PATTERN_PICKER */
+  var pickerCaption = document.getElementById('picker-caption');
+  var pickerCaptions = [
+    'Scrolling past irrelevant instructions? Split the handbook: layered CLAUDE.md.',
+    'A section became a checklist? It wants to be a skill.',
+    'Investigations arrive with 30 files of baggage? Delegate to a subagent.',
+    'Generated code keeps getting read? Deny rules — .gitignore can\'t save checked-in files.',
+    'Slow, bloated checkouts? Sparse worktrees (git 2.25+).',
+    'Definition-hunting in a typed language? A code-intelligence plugin answers with zero reads.'
+  ];
+  function pickerReset() {
+    for (var n = 1; n <= 6; n++) {
+      ['ps','pa','pp'].forEach(function (p) { document.getElementById(p + n).classList.remove('lit'); });
+    }
+  }
+  var pickerFrames = [1,2,3,4,5,6].map(function (n) {
+    return function () {
+      pickerReset();
+      ['ps','pa','pp'].forEach(function (p) { document.getElementById(p + n).classList.add('lit'); });
+    };
+  });
+  var pickerAnim = stepper({ frames: pickerFrames, captions: pickerCaptions, caption: pickerCaption, reset: pickerReset, interval: 1900 });
+
+  /* ROADMAP */
+  var roadEvs = Array.prototype.slice.call(document.querySelectorAll('.roadmap-ev'));
+  var roadCaption = document.getElementById('roadmap-caption');
+  var roadCaptions = [
+    'April 2026: a Karpathy thought experiment becomes a shipping tool in 48 hours.',
+    'June 12: Google formalizes the substrate that had already won — Markdown, frontmatter, Git.',
+    'July 1: the layers connect — and the 71.5x ceiling number enters the bloodstream.',
+    'July–August: replications land at 6.8–49x; the silent-hook postmortems get written. Scrutiny is a feature.',
+    'v0.2 territory: provenance, verification, freshness move into the spec itself.',
+    'Trust systems: hashing, tombstones, gates — M11 as a standard, not a habit.',
+    'Org scale: multi-repo graphs behind REST/GraphQL and LSP. All of it — unproven. Bring your evaluation kit.'
+  ];
+  function roadReset() { roadEvs.forEach(function (ev) { ev.classList.remove('on'); }); }
+  var roadFrames = roadEvs.map(function (ev) { return function () { ev.classList.add('on'); }; });
+  var roadAnim = stepper({ frames: roadFrames, captions: roadCaptions, caption: roadCaption, reset: roadReset, interval: 1700 });
+
+  /* Control wiring */
+  var anims = { budget: budgetAnim, picker: pickerAnim, roadmap: roadAnim };
+  document.querySelectorAll('.animation-controls button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var a = anims[btn.getAttribute('data-anim')];
+      if (a) a[btn.getAttribute('data-act')]();
+    });
+  });
+
+  /* Quiz */
+  var answered = 0, correct = 0;
+  var total = document.querySelectorAll('.quiz-question').length;
+  document.querySelectorAll('.quiz-question').forEach(function (q) {
+    var feedback = q.querySelector('.quiz-feedback');
+    q.querySelectorAll('.quiz-option').forEach(function (opt) {
+      opt.setAttribute('tabindex', '0');
+      opt.setAttribute('role', 'button');
+      function choose() {
+        if (q.dataset.done) return;
+        q.dataset.done = '1';
+        answered++;
+        var isRight = opt.getAttribute('data-correct') === 'true';
+        if (isRight) correct++;
+        opt.classList.add(isRight ? 'correct' : 'incorrect');
+        q.querySelectorAll('.quiz-option').forEach(function (o) {
+          o.setAttribute('aria-disabled', 'true');
+          if (o.getAttribute('data-correct') === 'true') o.classList.add('correct');
+        });
+        feedback.className = 'quiz-feedback show ' + (isRight ? 'good' : 'bad');
+        feedback.textContent = isRight
+          ? '✓ Correct. ' + (q.dataset.why || '')
+          : '✗ Not quite — the highlighted answer is correct. ' + (q.dataset.why || '');
+        var score = document.getElementById('quizScore');
+        if (answered === total) score.textContent = 'Score: ' + correct + ' / ' + total + (correct === total ? ' — perfect. One module to go.' : ' — review the sections you missed, then head to the capstone.');
+      }
+      opt.addEventListener('click', choose);
+      opt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); } });
+    });
+  });
+  /* Per-question explanations */
+  var whys = {
+    '1': 'Facts every session → CLAUDE.md; procedures → skills. A checklist is a procedure.',
+    '2': 'The reads happen either way — isolation keeps their bulk out of the main context for the rest of the session.',
+    '3': 'Deny rules are absolute: they block the agent AND your explicit requests, until removed.',
+    '4': 'Definition/usage lookup is the LSP\'s exact job: one query, file:line answers, zero reads.',
+    '5': 'v0.1 was deliberately minimal; v0.2\'s announced direction is trust — provenance, verification, freshness as first-class.',
+    '6': 'Corpus topology + replicated ranges (M04/M05) and the 24-hour staleness test (M11) — the course\'s evaluation kit.'
+  };
+  document.querySelectorAll('.quiz-question').forEach(function (q) { q.dataset.why = whys[q.getAttribute('data-q')] || ''; });
+})();
+</script>
+</body>
+</html>

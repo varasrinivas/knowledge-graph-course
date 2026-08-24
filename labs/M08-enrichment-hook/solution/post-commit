@@ -1,0 +1,9 @@
+#!/bin/sh
+# orderflow enrichment hook — diff-scoped, loud on failure.
+# No nohup, no backgrounding, no silent skips (see M11 for why).
+set -e
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+python3 "$REPO_ROOT/../M08-enrichment-hook/solution/refresh_concepts.py" "$REPO_ROOT" || {
+    echo "[enrich] FAILED — bundle NOT updated. Fix before trusting the graph." >&2
+    exit 1
+}

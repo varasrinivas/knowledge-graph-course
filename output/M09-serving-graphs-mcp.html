@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M09 — Serving Graphs to Agents over MCP · Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-primary:#0A1628; --bg-secondary:#111D33; --bg-card:#162033; --bg-surface:#1A2740;
+  --text-primary:#E8ECF1; --text-secondary:#94A3B8; --text-muted:#64748B;
+  --accent-primary:#D4A843; --accent-hover:#E5BC5A; --accent-muted:rgba(212,168,67,0.15);
+  --success:#10B981; --success-bg:rgba(16,185,129,0.1);
+  --warning:#F59E0B; --warning-bg:rgba(245,158,11,0.1);
+  --error:#F43F5E; --error-bg:rgba(244,63,94,0.1);
+  --info:#3B82F6; --info-bg:rgba(59,130,246,0.1);
+  --track-overview:#D4A843; --track-foundations:#6366F1; --track-structural:#8B5CF6;
+  --track-narrative:#06B6D4; --track-serving:#F97316; --track-production:#22C55E; --track-capstone:#D4A843;
+  --track-color:var(--track-serving);
+  --code-bg:#0D1117; --code-border:#21262D; --code-text:#C9D1D9; --code-comment:#8B949E;
+  --code-keyword:#FF7B72; --code-string:#A5D6FF; --code-function:#D2A8FF; --code-number:#79C0FF;
+  --transition-fast:150ms; --transition-normal:300ms; --transition-slow:500ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg-primary);color:var(--text-primary);font-family:'Source Sans 3',sans-serif;font-size:1.05rem;line-height:1.7}
+h1,h2,h3,h4{font-family:'Bricolage Grotesque',sans-serif;line-height:1.25}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.5rem;font-weight:700;margin:0 0 1rem;padding-top:.5rem}
+h3{font-size:1.25rem;font-weight:600;margin:1.75rem 0 .75rem}
+p{margin:0 0 1rem}
+a{color:var(--accent-primary)}
+ul,ol{margin:0 0 1rem 1.5rem}
+li{margin-bottom:.4rem}
+strong{font-weight:600}
+code{font-family:'JetBrains Mono',monospace;font-size:.9rem;background:var(--bg-surface);padding:.1em .35em;border-radius:4px;color:var(--code-text)}
+.page-container{max-width:1200px;margin:0 auto;padding:2rem;display:grid;grid-template-columns:240px 1fr;gap:3rem}
+.sidebar-nav{position:sticky;top:2rem;height:calc(100vh - 4rem);overflow-y:auto;font-family:'Bricolage Grotesque',sans-serif;font-size:.85rem;font-weight:600}
+.sidebar-nav .nav-title{color:var(--track-color);text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;margin-bottom:.75rem}
+.sidebar-nav a{display:block;color:var(--text-secondary);text-decoration:none;padding:.35rem .6rem;border-left:2px solid var(--code-border);transition:all var(--transition-fast)}
+.sidebar-nav a:hover{color:var(--text-primary);border-left-color:var(--track-color)}
+.content{max-width:800px;min-width:0}
+.section{margin-bottom:4rem}
+.course-header{background:var(--bg-secondary);border:1px solid var(--code-border);border-radius:16px;padding:2rem;margin-bottom:3rem}
+.course-kicker{font-family:'Bricolage Grotesque',sans-serif;font-size:.8rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+.track-badge{display:inline-block;font-family:'Bricolage Grotesque',sans-serif;font-size:.78rem;font-weight:700;color:var(--track-color);border:1px solid var(--track-color);border-radius:999px;padding:.15rem .75rem;margin:.75rem 0}
+.header-meta{display:flex;flex-wrap:wrap;gap:1.25rem;color:var(--text-secondary);font-size:.9rem;margin-top:1rem}
+.progress-bar{height:4px;background:var(--bg-surface);border-radius:2px;overflow:hidden;margin:1rem 0 .35rem}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--track-color),var(--accent-primary));border-radius:2px;transition:width var(--transition-slow)}
+.progress-label{font-size:.8rem;color:var(--text-muted)}
+.objectives{background:var(--bg-card);border-radius:12px;padding:1.5rem}
+.objectives .skill{font-family:'Bricolage Grotesque',sans-serif;font-size:.78rem;font-weight:700;color:var(--track-color)}
+.analogy-box{background:var(--accent-muted);border-left:4px solid var(--accent-primary);border-radius:0 8px 8px 0;padding:1.5rem;margin:1.5rem 0}
+.analogy-box::before{content:'💡 Everyday Analogy';font-family:'Bricolage Grotesque',sans-serif;font-weight:700;color:var(--accent-primary);display:block;margin-bottom:.5rem}
+.tech-def-box{background:var(--info-bg);border-left:4px solid var(--info);border-radius:0 8px 8px 0;padding:1.5rem;margin:1.5rem 0}
+.tech-def-box::before{content:'📐 Technical Definition';font-family:'Bricolage Grotesque',sans-serif;font-weight:700;color:var(--info);display:block;margin-bottom:.5rem}
+.callout{border-left:4px solid;border-radius:0 8px 8px 0;padding:1.5rem;margin:1.5rem 0}
+.callout .box-label{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;display:block;margin-bottom:.5rem}
+.callout-warning{background:var(--warning-bg);border-left-color:var(--warning)}
+.callout-warning .box-label{color:var(--warning)}
+.callout-why{background:var(--success-bg);border-left-color:var(--success)}
+.callout-why .box-label{color:var(--success)}
+.callout-cost{background:var(--warning-bg);border-left-color:var(--accent-primary)}
+.callout-cost .box-label{color:var(--accent-primary)}
+.callout-security{background:var(--error-bg);border-left-color:var(--error)}
+.callout-security .box-label{color:var(--error)}
+.bridge{font-style:italic;color:var(--text-secondary);border-top:1px dashed var(--code-border);border-bottom:1px dashed var(--code-border);padding:.9rem 0;margin:2rem 0}
+.checkpoint{background:var(--success-bg);border:1px solid var(--success);border-radius:12px;padding:1.25rem 1.5rem;margin:1.5rem 0}
+.checkpoint .box-label{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;color:var(--success);display:block;margin-bottom:.5rem}
+.term-tooltip{position:relative;color:var(--accent-primary);cursor:help;border-bottom:1px dashed var(--accent-primary)}
+.term-tooltip .tooltip-content{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--accent-primary);border-radius:8px;padding:.75rem 1rem;font-size:.85rem;color:var(--text-primary);width:280px;opacity:0;pointer-events:none;transition:opacity var(--transition-fast);z-index:10;font-style:normal;font-weight:400;line-height:1.5}
+.term-tooltip:hover .tooltip-content,.term-tooltip:focus .tooltip-content{opacity:1}
+.code-wrap{background:var(--code-bg);border:1px solid var(--code-border);border-radius:10px;margin:1.25rem 0;position:relative;overflow:hidden}
+.code-wrap pre{padding:1.1rem 1.25rem;overflow-x:auto}
+.code-wrap code{background:none;padding:0;font-size:.85rem;line-height:1.6;color:var(--code-text);display:block;white-space:pre}
+.code-title{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text-muted);padding:.5rem 1.25rem;border-bottom:1px solid var(--code-border)}
+.copy-btn{position:absolute;top:.4rem;right:.5rem;background:var(--bg-card);border:1px solid var(--code-border);color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:.7rem;border-radius:6px;padding:.25rem .6rem;cursor:pointer;transition:all var(--transition-fast)}
+.copy-btn:hover{border-color:var(--accent-primary);color:var(--accent-primary)}
+.tok-c{color:var(--code-comment)} .tok-s{color:var(--code-string)} .tok-k{color:var(--code-keyword)} .tok-f{color:var(--code-function)} .tok-n{color:var(--code-number)}
+.code-tabs{display:flex;gap:0;border-bottom:2px solid var(--code-border);margin-top:1.25rem}
+.code-tab{padding:.5rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:.8rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-muted);transition:all var(--transition-fast);background:none;border-top:none;border-left:none;border-right:none}
+.code-tab.active{color:var(--accent-primary);border-bottom-color:var(--accent-primary)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.animation-container{background:var(--bg-secondary);border:1px solid var(--code-border);border-radius:12px;padding:2rem;margin:2rem 0;position:relative;min-height:300px}
+.anim-title{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:.85rem;color:var(--track-color);text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem}
+.animation-controls{display:flex;gap:.5rem;position:absolute;bottom:1rem;right:1rem}
+.animation-controls button{background:var(--bg-card);border:1px solid var(--code-border);color:var(--text-primary);width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all var(--transition-fast)}
+.animation-controls button:hover{border-color:var(--accent-primary);color:var(--accent-primary)}
+.anim-caption{font-size:.85rem;color:var(--text-secondary);min-height:2.4em;margin-top:1rem;padding-right:9rem}
+.quiz-question{background:var(--bg-card);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.quiz-question h3{margin-top:0}
+.quiz-option{padding:.75rem 1rem;margin:.5rem 0;border:1px solid var(--code-border);border-radius:8px;cursor:pointer;transition:all var(--transition-fast)}
+.quiz-option:hover{border-color:var(--accent-primary)}
+.quiz-option.correct{border-color:var(--success);background:var(--success-bg)}
+.quiz-option.incorrect{border-color:var(--error);background:var(--error-bg)}
+.quiz-feedback{margin-top:.75rem;padding:.75rem;border-radius:8px;font-size:.9rem;display:none}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:.92rem}
+th,td{border:1px solid var(--code-border);padding:.6rem .8rem;text-align:left;vertical-align:top}
+th{background:var(--bg-card);font-family:'Bricolage Grotesque',sans-serif;font-weight:600}
+.table-scroll{overflow-x:auto}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0}
+.summary-card{background:var(--bg-card);border:1px solid var(--code-border);border-radius:12px;padding:1.1rem 1.25rem}
+.summary-card h4{color:var(--track-color);font-size:.95rem;margin-bottom:.4rem}
+.summary-card p{font-size:.9rem;color:var(--text-secondary);margin:0}
+.next-prev{display:flex;justify-content:space-between;gap:1rem;margin-top:3rem}
+.next-prev a{flex:1;background:var(--bg-card);border:1px solid var(--code-border);border-radius:12px;padding:1rem 1.25rem;text-decoration:none;transition:border-color var(--transition-fast)}
+.next-prev a:hover{border-color:var(--track-color)}
+.next-prev .dir{font-size:.75rem;color:var(--text-muted);display:block;font-family:'Bricolage Grotesque',sans-serif}
+.step-block{border:1px solid var(--code-border);border-radius:12px;padding:1.5rem;margin:1.5rem 0;background:var(--bg-secondary)}
+.step-block h3{margin-top:0}
+/* ---- animation stages ---- */
+.anim-stage{position:relative;height:250px;overflow:hidden}
+.actor{position:absolute;background:var(--bg-card);border:1.5px solid var(--code-border);border-radius:10px;padding:.55rem .8rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text-primary);transition:all .5s ease;text-align:center}
+.actor.lit{border-color:var(--track-color);box-shadow:0 0 14px rgba(249,115,22,.35)}
+.msg{position:absolute;font-family:'JetBrains Mono',monospace;font-size:.68rem;background:var(--bg-surface);border:1px solid var(--code-border);border-radius:6px;padding:.25rem .5rem;opacity:0;transition:all .6s ease;white-space:nowrap;color:var(--text-secondary)}
+.msg.show{opacity:1}
+.msg.ok{border-color:var(--success);color:var(--success)}
+.msg.req{border-color:var(--info);color:#9cc3ff}
+.meter{position:absolute;width:120px;height:10px;background:var(--bg-surface);border-radius:5px;overflow:hidden;border:1px solid var(--code-border)}
+.meter i{display:block;height:100%;width:0;background:var(--success);transition:width .8s ease;border-radius:5px}
+.meter.hot i{background:var(--error)}
+.meter-label{position:absolute;font-size:.65rem;font-family:'JetBrains Mono',monospace;color:var(--text-muted)}
+.scale-beam{position:absolute;left:50%;top:110px;width:420px;height:6px;background:var(--bg-card);border:1px solid var(--code-border);border-radius:3px;transform:translateX(-50%) rotate(0deg);transition:transform 1s ease;transform-origin:center}
+.scale-post{position:absolute;left:50%;top:116px;width:8px;height:90px;background:var(--bg-card);border:1px solid var(--code-border);transform:translateX(-50%)}
+.pan{position:absolute;top:120px;width:150px;text-align:center;transition:all 1s ease}
+.pan .load{background:var(--bg-card);border:1.5px solid var(--code-border);border-radius:10px;padding:.5rem;font-family:'JetBrains Mono',monospace;font-size:.7rem}
+@media (max-width:900px){
+  .page-container{grid-template-columns:1fr;padding:1rem}
+  .sidebar-nav{position:static;height:auto;margin-bottom:1.5rem}
+  .summary-grid{grid-template-columns:1fr}
+  .anim-caption{padding-right:0}
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .actor,.msg,.meter i,.scale-beam,.pan,.progress-fill{transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+<nav class="sidebar-nav" aria-label="Module sections">
+  <div class="nav-title">M09 · Serving over MCP</div>
+  <a href="#objectives">Learning Objectives</a>
+  <a href="#last-mile">The Last Mile Problem</a>
+  <a href="#mcp-serving">MCP as the Serving Layer</a>
+  <a href="#tool-surface">The okf-mcp Tool Surface</a>
+  <a href="#registration">One-Line Registration</a>
+  <a href="#token-economics">Token Economics</a>
+  <a href="#progressive">Progressive Disclosure</a>
+  <a href="#cache-trap">The Startup-Cache Trap</a>
+  <a href="#walkthrough">Build a Graph MCP Server</a>
+  <a href="#hands-on">Hands-On Exercise</a>
+  <a href="#quiz">Knowledge Check</a>
+  <a href="#summary">Module Summary</a>
+  <a href="#references">References</a>
+</nav>
+<main class="content">
+
+<header class="course-header">
+  <div class="course-kicker">Knowledge Graphs for AI Agents</div>
+  <span class="track-badge">Track 4 — Serving &amp; Architecture</span>
+  <h1>M09 · Serving Graphs to Agents over MCP</h1>
+  <div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="14" aria-label="Course progress: module 10 of 14"><div class="progress-fill" style="width:71%"></div></div>
+  <div class="progress-label">Module 10 of 14</div>
+  <div class="header-meta">
+    <span>⏱ Estimated time: 60 minutes</span>
+    <span>📋 Prerequisites: M04 (a structural graph exists), M06–M08 (an OKF bundle exists)</span>
+    <span>🎚 Level: Advanced</span>
+  </div>
+</header>
+
+<section class="section" id="objectives">
+  <h2>Learning Objectives</h2>
+  <div class="objectives">
+    <p class="skill">SKILL LEVEL: ADVANCED</p>
+    <ul>
+      <li>Explain why a graph or bundle sitting on disk delivers zero value until it has a <em>serving layer</em>, and name the three serving options in use today.</li>
+      <li>Describe the okf-mcp tool surface (<code>search</code>, <code>graph_callers</code>, <code>graph_callees</code>, <code>graph_api</code>, <code>graph_cycles</code>, <code>graph_modules</code>, <code>graph_path</code>, <code>explore</code>) and justify why a composite tool exists.</li>
+      <li>Work the token arithmetic: reproduce the 6,000-token vs 15-token comparison and explain why per-query savings compound per-session.</li>
+      <li>Design progressive disclosure into an orchestrator — and explain why bolting a bundle onto a directory-dumping agent yields maintenance cost with no savings.</li>
+      <li>Build and register a minimal MCP server over <code>graph.json</code> with graceful misses, and state the startup-cache trap it inherits.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="last-mile">
+  <h2>The Last Mile Problem</h2>
+  <p>Take stock of where the course has left you. After Track 2 you can turn any repository into a structural graph — <code>graph.json</code>, communities, god nodes, provenance-tagged edges. After Track 3 you can curate an OKF bundle — concept files, cross-links, an enrichment pipeline keeping it honest. Both artifacts now sit in your repo.</p>
+  <p>And by themselves, they help <strong>nobody</strong>. An agent doesn't spontaneously know that <code>graphify-out/graph.json</code> exists, what its schema means, or that <code>knowledge/index.md</code> is the intended entry point. Knowledge that isn't <em>served</em> is knowledge that gets re-derived — which is the exact failure this course set out to kill in M00.</p>
+  <div class="analogy-box">
+    <p><strong>BEFORE:</strong> Imagine a city library that spent a fortune building a perfect card catalog — every book indexed, cross-referenced, up to date. Then they locked the catalog in the basement. Visitors still wander the stacks shelf by shelf, because from where they stand, the catalog might as well not exist.</p>
+    <p><strong>PAIN:</strong> The librarians keep paying to maintain the catalog — reindexing new arrivals, fixing cross-references — while every visitor pays the full cost of a shelf-by-shelf search anyway. Worst of both worlds: maintenance cost <em>and</em> search cost.</p>
+    <p><strong>MAPPING:</strong> Your graph.json is the catalog; your agent is the visitor. A <em>serving layer</em> is the front desk that puts the catalog in the visitor's hands the moment they walk in. In agent terms that front desk is a tool the agent can call — and the standard way to hand an agent a tool is MCP.</p>
+  </div>
+  <p>Three serving options exist in today's ecosystem, and you have already met all three in passing:</p>
+  <ul>
+    <li><strong>Slash-command skills</strong> — Graphify installs <code>/graphify</code> into 17 assistants. The skill injects graph context into the conversation on demand. Simple, but the agent gets whatever the skill decides to paste, not what it asks for.</li>
+    <li><strong>Pre-flight file reads</strong> — the OKF pattern from M07: the agent reads <code>index.md</code> before touching the repo, then follows links. No infrastructure at all; the "server" is the filesystem. Works beautifully <em>if</em> the orchestrator is built to do it (more on that below).</li>
+    <li><strong>MCP servers</strong> — <span class="term-tooltip" tabindex="0">MCP<span class="tooltip-content">Model Context Protocol: an open protocol where a client (the AI assistant) discovers and calls tools exposed by a server process, usually over stdio. Named JSON messages in, results out.</span></span> tools that answer structural questions directly: okf-mcp, CodeGraph's server, <code>python -m graphify.serve graphify-out/graph.json</code>. The agent asks a precise question and receives a precise answer.</li>
+  </ul>
+  <div class="callout-why callout">
+    <span class="box-label">✅ Why It Matters</span>
+    <p>The serving choice decides your token bill. A skill that pastes a 3,000-token report into every session costs 3,000 tokens whether or not the task needed it. An MCP tool that answers "who calls <code>decode_jwt</code>?" costs ~15 tokens and is only paid when asked. On a team running 50 agent sessions a day, that difference is not a rounding error — it is the difference between a context system people keep and one they turn off.</p>
+  </div>
+  <div class="bridge">You know <em>what</em> to serve (the graph, the bundle) and <em>why</em> serving matters. The rest of this module is the <em>how</em>: the protocol, the tool surface, the economics, and the one nasty trap that serving introduces.</div>
+</section>
+
+<section class="section" id="mcp-serving">
+  <h2>MCP as the Serving Layer</h2>
+  <p>You met MCP in the sibling course as "USB-C for AI tools." Here's the thirty-second refresher, because this module leans on the mechanics. When an assistant like Claude Code starts an MCP server, they exchange small JSON messages: the client says "what tools do you have?" (<code>tools/list</code>), the server replies with names and input schemas, and later the client says "run this tool with these inputs" (<code>tools/call</code>) and gets a result back. That message pattern is called <span class="term-tooltip" tabindex="0">JSON-RPC<span class="tooltip-content">A minimal convention for sending named method calls with parameters as JSON, and getting results back as JSON. No REST endpoints, no URLs — just method + params over a pipe.</span></span>, and for local tools it usually travels over <span class="term-tooltip" tabindex="0">stdio<span class="tooltip-content">Standard input/output — the server is a subprocess; the client writes requests to its stdin and reads responses from its stdout. No network, no ports, no auth to configure.</span></span> — the server is just a subprocess.</p>
+  <p>Why is this the right shape for a knowledge graph? Because a graph query is <em>exactly</em> a named method call with parameters. "Who calls <code>verify_token</code>?" is <code>graph_callers(symbol="verify_token")</code>. The answer is small, structured, and deterministic — the ideal payload for a tool result. Contrast that with the alternative the agent had before: run grep, open candidate files, read enough surrounding code to confirm which hits are real call sites. Every one of those reads enters the context window at the file's full size.</p>
+  <p>There's a second, quieter benefit: <strong>vendor neutrality</strong>. Because okf-mcp speaks plain MCP over stdio, it isn't tied to a single assistant. The same binary serves Claude Code, opencode, or any other MCP client — you point the client's stdio transport at the binary and a project root. No per-agent integration, no proprietary plugin format, no re-implementing graph queries per tool. Build the bundle once; every MCP-compatible agent in your toolchain gets the same structured access.</p>
+
+  <div class="animation-container" id="anim-handshake">
+    <div class="anim-title">Animation · MCP_HANDSHAKE — one question, one call</div>
+    <div class="anim-stage" aria-label="Animated diagram: an agent client and a graph server exchange initialize, tools/list, and tools/call messages">
+      <div class="actor" id="hs-agent" style="left:4%;top:20px;width:130px">🤖 Agent<br>(MCP client)</div>
+      <div class="actor" id="hs-server" style="right:4%;top:20px;width:150px">🗺 okf-mcp<br>(graph server)</div>
+      <div class="msg req" id="hs-m1" style="left:26%;top:40px">initialize →</div>
+      <div class="msg ok"  id="hs-m2" style="left:26%;top:75px">← capabilities</div>
+      <div class="msg req" id="hs-m3" style="left:26%;top:110px">tools/list →</div>
+      <div class="msg ok"  id="hs-m4" style="left:26%;top:145px">← search, graph_callers, graph_callees, explore…</div>
+      <div class="msg req" id="hs-m5" style="left:26%;top:180px">tools/call graph_callers("decode_jwt") →</div>
+      <div class="msg ok"  id="hs-m6" style="left:26%;top:215px">← ["shared.auth.verify_token"]  (~15 tokens)</div>
+    </div>
+    <div class="anim-caption" id="hs-cap">Press play: the whole exchange for a structural answer is three round trips — and only the last one happens per question.</div>
+    <div class="animation-controls">
+      <button data-anim="handshake" data-act="play" aria-label="Play MCP handshake animation">▶</button>
+      <button data-anim="handshake" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="handshake" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <div class="callout-warning callout">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"MCP servers are heavy infrastructure."</strong> — No. A stdio MCP server is a subprocess reading JSON from stdin. There is no port, no daemon, no deployment. The lab's server is ~120 lines of Python.</p>
+    <p><strong>"The agent reads graph.json through MCP."</strong> — No. The server reads graph.json <em>once</em> and answers <em>queries</em> about it. The whole point is that the raw artifact never enters the agent's context — only answers do.</p>
+    <p><strong>"MCP replaces the OKF bundle."</strong> — They serve different layers. MCP tools answer precise structural questions; the bundle's <code>index.md</code> gives narrative orientation. M10 assembles them into one stack.</p>
+  </div>
+</section>
+
+<section class="section" id="tool-surface">
+  <h2>The okf-mcp Tool Surface</h2>
+  <p>What tools should a graph server expose? okf-rs's MCP server, <code>okf-mcp</code>, is the cleanest reference design in the ecosystem, so we'll study its surface. It exposes the bundle's search plus the resolved call graph as eight tools:</p>
+  <div class="table-scroll"><table>
+    <tr><th>Tool</th><th>Question it answers</th><th>Typical payload</th></tr>
+    <tr><td><code>search</code></td><td>"Which concepts mention billing?"</td><td>Ranked concept list</td></tr>
+    <tr><td><code>graph_callers</code></td><td>"Who calls <code>verify_token</code>?"</td><td>One line of caller names</td></tr>
+    <tr><td><code>graph_callees</code></td><td>"What does <code>handle_payment_webhook</code> call?"</td><td>One line of callee names</td></tr>
+    <tr><td><code>graph_api</code></td><td>"What does this module expose publicly?"</td><td>Public symbol list</td></tr>
+    <tr><td><code>graph_cycles</code></td><td>"Are there dependency cycles here?"</td><td>Cycle paths, if any</td></tr>
+    <tr><td><code>graph_modules</code></td><td>"What modules exist and how do they group?"</td><td>Module inventory</td></tr>
+    <tr><td><code>graph_path</code></td><td>"How does <code>post_invoice</code> reach <code>decode_jwt</code>?"</td><td>The edge path between two symbols</td></tr>
+    <tr><td><code>explore</code></td><td>"Tell me everything structural about X"</td><td>Composite: see below</td></tr>
+  </table></div>
+  <p>The first seven are single-purpose lookups. The eighth deserves its own paragraphs, because it encodes a real lesson about agent ergonomics.</p>
+  <h3 id="explore-tool">Why a composite <code>explore</code> tool exists</h3>
+  <p>Watch an agent investigate a symbol with only the single-purpose tools: it calls <code>graph_callers</code>, then <code>graph_callees</code>, then <code>graph_api</code>, then maybe <code>graph_cycles</code> — four round trips, four tool-call overheads, four chances to lose the thread. Each call costs not just the answer's tokens but the <em>call scaffolding</em>: the tool invocation, the schema, the assistant's bookkeeping between calls.</p>
+  <p><code>explore(concept)</code> collapses that chain. One call returns the symbol's signature, description, callers, callees, <span class="term-tooltip" tabindex="0">blast radius<span class="tooltip-content">The count of symbols that transitively depend on this one — every function whose behavior could change if it changes. You computed it with BFS over the reverse index in M01.</span></span>, public-API membership, and cycle membership together. In okf-rs's own words, it is "one more step toward keeping an agent's token budget for reasoning rather than tool-call overhead."</p>
+  <p>That is a design principle worth generalizing: <strong>shape tools around the agent's actual investigation pattern, not around your data model</strong>. Your data model has separate indexes for callers and callees; the agent's question is "what is this thing and how dangerous is it to touch?" The composite tool answers the agent's question.</p>
+</section>
+
+<section class="section" id="registration">
+  <h2>One-Line Registration</h2>
+  <p>Registering a graph server with Claude Code is one line:</p>
+  <div class="code-wrap"><div class="code-title">shell — register okf-mcp with Claude Code</div><pre><code>claude mcp add okf-rs -- /path/to/okf-mcp /path/to/project</code></pre></div>
+  <p>Read the anatomy: everything after <code>--</code> is the command line Claude Code will run as a subprocess — the server binary and the project root it should serve. From then on, every session in that project sees the eight graph tools in its tool menu, next to Read and Bash. Graphify's equivalent is <code>python -m graphify.serve graphify-out/graph.json</code> wired the same way, and CodeGraph's installer configures its MCP integration automatically for whichever assistants it detects.</p>
+  <div class="checkpoint"><span class="box-label">🔎 What Just Happened?</span>
+    <p>You didn't deploy anything. You told the assistant: "when a session starts here, spawn this subprocess and talk JSON to it." The server loads graph.json into memory at startup, builds its indexes, and waits on stdin. That phrase — <em>at startup</em> — is loaded, and section <a href="#cache-trap">7</a> is about why.</p>
+  </div>
+</section>
+
+<section class="section" id="token-economics">
+  <h2>Token Economics: 6,000 vs 15</h2>
+  <p>Time to put real numbers on the value of serving, because this is where the marketing wars of 2026 were fought and where you must learn to read claims carefully.</p>
+  <p>Here is the honest worked example, from okf-rs's own codebase. The question: <em>"who calls <code>cmd_generate</code>?"</em> Answering it by hand means opening a 672-line, ~24&nbsp;KB file and reading enough of it to find the caller. At the usual rule of thumb (a token ≈ 4 characters), that read costs roughly <strong>6,000 tokens</strong>. The equivalent <code>graph_callers</code> call returns one line — about <strong>15 tokens</strong>. That is a ~400× reduction <em>for that single question</em>.</p>
+
+  <div class="animation-container" id="anim-scale">
+    <div class="anim-title">Animation · TOKEN_SCALE — what one answer weighs</div>
+    <div class="anim-stage" aria-label="Animated balance scale comparing a 24 kilobyte file read at six thousand tokens against a one-line MCP answer at fifteen tokens">
+      <div class="scale-post"></div>
+      <div class="scale-beam" id="sc-beam"></div>
+      <div class="pan" id="sc-left" style="left:12%">
+        <div class="load">📄 read shared file<br>672 lines · ~24 KB<br><strong id="sc-ltok">0 tokens</strong></div>
+      </div>
+      <div class="pan" id="sc-right" style="right:12%">
+        <div class="load">🗺 graph_callers()<br>one line<br><strong id="sc-rtok">0 tokens</strong></div>
+      </div>
+    </div>
+    <div class="anim-caption" id="sc-cap">Press play to weigh the two ways of answering "who calls cmd_generate?"</div>
+    <div class="animation-controls">
+      <button data-anim="scale" data-act="play" aria-label="Play token scale animation">▶</button>
+      <button data-anim="scale" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="scale" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <p>The gap compounds in two directions, and the distinction matters:</p>
+  <ul>
+    <li><strong>Per query.</strong> Every structural question — "what calls this?", "what does this module expose?", "is there a cycle?" — pays the same ratio, because the expensive part (parsing source, resolving the call graph) happened <em>once</em>, at generate time, instead of being re-paid on every question. You bought the map once; every lookup afterward is nearly free.</li>
+    <li><strong>Per session.</strong> Without a structured index, an agent re-opens the same large files repeatedly as its context window fills and gets <span class="term-tooltip" tabindex="0">compacted<span class="tooltip-content">When a long conversation approaches the context limit, older content is summarized or dropped. Files the agent read earlier vanish from context — and re-reading them costs their full size again.</span></span> — each reopen costs the file's full size again. With a graph server, the agent asks a targeted question and gets a targeted answer every time, so context usage stays roughly <em>flat</em> instead of growing with session length. In practice: longer sessions on large codebases before hitting limits, lower per-task cost, and fewer wrong assumptions from skimming irrelevant code.</li>
+  </ul>
+  <div class="callout-cost callout">
+    <span class="box-label">💰 The Honesty Rule, applied</span>
+    <p>Hold two numbers in your head at once. The <strong>per-query</strong> ratio (~400× on that one lookup) is real and reproducible — it's arithmetic. The <strong>session-level</strong> saving is a different quantity: it depends on corpus topology and task mix, and independent replications put it at <strong>6.8× (code-review tasks) to 49× (daily coding in 500+ file repos)</strong> — not the 71.5× ceiling case a vendor benchmark produced on a favorable 52-file corpus. If someone quotes you one number for "the" savings, they haven't told you which quantity they measured. You learned to make this distinction in M04; serving doesn't change it — it just moves where the savings are collected.</p>
+  </div>
+</section>
+
+<section class="section" id="progressive">
+  <h2>Progressive Disclosure as a Serving Strategy</h2>
+  <p>MCP serves the <em>structural</em> layer beautifully. The <em>narrative</em> layer — your OKF bundle — is usually served a different way: the agent reads its way in, starting at <code>index.md</code>. M06 introduced this as progressive disclosure; here it becomes an explicit serving strategy with a hard requirement attached.</p>
+  <p>The pattern: an <span class="term-tooltip" tabindex="0">orchestrator<span class="tooltip-content">The top-level agent that decomposes a task and dispatches sub-agents. It decides what context each sub-agent receives — which makes it the gatekeeper of the token budget.</span></span> reads the root <code>index.md</code> (a screenful of titles and one-liners), decides which concept files a given subtask actually needs, and loads <em>only those</em> into the sub-agent's context. Nobody pulls the whole bundle for a change that touches one service.</p>
+
+  <div class="animation-container" id="anim-route">
+    <div class="anim-title">Animation · ORCHESTRATOR_ROUTE — index first, then only what's needed</div>
+    <div class="anim-stage" aria-label="Animated diagram: an orchestrator reads index.md then dispatches two sub-agents, each loading a single concept file; a token meter barely moves">
+      <div class="actor" id="rt-orch" style="left:38%;top:8px;width:150px">🧭 Orchestrator</div>
+      <div class="actor" id="rt-index" style="left:40%;top:78px;width:120px">📇 index.md</div>
+      <div class="actor" id="rt-a" style="left:6%;top:150px;width:170px">🤖 sub-agent A<br><span id="rt-a-load" style="color:var(--text-muted)">waiting…</span></div>
+      <div class="actor" id="rt-b" style="right:6%;top:150px;width:170px">🤖 sub-agent B<br><span id="rt-b-load" style="color:var(--text-muted)">waiting…</span></div>
+      <div class="meter" id="rt-meter" style="left:6%;top:20px"><i id="rt-fill"></i></div>
+      <div class="meter-label" style="left:6%;top:36px">context spent: <span id="rt-tok">0</span> tokens</div>
+    </div>
+    <div class="anim-caption" id="rt-cap">Press play: the orchestrator reads the index (~300 tokens), then routes one concept file to each sub-agent. The bundle-dump alternative would spend the whole meter at once.</div>
+    <div class="animation-controls">
+      <button data-anim="route" data-act="play" aria-label="Play orchestrator routing animation">▶</button>
+      <button data-anim="route" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="route" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <p>Now the hard requirement, and it is the most-skipped sentence in every OKF explainer: <strong>progressive disclosure has to be designed into your orchestration layer, not assumed</strong>. The token-budget benefit of <code>index.md</code> only materializes if something is actually built to read the index first and load concept files selectively. Bolt an OKF bundle onto an agent that still dumps whole directories into context and you get the <em>maintenance cost without the savings</em> — you're paying the enrichment pipeline from M08 to curate files that arrive in context wholesale anyway, wedged between the very noise they were supposed to replace.</p>
+  <div class="callout-why callout">
+    <span class="box-label">✅ Why It Matters</span>
+    <p>Concretely: orderflow's full bundle is ~5 concept files at ~350 tokens each, plus the index at ~120. The disclosure path for a billing task costs 120 + 350 = <strong>~470 tokens</strong>. The dump path costs ~1,870 — every file, relevant or not. Scale those proportions to a 400-concept enterprise bundle and the dump path is a six-figure token bill per session that the disclosure path serves for under a thousand.</p>
+  </div>
+  <div class="bridge">Serving looks solved: MCP for structure, index-first reads for narrative. One trap remains, and it's the kind that produces confidently wrong answers rather than errors — which by now you know is the worst failure class in this field.</div>
+</section>
+
+<section class="section" id="cache-trap">
+  <h2>The Startup-Cache Trap</h2>
+  <p>Remember the loaded phrase from the registration section: the server loads graph.json <em>at startup</em>. Hold that next to a fact from M08: your enrichment hook regenerates graph.json <em>on every commit</em>. See the race?</p>
+  <p>MCP server processes are long-lived — the assistant spawns them once per session, or once and reuses them across sessions. Real-world graph MCP servers have been reported to cache graph.json at startup <strong>with no hot-reload</strong>. Commit code, watch the hook rebuild the graph on disk, ask the agent "who calls the function I just added?" — and the server answers from the graph it loaded twenty minutes ago. You have a <strong>fresh graph on disk and a stale graph in the agent's working memory, simultaneously, with no artifact anywhere that tells you the two have diverged</strong>.</p>
+  <p>Notice what kind of failure this is. Nothing errored. The rebuild succeeded. The server is healthy. Every individual component reports green — and the composed system lies. This is your first taste of the failure family that M11 dissects in full (silent hook failures, artifact desync, drift). For now, learn the two mitigations that belong to the serving layer:</p>
+  <ul>
+    <li><strong>Restart or hot-reload the MCP server after every regeneration.</strong> Don't assume a running process picks up a freshly written graph.json on its own — verify it, or bounce it. The lab's server prints its load timestamp to stderr precisely so you can check.</li>
+    <li><strong>Serve the graph's generation timestamp as part of every answer</strong> (or at least expose a <code>status</code> tool). An agent that can see "graph generated: 3 commits ago" can decide to fall back to reading files; an agent that can't is navigating with a map it has no way to date.</li>
+  </ul>
+  <div class="callout-warning callout">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"My hook rebuilds the graph, so my agent is always current."</strong> — The disk is current. The serving process is whatever it loaded at startup. Two different lifetimes, two different states.</p>
+    <p><strong>"The server would obviously notice the file changed."</strong> — Only if someone wrote that code. File-watching, mtime checks, and hot-reload are features, not defaults — and the reference implementations you'll meet in the wild often don't have them.</p>
+  </div>
+</section>
+
+<section class="section" id="walkthrough">
+  <h2>Code Walkthrough: A Minimal Graph MCP Server</h2>
+  <p>Let's build the server you'll complete in the lab: three tools over orderflow's graph.json — <code>graph_callers</code>, <code>graph_callees</code>, and composite <code>explore</code>. We'll walk it in four chunks, teacher-style. The full file lives in <code>labs/M09-mcp-graph-server/</code>.</p>
+
+  <h3 id="chunk1">Chunk 1 — load once, index twice</h3>
+  <p><strong>What:</strong> read graph.json and build two dictionaries: edges by target (the reverse index) and edges by source (the forward index). <strong>Why:</strong> every caller query is a reverse lookup, every callee query a forward lookup — building both up front makes each tool O(1) dictionary access instead of a scan. <strong>Gotcha:</strong> this is the startup cache from the previous section, in the flesh. The moment you write <code>load_graph()</code> and call it once, you have created the trap — note the comment marking it.</p>
+  <div class="code-tabs" role="tablist">
+    <button class="code-tab active" role="tab" data-target="c1-py">Python</button>
+    <button class="code-tab" role="tab" data-target="c1-js">Node.js</button>
+  </div>
+  <div class="tab-panel active" id="c1-py">
+  <div class="code-wrap"><div class="code-title">server.py — startup load and indexes</div><pre><code>import json, sys
+from collections import defaultdict, deque
+from pathlib import Path
+
+_graph = None
+_reverse: dict[str, list] = {}
+_forward: dict[str, list] = {}
+
+def load_graph() -> dict:
+    """Read graph.json and index it. Called ONCE at startup —
+    this is the cache the module warned you about."""
+    global _graph, _reverse, _forward
+    path = Path(__file__).parent / "graph.json"
+    if not path.exists():
+        raise FileNotFoundError(f"{path} missing — run the extractor first")
+    _graph = json.loads(path.read_text(encoding="utf-8"))
+    _reverse, _forward = defaultdict(list), defaultdict(list)
+    for edge in _graph["edges"]:
+        _reverse[edge["target"]].append(edge)
+        _forward[edge["source"]].append(edge)
+    print("graph loaded:", len(_graph["nodes"]), "nodes", file=sys.stderr)
+    return _graph</code></pre></div>
+  </div>
+  <div class="tab-panel" id="c1-js">
+  <div class="code-wrap"><div class="code-title">server.mjs — startup load and indexes</div><pre><code>import { readFileSync, existsSync } from "node:fs";
+
+let graph = null;
+const reverse = new Map(), forward = new Map();
+
+function loadGraph() {
+  // Called ONCE at startup — this is the cache the module warned about.
+  const path = new URL("./graph.json", import.meta.url);
+  if (!existsSync(path)) throw new Error("graph.json missing — run the extractor first");
+  graph = JSON.parse(readFileSync(path, "utf-8"));
+  for (const edge of graph.edges) {
+    if (!reverse.has(edge.target)) reverse.set(edge.target, []);
+    if (!forward.has(edge.source)) forward.set(edge.source, []);
+    reverse.get(edge.target).push(edge);
+    forward.get(edge.source).push(edge);
+  }
+  console.error("graph loaded:", graph.nodes.length, "nodes");
+  return graph;
+}</code></pre></div>
+  </div>
+
+  <h3 id="chunk2">Chunk 2 — resolve symbols, miss gracefully</h3>
+  <p><strong>What:</strong> map a bare name like <code>decode_jwt</code> to full node ids, and return a <em>helpful message</em> — not an exception — when nothing matches. <strong>Why:</strong> the agent needs a graceful miss so it can fall back to grep. A stack trace teaches the agent nothing; the string "not in graph — it may be external; try grep" is an instruction it can act on. <strong>Gotcha:</strong> a name can match multiple nodes (two services defining <code>execute</code>). Don't pick one silently — surface the ambiguity, exactly like the AMBIGUOUS provenance tag from M03.</p>
+  <div class="code-tabs" role="tablist">
+    <button class="code-tab active" role="tab" data-target="c2-py">Python</button>
+    <button class="code-tab" role="tab" data-target="c2-js">Node.js</button>
+  </div>
+  <div class="tab-panel active" id="c2-py">
+  <div class="code-wrap"><div class="code-title">server.py — resolution and the graceful miss</div><pre><code>def _resolve(symbol: str) -> list[dict]:
+    return [n for n in _graph["nodes"]
+            if n["id"].rsplit(".", 1)[-1] == symbol or n["id"] == symbol]
+
+def graph_callers(symbol: str) -> dict:
+    """Direct callers of a symbol, or a miss the agent can act on."""
+    nodes = _resolve(symbol)
+    if not nodes:
+        return {"error": f"symbol {symbol!r} not in graph — "
+                          "it may be external; try grep"}
+    callers = sorted({e["source"].split(":", 1)[1]
+                      for n in nodes for e in _reverse.get(n["id"], [])})
+    return {"symbol": symbol, "callers": callers,
+            "ambiguous": len(nodes) > 1}</code></pre></div>
+  </div>
+  <div class="tab-panel" id="c2-js">
+  <div class="code-wrap"><div class="code-title">server.mjs — resolution and the graceful miss</div><pre><code>const resolve = (symbol) =>
+  graph.nodes.filter(n =>
+    n.id.split(".").at(-1) === symbol || n.id === symbol);
+
+function graphCallers(symbol) {
+  const nodes = resolve(symbol);
+  if (nodes.length === 0)
+    return { error: `symbol '${symbol}' not in graph — it may be external; try grep` };
+  const callers = new Set();
+  for (const n of nodes)
+    for (const e of reverse.get(n.id) ?? []) callers.add(e.source.split(":")[1]);
+  return { symbol, callers: [...callers].sort(), ambiguous: nodes.length > 1 };
+}</code></pre></div>
+  </div>
+
+  <h3 id="chunk3">Chunk 3 — the composite explore</h3>
+  <p><strong>What:</strong> one tool that answers "what is this thing and how dangerous is it to touch?" — kind, location, callers, callees, and a BFS blast radius over the reverse index. <strong>Why:</strong> this is the M01 blast-radius algorithm, promoted from a lab exercise to a serving primitive; one call replaces a four-call chain. <strong>Gotcha:</strong> blast radius must walk the <em>reverse</em> index. Walking forward gives you what the symbol depends on, not what depends on it — the single most common bug in the lab.</p>
+  <div class="code-tabs" role="tablist">
+    <button class="code-tab active" role="tab" data-target="c3-py">Python</button>
+    <button class="code-tab" role="tab" data-target="c3-js">Node.js</button>
+  </div>
+  <div class="tab-panel active" id="c3-py">
+  <div class="code-wrap"><div class="code-title">server.py — explore</div><pre><code>def explore(symbol: str) -> dict:
+    nodes = _resolve(symbol)
+    if not nodes:
+        return {"error": f"symbol {symbol!r} not in graph — "
+                          "it may be external; try grep"}
+    node = nodes[0]
+    seen = {n["id"] for n in nodes}
+    queue = deque(seen)
+    while queue:                       # BFS over the REVERSE index
+        for edge in _reverse.get(queue.popleft(), []):
+            if edge["source"] not in seen:
+                seen.add(edge["source"])
+                queue.append(edge["source"])
+    return {
+        "symbol": symbol,
+        "kind": node["kind"],
+        "location": f"{node['file']}:{node.get('line', '?')}",
+        "callers": graph_callers(symbol).get("callers", []),
+        "callees": graph_callees(symbol).get("callees", []),
+        "blast_radius": len(seen) - len(nodes),
+        "ambiguous": len(nodes) > 1,
+    }</code></pre></div>
+  </div>
+  <div class="tab-panel" id="c3-js">
+  <div class="code-wrap"><div class="code-title">server.mjs — explore</div><pre><code>function explore(symbol) {
+  const nodes = resolve(symbol);
+  if (nodes.length === 0)
+    return { error: `symbol '${symbol}' not in graph — it may be external; try grep` };
+  const seen = new Set(nodes.map(n => n.id));
+  const queue = [...seen];
+  while (queue.length) {               // BFS over the REVERSE index
+    for (const e of reverse.get(queue.shift()) ?? []) {
+      if (!seen.has(e.source)) { seen.add(e.source); queue.push(e.source); }
+    }
+  }
+  const n = nodes[0];
+  return {
+    symbol, kind: n.kind,
+    location: `${n.file}:${n.line ?? "?"}`,
+    callers: graphCallers(symbol).callers ?? [],
+    callees: graphCallees(symbol).callees ?? [],
+    blast_radius: seen.size - nodes.length,
+    ambiguous: nodes.length > 1,
+  };
+}</code></pre></div>
+  </div>
+
+  <h3 id="chunk4">Chunk 4 — expose over MCP</h3>
+  <p><strong>What:</strong> wrap the three functions as MCP tools and run the stdio transport. <strong>Why:</strong> the SDK generates each tool's JSON schema from the function signature — <code>symbol: str</code> becomes <code>{"type": "string"}</code> automatically, which is how the agent learns to call it. <strong>Gotcha:</strong> in a stdio server, stdout belongs to the protocol. One stray <code>print()</code> to stdout corrupts a JSON frame and the client hangs; all logging goes to stderr.</p>
+  <div class="code-tabs" role="tablist">
+    <button class="code-tab active" role="tab" data-target="c4-py">Python</button>
+    <button class="code-tab" role="tab" data-target="c4-js">Node.js</button>
+  </div>
+  <div class="tab-panel active" id="c4-py">
+  <div class="code-wrap"><div class="code-title">server.py — serve</div><pre><code>def serve() -> None:
+    from mcp.server.fastmcp import FastMCP
+    mcp = FastMCP("orderflow-graph")
+    mcp.tool()(graph_callers)
+    mcp.tool()(graph_callees)
+    mcp.tool()(explore)
+    load_graph()                        # the startup cache, created here
+    print("serving graph.json over stdio", file=sys.stderr)  # stderr ONLY
+    mcp.run()
+
+if __name__ == "__main__":
+    serve()</code></pre></div>
+  </div>
+  <div class="tab-panel" id="c4-js">
+  <div class="code-wrap"><div class="code-title">server.mjs — serve</div><pre><code>import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+
+const server = new McpServer({ name: "orderflow-graph", version: "1.0.0" });
+const asText = (r) => ({ content: [{ type: "text", text: JSON.stringify(r) }] });
+
+server.tool("graph_callers", { symbol: z.string() }, ({ symbol }) => asText(graphCallers(symbol)));
+server.tool("graph_callees", { symbol: z.string() }, ({ symbol }) => asText(graphCallees(symbol)));
+server.tool("explore",       { symbol: z.string() }, ({ symbol }) => asText(explore(symbol)));
+
+loadGraph();                            // the startup cache, created here
+console.error("serving graph.json over stdio");  // stderr ONLY
+await server.connect(new StdioServerTransport());</code></pre></div>
+  </div>
+
+  <div class="checkpoint"><span class="box-label">🔎 What Just Happened?</span>
+    <p>You built a serving layer in ~120 lines: graph.json loads once, two dictionaries make every lookup instant, misses come back as instructions the agent can act on, and a composite tool answers the whole "should I touch this?" question in one call. When Claude connects, it sees three tools in its menu and never needs to open <code>shared/auth.py</code> to learn who calls <code>decode_jwt</code>. The server runs as a subprocess — no network, no auth, just stdin/stdout.</p>
+  </div>
+</section>
+
+<section class="section" id="hands-on">
+  <h2>Hands-On Exercise</h2>
+  <p><strong>What you'll build:</strong> the complete server above, self-tested and registered with your assistant. <strong>Time:</strong> 60–75 min. <strong>Lab folder:</strong> <code>labs/M09-mcp-graph-server/</code> (starter with TODOs, solution, expected output). <strong>Files:</strong> <code>starter/server.py</code>.</p>
+
+  <div class="step-block">
+    <h3>Step 1 — Generate the graph</h3>
+    <p><strong>What &amp; why:</strong> the server serves graph.json; make sure one exists. The loader shells out to the course extractor from M01.</p>
+    <div class="code-wrap"><pre><code>cd labs/M09-mcp-graph-server/starter
+python -c "import server; server.load_graph()" &amp;&amp; echo graph ok</code></pre></div>
+    <p>Expected output: <code>graph loaded: 36 nodes</code> then <code>graph ok</code>.</p>
+    <div class="checkpoint"><span class="box-label">✅ Checkpoint</span><p>If you see <code>FileNotFoundError</code>, run from inside <code>starter/</code> so relative paths resolve.</p></div>
+  </div>
+
+  <div class="step-block">
+    <h3>Step 2 — Implement the three tools</h3>
+    <p><strong>What &amp; why:</strong> fill TODO 1 (<code>graph_callers</code>, reverse lookup), TODO 2 (<code>graph_callees</code>, forward lookup), TODO 3 (<code>explore</code>, composite with BFS blast radius). You wrote the BFS in M01 — reuse it. Every tool must return the graceful-miss dict for unknown symbols, never raise.</p>
+  </div>
+
+  <div class="step-block">
+    <h3>Step 3 — Smoke-test without an agent</h3>
+    <div class="code-wrap"><pre><code>python server.py --selftest</code></pre></div>
+    <p>Expected output ends with <code>SELFTEST PASSED</code>; compare the full JSON against <code>expected_output/sample_output.txt</code> — including the miss case returning <code>"error": "... try grep"</code>.</p>
+    <div class="checkpoint"><span class="box-label">✅ Checkpoint</span><p><code>graph_callers("decode_jwt")</code> must return exactly <code>["shared.auth.verify_token"]</code>. If it's empty, your reverse index is keyed by source instead of target.</p></div>
+  </div>
+
+  <div class="step-block">
+    <h3>Step 4 — Register and ask</h3>
+    <div class="code-wrap"><pre><code>claude mcp add orderflow-graph -- python /absolute/path/to/labs/M09-mcp-graph-server/solution/server.py</code></pre></div>
+    <p>Then ask your assistant: <em>"Using orderflow-graph, who calls decode_jwt and what's its blast radius?"</em> — and watch it answer with a single <code>explore</code> call instead of opening files.</p>
+    <p><strong>Troubleshooting:</strong> tool calls hang → you printed to stdout; move all logging to stderr. <code>ImportError: mcp</code> → <code>pip install mcp</code> in the venv.</p>
+  </div>
+
+  <p><strong>Stretch goals:</strong> add a <code>status</code> tool returning the graph's load timestamp and node count (your first drift detector — M11 builds on this); add <code>graph_path(a, b)</code> using bidirectional BFS.</p>
+</section>
+
+<section class="section" id="quiz">
+  <h2>Knowledge Check</h2>
+
+  <div class="quiz-question" data-explain="">
+    <h3>1. Why does a graph server return "not in graph — try grep" instead of raising an exception on an unknown symbol?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="Exceptions aren't faster — and speed isn't the issue. The issue is what the agent can do with the response.">It's faster than exception handling</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. The miss is an instruction the agent can act on: fall back to text search. A stack trace gives the agent nothing actionable, and external symbols legitimately aren't in the graph.">The agent needs an actionable fallback path — unknown symbols may simply be external to the codebase</div>
+    <div class="quiz-option" data-correct="0" data-explain="MCP transports errors fine. The design choice is about agent ergonomics, not protocol limits.">MCP cannot transmit exceptions</div>
+    <div class="quiz-option" data-correct="0" data-explain="Hiding failures is exactly what this course teaches you NOT to do — the message surfaces the miss explicitly.">To hide indexing failures from the user</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>2. The 6,000-vs-15-token example shows a ~400× per-query saving, yet honest session-level replications report 6.8×–49×. Why the gap?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="The per-query number is real arithmetic, not marketing — the two numbers measure different quantities.">The 400× number is fabricated</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. Sessions mix structural lookups (huge savings) with reasoning, editing, and reading the model must do anyway; the blended multiple depends on corpus topology and task mix.">A session mixes graph-answerable questions with work the graph can't help — the blend dilutes the per-query ratio</div>
+    <div class="quiz-option" data-correct="0" data-explain="Compaction makes graph serving MORE valuable (no re-reads), not less.">Context compaction erases the savings</div>
+    <div class="quiz-option" data-correct="0" data-explain="Tool-call overhead is tiny — tens of tokens, not thousands.">MCP tool calls cost nearly as much as file reads</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>3. What makes the composite <code>explore</code> tool worth having alongside <code>graph_callers</code>/<code>graph_callees</code>?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="It returns MORE data than a single lookup, not less.">It returns fewer tokens than any single-purpose tool</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. It matches the agent's real investigation pattern — 'what is this and how dangerous is it to touch?' — collapsing a four-call chain into one call, keeping the token budget for reasoning instead of tool-call overhead.">It answers the agent's actual question in one call instead of a chain of four</div>
+    <div class="quiz-option" data-correct="0" data-explain="Both read the same in-memory indexes; accuracy is identical.">It's more accurate than the individual tools</div>
+    <div class="quiz-option" data-correct="0" data-explain="The blast radius is computed live from the reverse index at call time.">It caches blast radii ahead of time</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>4. Your M08 hook rebuilds graph.json on every commit. Your MCP server has been running since this morning. What does the agent see?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="The server does NOT watch the file — hot-reload is a feature someone must build, not a default.">The fresh graph — servers watch their data files</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. The server cached graph.json at startup with no hot-reload: fresh graph on disk, stale graph in the agent's memory, and no artifact reveals the divergence. Restart or hot-reload after every regeneration.">The graph as it existed when the server started — the startup-cache trap</div>
+    <div class="quiz-option" data-correct="0" data-explain="Nothing errors — that's precisely what makes this failure class dangerous.">An error, because the file changed underneath it</div>
+    <div class="quiz-option" data-correct="0" data-explain="MCP has no such mechanism; the client doesn't know the server's data went stale.">A merged view of old and new graphs</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>5. A team adds an OKF bundle but their agent still loads whole directories into context. What outcome does this module predict?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="Savings require the orchestrator to actually read index.md first and load selectively.">Token savings, just smaller ones</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. Progressive disclosure must be designed into the orchestration layer. Without it, the team pays the enrichment pipeline's maintenance cost while the agent's context fills exactly as before.">Maintenance cost without savings — the bundle is curated but never selectively read</div>
+    <div class="quiz-option" data-correct="0" data-explain="The bundle doesn't harm anything; it just doesn't help until something reads it index-first.">Corrupted agent context</div>
+    <div class="quiz-option" data-correct="0" data-explain="MCP registration is unrelated — the bundle is served by file reads, not MCP, in this scenario.">The bundle fails to register over MCP</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>6. Why must a stdio MCP server never print logs to stdout?</h3>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. stdout carries the JSON-RPC protocol frames; a stray print corrupts a frame and the client hangs waiting for valid JSON. Logs belong on stderr.">stdout is the protocol channel — stray output corrupts JSON frames and hangs the client</div>
+    <div class="quiz-option" data-correct="0" data-explain="Performance is unaffected; correctness is the issue.">Printing slows the server down</div>
+    <div class="quiz-option" data-correct="0" data-explain="The client can't 'see' logs as logs — it parses everything on stdout as protocol data, which is exactly the problem.">The client would display the logs to the user</div>
+    <div class="quiz-option" data-correct="0" data-explain="No such rule — stderr logging is standard practice and encouraged.">MCP forbids all logging</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+</section>
+
+<section class="section" id="summary">
+  <h2>Module Summary</h2>
+  <div class="summary-grid">
+    <div class="summary-card"><h4>The last mile</h4><p>A graph on disk helps nobody. Three serving options: slash-command skills, pre-flight index.md reads, MCP servers — MCP for precise structural answers.</p></div>
+    <div class="summary-card"><h4>The tool surface</h4><p>okf-mcp: search, graph_callers/callees, graph_api, graph_cycles, graph_modules, graph_path — plus composite <code>explore</code>, shaped around the agent's question, not your data model.</p></div>
+    <div class="summary-card"><h4>The economics</h4><p>~6,000 tokens (read a 24KB file) vs ~15 (one tool answer): ~400× per query. Session-level: an honest 6.8×–49×, depending on corpus and task mix.</p></div>
+    <div class="summary-card"><h4>The two traps</h4><p>Progressive disclosure must be designed into the orchestrator, or you pay maintenance with no savings. And servers cache graph.json at startup — restart after every regeneration.</p></div>
+  </div>
+  <p><strong>What we built on orderflow:</strong> a three-tool MCP server over graph.json, registered with one line — the agent now answers "who calls decode_jwt?" in one call instead of opening <code>shared/auth.py</code>.</p>
+  <p><strong>Next module preview:</strong> you now have three context layers that each earn their keep separately. M10 assembles them — vector RAG, structural graph, narrative bundle — into one architecture, and teaches the discipline of adding a layer only when a concrete failure mode demands it.</p>
+</section>
+
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul>
+    <li>okf-rs repository &amp; okf-mcp server — github.com/jyjeanne/okf-rs</li>
+    <li>Model Context Protocol specification — modelcontextprotocol.io</li>
+    <li>Graphify MCP serving — <code>python -m graphify.serve</code>, github.com/safishamsi/graphify</li>
+    <li>CodeGraph MCP integration — github.com/colbymchenry/codegraph</li>
+    <li>Course lab: <code>labs/M09-mcp-graph-server/</code></li>
+  </ul>
+  <nav class="next-prev" aria-label="Module navigation">
+    <a href="M08-enrichment-pipeline.html"><span class="dir">← Previous</span>M08 · The Enrichment Pipeline</a>
+    <a href="M10-hybrid-context-stack.html" style="text-align:right"><span class="dir">Next →</span>M10 · The Hybrid Context Stack</a>
+  </nav>
+</section>
+
+</main>
+</div>
+<script>
+(function(){
+"use strict";
+var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('.code-wrap').forEach(function(w){
+  var btn=document.createElement('button');
+  btn.className='copy-btn'; btn.textContent='copy'; btn.setAttribute('aria-label','Copy code to clipboard');
+  btn.addEventListener('click',function(){
+    var code=w.querySelector('code');
+    if(navigator.clipboard){ navigator.clipboard.writeText(code.innerText).then(function(){ btn.textContent='copied!'; setTimeout(function(){btn.textContent='copy';},1400); }); }
+  });
+  w.appendChild(btn);
+});
+
+/* ---------- code tabs ---------- */
+document.querySelectorAll('.code-tabs').forEach(function(tabs){
+  tabs.querySelectorAll('.code-tab').forEach(function(tab){
+    tab.addEventListener('click',function(){
+      tabs.querySelectorAll('.code-tab').forEach(function(t){t.classList.remove('active');});
+      tab.classList.add('active');
+      var wrap=tabs.parentElement;
+      var panel=document.getElementById(tab.dataset.target);
+      var p=tabs.nextElementSibling;
+      while(p && p.classList.contains('tab-panel')){ p.classList.remove('active'); p=p.nextElementSibling; }
+      if(panel) panel.classList.add('active');
+    });
+  });
+});
+
+/* ---------- simple syntax tint ---------- */
+document.querySelectorAll('pre code').forEach(function(c){
+  var h=c.innerHTML;
+  h=h.replace(/(^|\n)(\s*)(#[^\n]*)/g,'$1$2<span class="tok-c">$3<\/span>');
+  h=h.replace(/(\/\/[^\n<]*)/g,'<span class="tok-c">$1<\/span>');
+  h=h.replace(/(&quot;[^&]*?&quot;|'[^'\n]*'|`[^`]*`)/g,'<span class="tok-s">$1<\/span>');
+  h=h.replace(/\b(def|class|import|from|return|if|else|elif|for|while|try|except|raise|with|as|global|const|let|var|function|await|async|new|export|None|True|False|null|true|false|not|in)\b/g,'<span class="tok-k">$1<\/span>');
+  c.innerHTML=h;
+});
+
+/* ---------- quiz ---------- */
+document.querySelectorAll('.quiz-question').forEach(function(q){
+  q.querySelectorAll('.quiz-option').forEach(function(opt){
+    opt.setAttribute('tabindex','0'); opt.setAttribute('role','button');
+    function answer(){
+      if(q.dataset.answered) return; q.dataset.answered='1';
+      var correct=opt.dataset.correct==='1';
+      opt.classList.add(correct?'correct':'incorrect');
+      if(!correct){ var right=q.querySelector('.quiz-option[data-correct="1"]'); if(right) right.classList.add('correct'); }
+      var fb=q.querySelector('.quiz-feedback');
+      fb.style.display='block';
+      fb.style.background=correct?'var(--success-bg)':'var(--error-bg)';
+      fb.textContent=(correct?'✅ ':'❌ ')+(opt.dataset.explain||'');
+    }
+    opt.addEventListener('click',answer);
+    opt.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); answer(); }});
+  });
+});
+
+/* ---------- animation framework ---------- */
+function Stepper(steps, interval){
+  this.steps=steps; this.interval=interval||1500; this.i=0; this.timer=null;
+  this.apply=function(){ this.steps[this.i](); };
+  this.play=function(){
+    if(reduced){ this.i=this.steps.length-1; this.apply(); return; }
+    if(this.timer) return;
+    var self=this;
+    this.timer=setInterval(function(){
+      self.i=(self.i+1)%self.steps.length;
+      self.apply();
+    },this.interval);
+  };
+  this.pause=function(){ clearInterval(this.timer); this.timer=null; };
+  this.restart=function(){ this.pause(); this.i=0; this.apply(); this.play(); };
+}
+var anims={};
+document.querySelectorAll('.animation-controls button').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var a=anims[btn.dataset.anim]; if(!a) return;
+    a[btn.dataset.act]();
+  });
+});
+
+/* MCP_HANDSHAKE */
+(function(){
+  var caps=[
+    'The client spawns the server as a subprocess and says hello (initialize).',
+    'The server replies with its capabilities.',
+    'The client asks what tools exist (tools/list)…',
+    '…and learns the full graph tool surface — schemas included.',
+    'Per question: ONE tools/call with the symbol as a parameter…',
+    '…and one ~15-token answer comes back. No file was opened.'
+  ];
+  var ids=['hs-m1','hs-m2','hs-m3','hs-m4','hs-m5','hs-m6'];
+  function state(n){
+    ids.forEach(function(id,k){ document.getElementById(id).classList.toggle('show',k<=n); });
+    document.getElementById('hs-agent').classList.toggle('lit',n===0||n===2||n===4);
+    document.getElementById('hs-server').classList.toggle('lit',n===1||n===3||n===5);
+    document.getElementById('hs-cap').textContent=caps[n];
+  }
+  var steps=[];
+  for(var n=0;n<6;n++)(function(n){ steps.push(function(){state(n);}); })(n);
+  anims.handshake=new Stepper(steps,1600);
+})();
+
+/* TOKEN_SCALE */
+(function(){
+  var beam=document.getElementById('sc-beam'), l=document.getElementById('sc-left'), r=document.getElementById('sc-right');
+  var lt=document.getElementById('sc-ltok'), rt=document.getElementById('sc-rtok'), cap=document.getElementById('sc-cap');
+  function state(n){
+    if(n===0){ beam.style.transform='translateX(-50%) rotate(0deg)'; l.style.top='120px'; r.style.top='120px'; lt.textContent='0 tokens'; rt.textContent='0 tokens'; cap.textContent='Two ways to answer: read the file, or ask the graph.'; }
+    if(n===1){ lt.textContent='~6,000 tokens'; cap.textContent='Reading the 672-line file: its full size enters context — ~6,000 tokens.'; }
+    if(n===2){ rt.textContent='~15 tokens'; cap.textContent='graph_callers returns one line: ~15 tokens.'; }
+    if(n===3){ beam.style.transform='translateX(-50%) rotate(9deg)'; l.style.top='158px'; r.style.top='86px'; cap.textContent='~400× per query — and the parse cost was paid once, at generate time. Session-level blends land at an honest 6.8×–49×.'; }
+  }
+  var steps=[0,1,2,3].map(function(n){ return function(){state(n);}; });
+  anims.scale=new Stepper(steps,1800);
+})();
+
+/* ORCHESTRATOR_ROUTE */
+(function(){
+  var orch=document.getElementById('rt-orch'), idx=document.getElementById('rt-index');
+  var a=document.getElementById('rt-a'), b=document.getElementById('rt-b');
+  var al=document.getElementById('rt-a-load'), bl=document.getElementById('rt-b-load');
+  var fill=document.getElementById('rt-fill'), tok=document.getElementById('rt-tok'), cap=document.getElementById('rt-cap');
+  function state(n){
+    orch.classList.toggle('lit',n===0);
+    idx.classList.toggle('lit',n===1);
+    a.classList.toggle('lit',n===2);
+    b.classList.toggle('lit',n===3);
+    if(n===0){ al.textContent='waiting…'; bl.textContent='waiting…'; fill.style.width='0%'; tok.textContent='0'; cap.textContent='A task arrives: "update billing webhooks and notify on completion."'; }
+    if(n===1){ fill.style.width='8%'; tok.textContent='~120'; cap.textContent='The orchestrator reads index.md — titles and one-liners only (~120 tokens).'; }
+    if(n===2){ al.textContent='← billing-service.md'; fill.style.width='22%'; tok.textContent='~470'; cap.textContent='Sub-agent A gets ONLY billing-service.md (~350 tokens).'; }
+    if(n===3){ bl.textContent='← notifications-service.md'; fill.style.width='36%'; tok.textContent='~820'; cap.textContent='Sub-agent B gets ONLY notifications-service.md. The dump alternative would have spent ~1,870 tokens per agent — before the work began.'; }
+  }
+  var steps=[0,1,2,3].map(function(n){ return function(){state(n);}; });
+  anims.route=new Stepper(steps,1900);
+})();
+
+/* init: static first frames (also serves reduced-motion users a meaningful state) */
+Object.keys(anims).forEach(function(k){ if(reduced){ anims[k].i=0; } anims[k].apply(); });
+})();
+</script>
+</body>
+</html>

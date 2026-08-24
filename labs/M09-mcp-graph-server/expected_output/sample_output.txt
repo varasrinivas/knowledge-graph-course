@@ -1,0 +1,31 @@
+{
+  "symbol": "decode_jwt",
+  "callers": [
+    "shared.auth.verify_token"
+  ]
+}
+{
+  "symbol": "handle_payment_webhook",
+  "callees": [
+    "services.billing.invoice.mark_paid",
+    "services.billing.webhooks.WebhookError",
+    "shared.events.publish"
+  ]
+}
+{
+  "symbol": "decode_jwt",
+  "kind": "function",
+  "location": "shared/auth.py:16",
+  "callers": [
+    "shared.auth.verify_token"
+  ],
+  "callees": [
+    "shared.auth.AuthError"
+  ],
+  "blast_radius": 2,
+  "ambiguous": false
+}
+{
+  "error": "symbol 'not_a_symbol' not in graph \u2014 it may be external; try grep"
+}
+SELFTEST PASSED

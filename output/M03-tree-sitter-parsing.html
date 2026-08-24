@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M03 · Parsing Code into Graphs with tree-sitter — Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0A1628; --bg-secondary: #111D33; --bg-card: #162033; --bg-surface: #1A2740;
+  --text-primary: #E8ECF1; --text-secondary: #94A3B8; --text-muted: #64748B;
+  --accent-primary: #D4A843; --accent-hover: #E5BC5A; --accent-muted: rgba(212,168,67,0.15);
+  --success: #10B981; --success-bg: rgba(16,185,129,0.1);
+  --warning: #F59E0B; --warning-bg: rgba(245,158,11,0.1);
+  --error: #F43F5E; --error-bg: rgba(244,63,94,0.1);
+  --info: #3B82F6; --info-bg: rgba(59,130,246,0.1);
+  --track-overview: #D4A843; --track-foundations: #6366F1; --track-structural: #8B5CF6;
+  --track-narrative: #06B6D4; --track-serving: #F97316; --track-production: #22C55E; --track-capstone: #D4A843;
+  --track-color: #8B5CF6;
+  --code-bg: #0D1117; --code-border: #21262D; --code-text: #C9D1D9; --code-comment: #8B949E;
+  --code-keyword: #FF7B72; --code-string: #A5D6FF; --code-function: #D2A8FF; --code-number: #79C0FF;
+  --transition-fast: 150ms; --transition-normal: 300ms; --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Source Sans 3', sans-serif; font-size: 1.05rem; line-height: 1.7; }
+h1, h2, h3, h4 { font-family: 'Bricolage Grotesque', sans-serif; line-height: 1.25; }
+h1 { font-size: 2rem; font-weight: 700; }
+h2 { font-size: 1.5rem; font-weight: 700; margin: 0 0 1rem; padding-top: .5rem; }
+h3 { font-size: 1.25rem; font-weight: 600; margin: 2rem 0 .75rem; }
+p { margin-bottom: 1rem; }
+a { color: var(--accent-primary); }
+strong { font-weight: 600; }
+ul, ol { margin: 0 0 1rem 1.5rem; }
+li { margin-bottom: .4rem; }
+code { font-family: 'JetBrains Mono', monospace; font-size: .9rem; background: var(--bg-surface); padding: .1em .35em; border-radius: 4px; }
+.page-container { max-width: 1200px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: 240px 1fr; gap: 3rem; }
+.sidebar-nav { position: sticky; top: 2rem; height: calc(100vh - 4rem); overflow-y: auto; font-family: 'Bricolage Grotesque', sans-serif; font-size: .85rem; }
+.sidebar-nav .nav-title { color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; margin-bottom: .75rem; }
+.sidebar-nav a { display: block; color: var(--text-secondary); text-decoration: none; padding: .35rem .6rem; border-left: 2px solid var(--code-border); transition: all var(--transition-fast); }
+.sidebar-nav a:hover { color: var(--text-primary); }
+.sidebar-nav a.active { color: var(--track-color); border-left-color: var(--track-color); }
+.content { max-width: 800px; min-width: 0; }
+.section { margin-bottom: 4rem; }
+.course-kicker { font-family: 'Bricolage Grotesque', sans-serif; font-size: .85rem; color: var(--text-muted); letter-spacing: .05em; }
+.track-chip { display: inline-block; background: color-mix(in srgb, var(--track-color) 18%, transparent); color: var(--track-color); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: .8rem; padding: .2rem .7rem; border-radius: 999px; margin: .8rem 0 .6rem; }
+.progress-bar { height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; margin: 1rem 0; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--track-color), var(--accent-primary)); border-radius: 2px; transition: width var(--transition-slow); }
+.meta-row { display: flex; flex-wrap: wrap; gap: 1.25rem; color: var(--text-secondary); font-size: .9rem; margin-top: .75rem; }
+.meta-row span strong { color: var(--text-primary); }
+.objectives { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; }
+.objectives ul { margin-bottom: 0; }
+.skill-chip { display: inline-block; background: var(--info-bg); color: var(--info); border-radius: 999px; font-size: .78rem; padding: .15rem .65rem; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; margin-left: .5rem; vertical-align: middle; }
+.analogy-box, .tech-def-box, .callout { border-radius: 0 8px 8px 0; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid; }
+.analogy-box { background: var(--accent-muted); border-left-color: var(--accent-primary); }
+.analogy-box::before { content: '💡 Everyday Analogy'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--accent-primary); display: block; margin-bottom: .5rem; }
+.tech-def-box { background: var(--info-bg); border-left-color: var(--info); }
+.tech-def-box::before { content: '📐 Technical Definition'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--info); display: block; margin-bottom: .5rem; }
+.callout .box-label { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: .5rem; }
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-cost { background: var(--warning-bg); border-left-color: var(--accent-primary); }
+.callout-cost .box-label { color: var(--accent-primary); }
+.callout-security { background: var(--error-bg); border-left-color: var(--error); }
+.callout-security .box-label { color: var(--error); }
+.checkpoint { background: var(--success-bg); border: 1px solid rgba(16,185,129,.35); border-radius: 8px; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+.checkpoint .box-label { color: var(--success); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: .35rem; }
+.bridge { font-style: italic; color: var(--text-secondary); border-top: 1px dashed var(--code-border); border-bottom: 1px dashed var(--code-border); padding: .9rem .25rem; margin: 2rem 0; }
+.term-tooltip { position: relative; color: var(--accent-primary); cursor: help; border-bottom: 1px dashed var(--accent-primary); }
+.term-tooltip .tooltip-content { position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--accent-primary); border-radius: 8px; padding: .75rem 1rem; font-size: .85rem; color: var(--text-primary); width: 280px; opacity: 0; pointer-events: none; transition: opacity var(--transition-fast); z-index: 10; font-style: normal; font-weight: 400; line-height: 1.5; }
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+.code-card { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 10px; margin: 1.25rem 0; overflow: hidden; }
+.code-card .code-head { display: flex; justify-content: space-between; align-items: center; padding: .45rem .9rem; border-bottom: 1px solid var(--code-border); font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: var(--text-muted); }
+.copy-btn { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: .72rem; border-radius: 6px; padding: .25rem .6rem; cursor: pointer; transition: all var(--transition-fast); }
+.copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.code-card pre { padding: 1rem; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: .85rem; line-height: 1.6; color: var(--code-text); }
+.code-card pre code { background: none; padding: 0; font-size: inherit; }
+.tok-k { color: var(--code-keyword); } .tok-s { color: var(--code-string); } .tok-c { color: var(--code-comment); font-style: italic; } .tok-f { color: var(--code-function); } .tok-n { color: var(--code-number); }
+.code-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--code-border); margin-top: 1.25rem; }
+.code-tab { padding: .5rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: .8rem; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px; color: var(--text-muted); transition: all var(--transition-fast); }
+.code-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+.tab-panel { display: none; } .tab-panel.active { display: block; }
+.animation-container { background: var(--bg-secondary); border: 1px solid var(--code-border); border-radius: 12px; padding: 1.5rem 1.5rem 4rem; margin: 2rem 0; position: relative; min-height: 300px; }
+.anim-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: .85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 1rem; }
+.animation-controls { display: flex; gap: .5rem; position: absolute; bottom: 1rem; right: 1rem; }
+.animation-controls button { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-primary); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all var(--transition-fast); }
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.anim-caption { position: absolute; bottom: 1.1rem; left: 1.5rem; right: 10rem; color: var(--text-secondary); font-size: .85rem; }
+.anim-fallback { display: none; color: var(--text-secondary); font-size: .9rem; }
+.quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.quiz-question h4 { margin-bottom: .75rem; font-size: 1.02rem; }
+.quiz-option { padding: .75rem 1rem; margin: .5rem 0; border: 1px solid var(--code-border); border-radius: 8px; cursor: pointer; transition: all var(--transition-fast); }
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-feedback { margin-top: .75rem; padding: .75rem; border-radius: 8px; font-size: .9rem; display: none; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); color: var(--text-primary); }
+.quiz-feedback.bad { background: var(--error-bg); color: var(--text-primary); }
+table.facts { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: .92rem; }
+table.facts th, table.facts td { border: 1px solid var(--code-border); padding: .55rem .75rem; text-align: left; vertical-align: top; }
+table.facts th { background: var(--bg-surface); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; }
+.table-wrap { overflow-x: auto; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 1rem; margin: 1.25rem 0; }
+.summary-card { background: var(--bg-card); border-radius: 10px; padding: 1.1rem 1.2rem; border-top: 3px solid var(--track-color); }
+.summary-card h4 { font-size: .95rem; margin-bottom: .4rem; }
+.summary-card p { font-size: .88rem; color: var(--text-secondary); margin: 0; }
+.prevnext { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; }
+.prevnext a { flex: 1; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 10px; padding: 1rem 1.25rem; text-decoration: none; color: var(--text-primary); transition: border-color var(--transition-fast); font-family: 'Bricolage Grotesque', sans-serif; }
+.prevnext a:hover { border-color: var(--track-color); }
+.prevnext .dir { display: block; font-size: .75rem; color: var(--text-muted); }
+.ref-list li { margin-bottom: .5rem; }
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; padding: 1.25rem; }
+  .sidebar-nav { position: static; height: auto; margin-bottom: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .anim-stage, .animation-controls { display: none !important; }
+  .anim-fallback { display: block !important; }
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+<nav class="sidebar-nav" aria-label="Module sections">
+  <div class="nav-title">Module 4 of 14</div>
+  <a href="#objectives">Learning objectives</a>
+  <a href="#what-is-ast">What an AST is</a>
+  <a href="#tree-sitter">Meet tree-sitter</a>
+  <a href="#extraction">Extraction queries</a>
+  <a href="#determinism">Determinism &amp; zero LLM</a>
+  <a href="#resolution">The resolution ladder</a>
+  <a href="#languages">Languages &amp; visibility</a>
+  <a href="#walkthrough">Code walkthrough</a>
+  <a href="#lab">Hands-on lab</a>
+  <a href="#quiz">Knowledge check</a>
+  <a href="#summary">Summary</a>
+  <a href="#references">References</a>
+</nav>
+<main class="content">
+
+<!-- ===================== HEADER ===================== -->
+<header class="section" id="top">
+  <div class="course-kicker">Knowledge Graphs for AI Agents · From RAG Limits to Self-Updating Codebase Brains</div>
+  <span class="track-chip">Track 2 — Structural Graphs</span>
+  <h1>M03 · Parsing Code into Graphs with tree-sitter</h1>
+  <div class="progress-bar" role="progressbar" aria-valuenow="4" aria-valuemin="1" aria-valuemax="14" aria-label="Module 4 of 14"><div class="progress-fill" style="width:28.5%"></div></div>
+  <div class="meta-row">
+    <span>📍 <strong>Module 4 of 14</strong></span>
+    <span>⏱ <strong>~60 minutes</strong></span>
+    <span>🎯 Level: <strong>Intermediate</strong></span>
+    <span>📋 Prerequisites: <strong>M01 (graph fundamentals), M02 (RAG limits)</strong></span>
+  </div>
+</header>
+
+<!-- ===================== OBJECTIVES ===================== -->
+<section class="section" id="objectives">
+  <h2 id="objectives-h">Learning objectives <span class="skill-chip">Intermediate</span></h2>
+  <div class="objectives">
+    <ul>
+      <li>Explain what an <strong>abstract syntax tree (AST)</strong> is and why graph extractors parse structure instead of reading text.</li>
+      <li>Describe the three properties that made <strong>tree-sitter</strong> the industry-standard parser for code graphs: incremental parsing, fault tolerance, and speed.</li>
+      <li>Write a working extractor that pulls <strong>function definitions and call edges</strong> out of a real Python file — in both Python and Node.js.</li>
+      <li>Assign the provenance tags <strong>EXTRACTED / INFERRED / AMBIGUOUS</strong> correctly, and explain the resolution ladder (heuristics → LSP → honest ambiguity).</li>
+      <li>Predict where structural parsing gets harder: dynamic languages, dynamic dispatch, and per-language visibility rules.</li>
+    </ul>
+  </div>
+  <p style="margin-top:1rem;">In M01 you built a graph by hand and queried it. In M02 you watched text-similarity retrieval fail on questions about structure. This module answers the obvious next question: <em>where do real code graphs come from?</em> The answer is not an LLM reading your files. It is a parser — and understanding that parser is what separates people who trust their graph from people who should not.</p>
+</section>
+
+<!-- ===================== CONCEPT 1: AST ===================== -->
+<section class="section" id="what-is-ast">
+  <h2>What an AST is — and why extractors start there</h2>
+
+  <div class="analogy-box">
+    <p><strong>Before</strong>: imagine handing a friend a printed novel and asking, "list every character who speaks to every other character." Your friend has to read all 400 pages, guess who "he" refers to in each line of dialogue, and keep a growing list on a napkin. Slow, error-prone, and they have to redo it for every new question.</p>
+    <p><strong>The pain</strong>: the information was always <em>in</em> the book, but it was buried in prose. Prose is optimized for reading front-to-back, not for answering structural questions like "who talks to whom."</p>
+    <p><strong>The mapping</strong>: a screenplay of the same story solves this instantly — every line is labeled <code>CHARACTER: dialogue</code>, scenes are numbered, and stage directions are marked. An <strong>abstract syntax tree</strong> is the screenplay version of your source code: the same content, reorganized into an explicit, labeled structure where "find every function call" is a lookup, not a reading comprehension exercise.</p>
+  </div>
+
+  <div class="tech-def-box">
+    <p>An <strong>abstract syntax tree (AST)</strong> is a tree data structure that represents the grammatical structure of source code. Each <em>node</em> in the tree is a labeled construct — a <code>module</code> at the root, then <code>function_definition</code>, <code>class_definition</code>, <code>call</code>, <code>identifier</code>, <code>string</code>, and so on. "Abstract" means the tree drops details that don't affect meaning, like exact whitespace and most punctuation — it keeps the <em>grammar</em>, not the <em>typography</em>.</p>
+    <p>A <strong>parser</strong> is the program that turns flat text into that tree. When this course says a tool "parses code structurally," it means: the tool asks the tree "give me every node labeled <code>call</code> inside every node labeled <code>function_definition</code>" — it never pattern-matches raw text the way <code>grep</code> does.</p>
+  </div>
+
+  <p>Here is why this matters for knowledge graphs specifically. In M01 you learned that a code graph is nodes (functions, classes, modules) plus typed edges (<code>calls</code>, <code>imports</code>, <code>inherits</code>). Every one of those node and edge types corresponds <em>exactly</em> to an AST node type. A <code>function_definition</code> node becomes a graph node. A <code>call</code> node inside it becomes an outgoing edge. An <code>import_statement</code> becomes an <code>imports</code> edge. The graph is not "derived" from the AST in some fuzzy way — it is a straightforward relabeling of things the parser already found.</p>
+
+  <p>Contrast that with the two alternatives you already know. <code>grep "verify_token"</code> finds the <em>string</em> <code>verify_token</code> — in calls, in comments, in docstrings, in a variable named <code>verify_token_backup</code>, with no idea which is which. An embedding search (M02) finds text that <em>talks like</em> <code>verify_token</code>. Only the AST knows the difference between <em>defining</em> a function, <em>calling</em> it, and <em>mentioning</em> it in a comment — because those are three different node types in the tree.</p>
+
+  <div class="animation-container" id="anim-ast">
+    <div class="anim-title">Animation · AST_GROW — source text becomes a labeled tree</div>
+    <div class="anim-stage" style="position:relative; height:300px;">
+      <svg viewBox="0 0 760 300" width="100%" height="100%" aria-label="Animation showing source code transforming into an abstract syntax tree">
+        <g id="ast-src" font-family="JetBrains Mono, monospace" font-size="12" fill="#C9D1D9">
+          <text x="20" y="40">def verify_token(token):</text>
+          <text x="20" y="62">    if not token:</text>
+          <text x="20" y="84">        raise AuthError(...)</text>
+          <text x="20" y="106">    return decode_jwt(token)</text>
+        </g>
+        <g id="ast-tree" opacity="0">
+          <g id="ast-n1" opacity="0"><rect x="430" y="20" width="130" height="28" rx="6" fill="#1A2740" stroke="#8B5CF6"/><text x="495" y="39" text-anchor="middle" font-size="11" fill="#E8ECF1" font-family="JetBrains Mono, monospace">module</text></g>
+          <g id="ast-n2" opacity="0"><line x1="495" y1="48" x2="495" y2="72" stroke="#64748B"/><rect x="410" y="72" width="170" height="28" rx="6" fill="#1A2740" stroke="#8B5CF6"/><text x="495" y="91" text-anchor="middle" font-size="11" fill="#E8ECF1" font-family="JetBrains Mono, monospace">function_definition</text></g>
+          <g id="ast-n3" opacity="0"><line x1="450" y1="100" x2="380" y2="130" stroke="#64748B"/><rect x="310" y="130" width="140" height="28" rx="6" fill="#1A2740" stroke="#06B6D4"/><text x="380" y="149" text-anchor="middle" font-size="11" fill="#E8ECF1" font-family="JetBrains Mono, monospace">name: verify_token</text></g>
+          <g id="ast-n4" opacity="0"><line x1="540" y1="100" x2="600" y2="130" stroke="#64748B"/><rect x="540" y="130" width="120" height="28" rx="6" fill="#1A2740" stroke="#8B5CF6"/><text x="600" y="149" text-anchor="middle" font-size="11" fill="#E8ECF1" font-family="JetBrains Mono, monospace">block</text></g>
+          <g id="ast-n5" opacity="0"><line x1="570" y1="158" x2="500" y2="190" stroke="#64748B"/><rect x="420" y="190" width="160" height="28" rx="6" fill="#1A2740" stroke="#F59E0B"/><text x="500" y="209" text-anchor="middle" font-size="11" fill="#E8ECF1" font-family="JetBrains Mono, monospace">call: AuthError</text></g>
+          <g id="ast-n6" opacity="0"><line x1="630" y1="158" x2="660" y2="190" stroke="#64748B"/><rect x="590" y="190" width="150" height="28" rx="6" fill="#1A2740" stroke="#10B981"/><text x="665" y="209" text-anchor="middle" font-size="11" fill="#E8ECF1" font-family="JetBrains Mono, monospace">call: decode_jwt</text></g>
+          <g id="ast-note" opacity="0"><text x="430" y="262" font-size="12" fill="#94A3B8" font-family="Source Sans 3, sans-serif">calls are labeled nodes — finding them is a lookup, not a search</text></g>
+        </g>
+      </svg>
+    </div>
+    <div class="anim-fallback"><p>Static description: the four lines of <code>verify_token</code> source become a tree — a <code>module</code> root, a <code>function_definition</code> child with its <code>name</code>, a <code>block</code>, and two labeled <code>call</code> nodes (<code>AuthError</code>, <code>decode_jwt</code>). Call sites are explicit nodes in the tree, so extraction is a lookup rather than a text search.</p></div>
+    <div class="anim-caption" id="anim-ast-caption">Press play: the source lines light up and grow into labeled tree nodes.</div>
+    <div class="animation-controls">
+      <button data-anim="ast" data-act="play" aria-label="Play AST animation">▶</button>
+      <button data-anim="ast" data-act="pause" aria-label="Pause AST animation">⏸</button>
+      <button data-anim="ast" data-act="restart" aria-label="Restart AST animation">↻</button>
+    </div>
+  </div>
+
+  <div class="callout-why callout">
+    <span class="box-label">✅ Why It Matters</span>
+    <p>The orderflow repo from the labs has 14 modules and 22 call edges. <code>grep -rn "execute"</code> across it returns matches in 5 files including comments and docstrings; you'd read all five to learn who really calls <code>DatabasePool.execute</code>. The AST route returns exactly 3 caller nodes, labeled, with line numbers — and on a 10,000-file monorepo the arithmetic is the difference between an agent reading 2.8 million tokens of files and querying a pre-built graph (that gap, measured on VS Code's repo, is 78% of all tokens — you'll see the full benchmark table in M05).</p>
+  </div>
+</section>
+
+<div class="bridge">You now know <em>what</em> the tree is. The next question is which parser builds it. The answer across Graphify, CodeGraph, and okf-rs is the same library — and the reasons it won are worth understanding, because they are the reasons you can trust the graph on messy, mid-edit, real-world code.</div>
+
+<!-- ===================== CONCEPT 2: TREE-SITTER ===================== -->
+<section class="section" id="tree-sitter">
+  <h2>Meet tree-sitter: the parser every graph tool chose</h2>
+
+  <p><strong>tree-sitter</strong> is an open-source parsing library originally developed at GitHub for the <span class="term-tooltip" tabindex="0">Atom editor<span class="tooltip-content">GitHub's extensible text editor (2014–2022). tree-sitter was built to give it fast, accurate syntax highlighting; the editor is gone, the parser became an industry standard.</span></span>, and now serving as <span class="term-tooltip" tabindex="0">Neovim<span class="tooltip-content">A modern fork of the Vim editor. Its syntax highlighting and code navigation are powered by tree-sitter grammars.</span></span>'s core syntax engine. Graphify runs it across 36 language grammars. CodeGraph uses it for every language it indexes. okf-rs embeds it in a native Rust core. When independently-built tools all converge on one dependency, the dependency is doing something hard well. Three things, specifically.</p>
+
+  <h3 id="ts-incremental">1. It parses incrementally</h3>
+  <p>tree-sitter was designed to re-parse a file <em>as you type</em>, reusing the untouched parts of the previous tree. Edit one function in a 2,000-line file and it rebuilds only the subtree that changed. For an editor this means keystroke-speed highlighting. For a knowledge graph it means something better: <strong>watch mode is cheap</strong>. When CodeGraph's file watcher (M05) sees you save one file, re-indexing is proportional to the edit, not the codebase. This property is what makes "the graph stays current automatically" architecturally plausible at all.</p>
+
+  <h3 id="ts-fault">2. It is fault-tolerant</h3>
+  <p>This is the property that matters most, and the one traditional compiler frontends lack. A compiler parser meets one syntax error and gives up — that's fine for a compiler, whose job is to refuse bad programs. tree-sitter instead produces a <strong>partial AST</strong>: the broken region becomes an <code>ERROR</code> node island, and everything around it parses normally.</p>
+  <p>Why does a graph tool care? Because real development never happens in a permanently compilable state. At any moment in a working repository, someone's branch has a half-written function, a missing bracket, a merge-conflict marker. A parser that refused those files would leave holes in the graph exactly where the most active development is happening — the code your agent is most likely to be asked about. Fault tolerance means one broken function costs you one <code>ERROR</code> node, not a whole file's worth of nodes and edges.</p>
+
+  <h3 id="ts-fast">3. It is fast</h3>
+  <p>tree-sitter grammars compile to C, and parsing runs at millions of lines per minute. That matters because initial indexing is the one unavoidable full-corpus pass: CodeGraph's <code>codegraph init -i</code> on a 100,000-file repository takes about ten minutes — bounded by parsing speed and disk I/O — and that's a one-time cost precisely because everything after it is incremental.</p>
+
+  <div class="callout-warning callout">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"The parser understands what my code means."</strong> — No. tree-sitter knows <em>grammar</em>, not <em>semantics</em>. It knows <code>decode_jwt(token)</code> is a call expression with one argument; it has no idea what a JWT is, whether the call is safe, or even — in the general case — <em>which</em> <code>decode_jwt</code> in a large project this name refers to. Meaning stays with the LLM; structure comes from the parser.</p>
+    <p><strong>"Parsing needs the code to compile."</strong> — The opposite is the point. Fault tolerance means the tree is produced even when the code cannot compile; broken regions degrade to ERROR nodes locally instead of failing the file.</p>
+    <p><strong>"An LLM could just extract this structure instead."</strong> — It could, at a price: tokens for every file on every pass, plus a nonzero hallucination rate on the one layer of your stack that can be exact. The next section makes this the central design argument.</p>
+  </div>
+</section>
+
+<!-- ===================== CONCEPT 3: EXTRACTION ===================== -->
+<section class="section" id="extraction">
+  <h2>Extraction queries: from tree to graph</h2>
+
+  <p>A parse tree is not yet a graph. The second half of every extractor is a set of <strong>extraction queries</strong> — language-specific patterns that walk the tree and pull out two kinds of things:</p>
+  <ul>
+    <li><strong>Symbols</strong> (graph nodes): functions, classes, methods, interfaces — anything with a name and a location worth pointing at.</li>
+    <li><strong>Edges</strong> (relationships): calls, imports, inheritance, interface implementations.</li>
+  </ul>
+  <p>"Language-specific" is doing real work in that sentence. A Python function is a <code>function_definition</code> node; in Go it's a <code>function_declaration</code>; a Ruby method call can omit parentheses entirely. Every language needs its own grammar <em>and</em> its own extraction queries — which is why tools advertise language support as a headline number (Graphify: 36 grammars; okf-rs: 11 languages; CodeGraph: deepest coverage in TypeScript, Python, Rust, and Go). The grammar gives you the tree; the queries decide what in the tree becomes knowledge.</p>
+
+  <div class="animation-container" id="anim-extract">
+    <div class="anim-title">Animation · EXTRACT_EDGES — queries sweep the tree, a graph appears</div>
+    <div class="anim-stage" style="position:relative; height:280px;">
+      <svg viewBox="0 0 760 280" width="100%" height="100%" aria-label="Animation of extraction queries highlighting tree nodes and emitting graph nodes and edges">
+        <g font-family="JetBrains Mono, monospace" font-size="11">
+          <g id="ex-t1"><rect x="30" y="30" width="180" height="26" rx="6" fill="#1A2740" stroke="#64748B"/><text x="120" y="47" text-anchor="middle" fill="#E8ECF1">function_definition</text></g>
+          <g id="ex-t2"><rect x="30" y="90" width="180" height="26" rx="6" fill="#1A2740" stroke="#64748B"/><text x="120" y="107" text-anchor="middle" fill="#E8ECF1">└ name: verify_token</text></g>
+          <g id="ex-t3"><rect x="30" y="150" width="180" height="26" rx="6" fill="#1A2740" stroke="#64748B"/><text x="120" y="167" text-anchor="middle" fill="#E8ECF1">└ call: decode_jwt</text></g>
+          <g id="ex-t4"><rect x="30" y="210" width="180" height="26" rx="6" fill="#1A2740" stroke="#64748B"/><text x="120" y="227" text-anchor="middle" fill="#E8ECF1">import_statement</text></g>
+          <rect id="ex-scan" x="26" y="26" width="188" height="34" rx="8" fill="none" stroke="#8B5CF6" stroke-width="2" opacity="0"/>
+          <g id="ex-g1" opacity="0"><circle cx="470" cy="70" r="34" fill="#162033" stroke="#8B5CF6" stroke-width="2"/><text x="470" y="74" text-anchor="middle" fill="#E8ECF1">verify_token</text></g>
+          <g id="ex-g2" opacity="0"><circle cx="650" cy="180" r="34" fill="#162033" stroke="#10B981" stroke-width="2"/><text x="650" y="184" text-anchor="middle" fill="#E8ECF1">decode_jwt</text></g>
+          <g id="ex-e1" opacity="0"><line x1="497" y1="92" x2="622" y2="163" stroke="#D4A843" stroke-width="2" marker-end="url(#ex-arrow)"/><text x="536" y="122" fill="#D4A843" font-size="10">calls</text></g>
+          <defs><marker id="ex-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#D4A843"/></marker></defs>
+        </g>
+      </svg>
+    </div>
+    <div class="anim-fallback"><p>Static description: an extraction query cursor sweeps down four tree rows (function_definition, its name, a call node, an import). As it passes, two graph nodes appear on the right (verify_token, decode_jwt) and a gold <code>calls</code> edge connects them.</p></div>
+    <div class="anim-caption" id="anim-extract-caption">The query cursor visits tree nodes; matching ones emit graph nodes and edges.</div>
+    <div class="animation-controls">
+      <button data-anim="extract" data-act="play" aria-label="Play extraction animation">▶</button>
+      <button data-anim="extract" data-act="pause" aria-label="Pause extraction animation">⏸</button>
+      <button data-anim="extract" data-act="restart" aria-label="Restart extraction animation">↻</button>
+    </div>
+  </div>
+
+  <p>Here is what one extracted record actually looks like — the concrete artifact behind all this vocabulary. This is a single edge from the lab extractor you'll run later, in the exact shape Graphify's <code>graph.json</code> uses:</p>
+  <div class="code-card"><div class="code-head"><span>graph.json · one edge</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code>{
+  <span class="tok-s">"source"</span>: <span class="tok-s">"function:shared.auth.verify_token"</span>,
+  <span class="tok-s">"target"</span>: <span class="tok-s">"function:shared.auth.decode_jwt"</span>,
+  <span class="tok-s">"type"</span>: <span class="tok-s">"calls"</span>,
+  <span class="tok-s">"provenance"</span>: <span class="tok-s">"EXTRACTED"</span>
+}</code></pre></div>
+  <p>Four fields. The first three you know from M01. The fourth — <code>provenance</code> — is the subject of the resolution ladder below, and it is the most honest field in the whole file.</p>
+</section>
+
+<!-- ===================== CONCEPT 4: DETERMINISM ===================== -->
+<section class="section" id="determinism">
+  <h2>Determinism: the structural pass cannot hallucinate</h2>
+
+  <div class="analogy-box">
+    <p><strong>Before</strong>: think about two ways to inventory a warehouse. Way one: walk the aisles with a barcode scanner — every scan is a fact, and scanning the same warehouse twice produces the same list. Way two: ask a very well-read consultant to <em>describe from memory</em> what's probably in the warehouse.</p>
+    <p><strong>The pain</strong>: the consultant is genuinely useful for questions like "what should we stock next quarter?" — but if you ask for the current inventory, you'll get a plausible list with a few confident inventions in it, and you won't know which entries those are.</p>
+    <p><strong>The mapping</strong>: AST extraction is the barcode scanner. An LLM reading your code is the consultant. The entire design bet of Graphify, CodeGraph, and okf-rs is: use the scanner for the inventory (structure), save the consultant for judgment (meaning) — and never let the consultant write inventory rows.</p>
+  </div>
+
+  <p>Three consequences follow, and each one shows up as a concrete, checkable property of these tools:</p>
+  <p><strong>First: zero API cost for the structural pass.</strong> Parsing needs no LLM calls — no API key, no tokens, no rate limits. Graphify's own logs say it plainly: <code>Re-extracting code files in . (no LLM needed)...</code>. On a pure-code repository, building the entire graph is free. Only the optional semantic pass — docs, PDFs, images — costs tokens, and only that pass can hallucinate.</p>
+  <p><strong>Second: zero hallucination in extracted edges.</strong> An <code>EXTRACTED</code> edge exists because a <code>call</code> node existed in a parse tree. There is no probability attached, nothing to "verify." This is the zero-hallucination structural extraction that Graphify's benchmark analysis identifies as one of its two real advantages (the other being ingest cost — M04 covers both honestly).</p>
+  <p><strong>Third: reproducibility.</strong> okf-rs takes this furthest as an explicit guarantee: identical source produces <em>byte-identical</em> output — no timestamps, no unordered-map noise leaking into the result. That sounds like pedantry until you put a graph in CI: byte-identical output means a graph diff in a pull request shows exactly and only what the code change changed. A tool that shuffles its output every run makes graph diffs useless.</p>
+
+  <div class="callout-why callout">
+    <span class="box-label">✅ Why It Matters</span>
+    <p>Put M02 and M03 side by side. A vector-RAG answer to "who calls <code>decode_jwt</code>?" is a similarity guess that might surface an old docstring. The structural answer is a parse-tree fact. When Graphify's own benchmarks show its retrieval <em>accuracy tying</em> dense vector RAG (76% vs 76% on LongMemEval-S — full numbers in M04), determinism is precisely what it's buying you instead: not better recall, but answers that are <em>facts with provenance</em>, produced for $0 in API calls.</p>
+  </div>
+</section>
+
+<div class="bridge">If extraction is deterministic, why does the edge record carry a provenance field at all? Because there's one step the parser cannot always do deterministically: deciding <em>which</em> definition a name refers to. That step has a ladder of increasingly expensive answers.</div>
+
+<!-- ===================== CONCEPT 5: RESOLUTION LADDER ===================== -->
+<section class="section" id="resolution">
+  <h2>The resolution ladder: EXTRACTED → INFERRED → AMBIGUOUS</h2>
+
+  <p>The parse tree tells you, with certainty, that <em>some function named</em> <code>publish</code> is called on line 27 of <code>webhooks.py</code>. It does not tell you which <code>publish</code>. Your project might define one in <code>shared/events.py</code>, another in a vendored SDK, and a third on a class. Connecting a call site to the right definition is <strong>name resolution</strong>, and it is where structural parsing stops being trivially exact.</p>
+
+  <div class="tech-def-box">
+    <p><strong>Name resolution</strong> is the step that binds a name at a use site (a call like <code>publish(...)</code>) to the declaration it refers to (the <code>def publish</code> in a specific module). Compilers do this with full type information. Structural extractors work with less — so honest ones grade their own confidence, tagging every edge:</p>
+    <ul style="margin-bottom:0;">
+      <li><strong>EXTRACTED</strong> — the binding is explicit in source (the definition is in scope, unambiguous — e.g., defined in the same module). Parse-tree fact; 100% confidence.</li>
+      <li><strong>INFERRED</strong> — resolved by heuristic (exactly one definition with that name exists project-wide, so it's <em>probably</em> the target). Correct most of the time; a guess by construction.</li>
+      <li><strong>AMBIGUOUS</strong> — multiple candidate definitions match; the honest move is to emit all candidates, labeled, and let the consumer decide.</li>
+    </ul>
+  </div>
+
+  <p>Three forces push edges down the ladder, and you should be able to name all three:</p>
+  <p><strong>Dynamic languages.</strong> In Python or JavaScript, "types are merely suggestions" — nothing in the tree says what type <code>self.gateway</code> is, so <code>self.gateway.charge()</code> could resolve to any class with a <code>charge</code> method. Extractors fall back to name matching, which is exactly the heuristic INFERRED describes.</p>
+  <p><strong>Dynamic dispatch.</strong> A call through an interface, a callback passed as an argument, a handler registered in a table (<code>subscribe("payment.settled", send_receipt)</code> from orderflow is a perfect example) — the <em>real</em> call happens at runtime through a variable. Static extraction sees the registration but not the eventual invocation. This is a known blind spot: <em>dynamic dispatch stays invisible</em>, and no static tool escapes it.</p>
+  <p><strong>Name collisions.</strong> Two modules both define <code>execute</code>. Bare-name matching now has two candidates. Down to AMBIGUOUS.</p>
+
+  <h3 id="lsp-rung">The middle rung nobody should skip: asking a language server</h3>
+  <p>Between "cheap heuristic" and "give up" there is a third option: ask the program that already solves resolution for your editor. A <span class="term-tooltip" tabindex="0">language server<span class="tooltip-content">A background process implementing the Language Server Protocol (LSP) — the same thing that powers go-to-definition in VS Code. rust-analyzer (Rust) and pyright (Python) are the reference examples.</span></span> performs full semantic analysis; okf-rs exposes this as <code>okf-rs generate --lsp</code>, which resolves project-wide ambiguous names by asking the real language server (rust-analyzer, pyright) via the LSP request <code>textDocument/definition</code> — verified end-to-end against real servers, with timeout handling and correct behavior on paths containing spaces or non-ASCII characters. The tradeoff is the ladder's whole shape: each rung up buys accuracy with startup time and complexity. Heuristics are instant; an LSP takes seconds to warm up and needs project configuration; and anything still unresolved gets the honest label instead of a confident wrong edge.</p>
+
+  <div class="animation-container" id="anim-ladder">
+    <div class="anim-title">Animation · RESOLVE_LADDER — one call site, three attempts</div>
+    <div class="anim-stage" style="position:relative; height:280px;">
+      <svg viewBox="0 0 760 280" width="100%" height="100%" aria-label="Animation of a call being resolved through heuristic, LSP, and ambiguous stages">
+        <g font-family="JetBrains Mono, monospace" font-size="12">
+          <rect x="20" y="110" width="200" height="40" rx="8" fill="#162033" stroke="#8B5CF6" stroke-width="2"/><text x="120" y="135" text-anchor="middle" fill="#E8ECF1">call: execute(...)</text>
+          <g id="lad-s1" opacity="0"><rect x="290" y="30" width="200" height="40" rx="8" fill="#1A2740" stroke="#D4A843"/><text x="390" y="49" text-anchor="middle" fill="#D4A843" font-size="11">1 · bare-name heuristic</text><text x="390" y="63" text-anchor="middle" fill="#94A3B8" font-size="10">2 candidates found…</text></g>
+          <g id="lad-s2" opacity="0"><rect x="290" y="110" width="200" height="40" rx="8" fill="#1A2740" stroke="#3B82F6"/><text x="390" y="129" text-anchor="middle" fill="#3B82F6" font-size="11">2 · ask LSP (pyright)</text><text x="390" y="143" text-anchor="middle" fill="#94A3B8" font-size="10">textDocument/definition</text></g>
+          <g id="lad-s3" opacity="0"><rect x="290" y="190" width="200" height="40" rx="8" fill="#1A2740" stroke="#F43F5E"/><text x="390" y="209" text-anchor="middle" fill="#F43F5E" font-size="11">3 · emit AMBIGUOUS</text><text x="390" y="223" text-anchor="middle" fill="#94A3B8" font-size="10">all candidates, labeled</text></g>
+          <g id="lad-r1" opacity="0"><rect x="560" y="110" width="180" height="40" rx="8" fill="#162033" stroke="#10B981" stroke-width="2"/><text x="650" y="130" text-anchor="middle" fill="#10B981" font-size="11">shared.db.execute</text><text x="650" y="143" text-anchor="middle" fill="#94A3B8" font-size="10">provenance: INFERRED→OK</text></g>
+        </g>
+      </svg>
+    </div>
+    <div class="anim-fallback"><p>Static description: a call site <code>execute(...)</code> tries rung 1 (bare-name heuristic — two candidates, inconclusive), climbs to rung 2 (ask the pyright language server via textDocument/definition — resolves to <code>shared.db.execute</code>), and rung 3 (emit AMBIGUOUS with all candidates) is shown as the honest fallback if the LSP also fails.</p></div>
+    <div class="anim-caption" id="anim-ladder-caption">Cheap first, exact second, honest last.</div>
+    <div class="animation-controls">
+      <button data-anim="ladder" data-act="play" aria-label="Play resolution ladder animation">▶</button>
+      <button data-anim="ladder" data-act="pause" aria-label="Pause resolution ladder animation">⏸</button>
+      <button data-anim="ladder" data-act="restart" aria-label="Restart resolution ladder animation">↻</button>
+    </g>
+    </div>
+  </div>
+
+  <div class="callout-warning callout">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"INFERRED means broken."</strong> — No; it means <em>graded</em>. In the lab extractor's run over orderflow, 13 of 22 edges are INFERRED and every one happens to be correct. The tag exists so a consumer (or an agent) can <em>choose</em> its confidence floor — recall from M01 that blast-radius queries can run EXTRACTED-only for high-stakes questions.</p>
+    <p><strong>"The LSP rung makes everything EXTRACTED."</strong> — It resolves what static heuristics can't, but dynamic dispatch is still invisible: a handler invoked through an event table is a runtime fact, and no amount of static analysis sees it.</p>
+    <p><strong>"More edges = better graph."</strong> — A tool that guesses aggressively produces more edges and more <em>wrong</em> edges, unlabeled. Prefer the tool that tells you which answers are facts and which are guesses; it's the only one whose graph you can audit.</p>
+  </div>
+</section>
+
+<!-- ===================== CONCEPT 6: LANGUAGES ===================== -->
+<section class="section" id="languages">
+  <h2>Languages and visibility: where "public API" comes from</h2>
+  <p>One more extraction detail matters for the narrative layers you'll build in Track 3: deciding which symbols are a module's <strong>public API</strong>. That sounds universal; it's actually one of the most language-specific judgments an extractor makes, because every language community encodes visibility differently:</p>
+  <div class="table-wrap"><table class="facts">
+    <thead><tr><th>Convention</th><th>Languages</th><th>What the extractor checks</th></tr></thead>
+    <tbody>
+      <tr><td>Explicit opt-in</td><td>Rust (<code>pub</code>), Java (<code>public</code>)</td><td>a keyword on the declaration node</td></tr>
+      <tr><td>Opt-out by default</td><td>PHP, Kotlin</td><td>everything public unless marked otherwise</td></tr>
+      <tr><td>Capitalization-based</td><td>Go</td><td><code>Execute</code> exported, <code>execute</code> package-private — the first letter <em>is</em> the modifier</td></tr>
+      <tr><td>Section-based</td><td>C++</td><td>position under a <code>public:</code>/<code>private:</code> label</td></tr>
+    </tbody>
+  </table></div>
+  <p>okf-rs implements exactly this per-language table across its 11 languages (Rust, Python, TypeScript, JavaScript, Go, Java, C#, PHP, Kotlin, C/C++, Swift). Graphify's 36 grammars and CodeGraph's coverage (deepest in TypeScript, Python, Rust, Go; Objective-C explicitly partial) each embody the same kind of judgment. The takeaway when evaluating any tool: "supports language X" is a spectrum — grammar-level parsing is the easy part; correct visibility rules, call conventions, and module-system semantics are where support is deep or shallow. Projects on less common languages should test before adopting.</p>
+</section>
+
+<!-- ===================== CODE WALKTHROUGH ===================== -->
+<section class="section" id="walkthrough">
+  <h2>Code walkthrough: a real extractor in ~60 lines</h2>
+  <p>Time to hold the whole pipeline in your hands: parse <code>shared/auth.py</code> from orderflow with tree-sitter, walk the tree, and emit graph nodes and provenance-tagged edges. Pick your language — the two tabs implement the same logic with the official bindings.</p>
+
+  <div class="code-tabs" role="tablist">
+    <button class="code-tab active" role="tab" data-tabgroup="ext" data-tab="py">Python</button>
+    <button class="code-tab" role="tab" data-tabgroup="ext" data-tab="js">Node.js</button>
+  </div>
+
+  <div class="tab-panel active" data-tabgroup="ext" data-tabname="py">
+    <p><strong>Chunk 1 — parse the file.</strong> <em>What</em>: load the Python grammar and produce a tree. <em>Why</em>: everything downstream is tree lookups. <em>Gotcha</em>: tree-sitter wants <code>bytes</code>, not <code>str</code> — its node offsets are byte offsets, which matters the moment a file contains a non-ASCII character.</p>
+    <div class="code-card"><div class="code-head"><span>extract.py · chunk 1</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-k">import</span> tree_sitter_python
+<span class="tok-k">from</span> tree_sitter <span class="tok-k">import</span> Language, Parser
+
+parser = Parser(Language(tree_sitter_python.language()))
+
+<span class="tok-k">try</span>:
+    source = <span class="tok-f">open</span>(<span class="tok-s">"sample-project/shared/auth.py"</span>, <span class="tok-s">"rb"</span>).read()
+<span class="tok-k">except</span> OSError <span class="tok-k">as</span> exc:
+    <span class="tok-k">raise</span> SystemExit(<span class="tok-s">f"cannot read source: {exc}"</span>)
+
+tree = parser.parse(source)
+<span class="tok-f">print</span>(tree.root_node)   <span class="tok-c"># the AST as an S-expression</span></code></pre></div>
+
+    <p><strong>Chunk 2 — collect the definitions.</strong> <em>What</em>: walk the tree once, recording every <code>function_definition</code> by name. <em>Why</em>: this is the candidate list that name resolution matches against — you can't grade a call's provenance until you know what's defined where. Notice there is no regex anywhere: we ask nodes for their <em>type</em>, and slice names out of the source by the byte offsets the parser hands us.</p>
+    <div class="code-card"><div class="code-head"><span>extract.py · chunk 2</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-k">def</span> <span class="tok-f">node_text</span>(node) -&gt; <span class="tok-f">str</span>:
+    <span class="tok-k">return</span> source[node.start_byte:node.end_byte].decode(<span class="tok-s">"utf-8"</span>, <span class="tok-s">"replace"</span>)
+
+defs = {}                        <span class="tok-c"># name -> line number</span>
+stack = [tree.root_node]
+<span class="tok-k">while</span> stack:
+    node = stack.pop()
+    <span class="tok-k">if</span> node.type == <span class="tok-s">"function_definition"</span>:
+        name_node = node.child_by_field_name(<span class="tok-s">"name"</span>)
+        <span class="tok-k">if</span> name_node <span class="tok-k">is not</span> <span class="tok-k">None</span>:
+            defs[node_text(name_node)] = name_node.start_point[<span class="tok-n">0</span>] + <span class="tok-n">1</span>
+    stack.extend(node.children)
+
+<span class="tok-f">print</span>(<span class="tok-s">f"definitions: {defs}"</span>)
+<span class="tok-c"># definitions: {'decode_jwt': 16, 'verify_token': 40}</span></code></pre></div>
+
+    <p><strong>Chunk 3 — extract calls and grade them.</strong> <em>What</em>: a second walk finds every <code>call</code> node inside each function and applies the resolution ladder's bottom rung. <em>Why</em>: a call whose target is in our own <code>defs</code> table resolves locally (EXTRACTED here, since this is a single module); a known-name-elsewhere would be INFERRED; unknown names are external and skipped. <em>Gotcha</em>: a call's function child can be a bare <code>identifier</code> (<code>decode_jwt(...)</code>) or an <code>attribute</code> (<code>hmac.new(...)</code>) — handle both or you silently drop every method call in the file.</p>
+    <div class="code-card"><div class="code-head"><span>extract.py · chunk 3</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-k">def</span> <span class="tok-f">call_name</span>(call_node):
+    fn = call_node.child_by_field_name(<span class="tok-s">"function"</span>)
+    <span class="tok-k">if</span> fn <span class="tok-k">is</span> <span class="tok-k">None</span>: <span class="tok-k">return</span> <span class="tok-k">None</span>
+    <span class="tok-k">if</span> fn.type == <span class="tok-s">"identifier"</span>: <span class="tok-k">return</span> node_text(fn)
+    <span class="tok-k">if</span> fn.type == <span class="tok-s">"attribute"</span>:               <span class="tok-c"># obj.method(...) -&gt; "method"</span>
+        attr = fn.child_by_field_name(<span class="tok-s">"attribute"</span>)
+        <span class="tok-k">return</span> node_text(attr) <span class="tok-k">if</span> attr <span class="tok-k">else</span> <span class="tok-k">None</span>
+    <span class="tok-k">return</span> <span class="tok-k">None</span>
+
+edges = []
+stack = [tree.root_node]
+current_fn = <span class="tok-k">None</span>
+<span class="tok-k">def</span> <span class="tok-f">walk</span>(node, owner):
+    <span class="tok-k">if</span> node.type == <span class="tok-s">"function_definition"</span>:
+        name_node = node.child_by_field_name(<span class="tok-s">"name"</span>)
+        owner = node_text(name_node) <span class="tok-k">if</span> name_node <span class="tok-k">else</span> owner
+    <span class="tok-k">if</span> node.type == <span class="tok-s">"call"</span> <span class="tok-k">and</span> owner:
+        target = call_name(node)
+        <span class="tok-k">if</span> target <span class="tok-k">in</span> defs:                    <span class="tok-c"># resolves inside this module</span>
+            edges.append((owner, target, <span class="tok-s">"EXTRACTED"</span>))
+        <span class="tok-c"># unknown names are stdlib/third-party: skipped, not guessed</span>
+    <span class="tok-k">for</span> child <span class="tok-k">in</span> node.children:
+        walk(child, owner)
+
+walk(tree.root_node, <span class="tok-k">None</span>)
+<span class="tok-k">for</span> src, dst, prov <span class="tok-k">in</span> edges:
+    <span class="tok-f">print</span>(<span class="tok-s">f"{src} -&gt; {dst}  [{prov}]"</span>)
+<span class="tok-c"># verify_token -&gt; decode_jwt  [EXTRACTED]</span></code></pre></div>
+  </div>
+
+  <div class="tab-panel" data-tabgroup="ext" data-tabname="js">
+    <p><strong>Chunk 1 — parse the file.</strong> Same shape as the Python tab: load the grammar, read bytes, get a tree. The npm packages are <code>tree-sitter</code> and <code>tree-sitter-python</code> (we're parsing Python source <em>from</em> Node — the grammar and the host language are independent choices).</p>
+    <div class="code-card"><div class="code-head"><span>extract.mjs · chunk 1</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-k">import</span> Parser <span class="tok-k">from</span> <span class="tok-s">"tree-sitter"</span>;
+<span class="tok-k">import</span> Python <span class="tok-k">from</span> <span class="tok-s">"tree-sitter-python"</span>;
+<span class="tok-k">import</span> { readFileSync } <span class="tok-k">from</span> <span class="tok-s">"node:fs"</span>;
+
+<span class="tok-k">const</span> parser = <span class="tok-k">new</span> <span class="tok-f">Parser</span>();
+parser.setLanguage(Python);
+
+<span class="tok-k">let</span> source;
+<span class="tok-k">try</span> {
+  source = readFileSync(<span class="tok-s">"sample-project/shared/auth.py"</span>, <span class="tok-s">"utf8"</span>);
+} <span class="tok-k">catch</span> (err) {
+  console.error(<span class="tok-s">`cannot read source: ${err.message}`</span>);
+  process.exit(<span class="tok-n">1</span>);
+}
+<span class="tok-k">const</span> tree = parser.parse(source);
+console.log(tree.rootNode.toString());  <span class="tok-c">// S-expression AST</span></code></pre></div>
+
+    <p><strong>Chunk 2 — collect definitions.</strong> Identical walk, JavaScript idiom: an explicit stack, checking <code>node.type</code>, reading names via the field accessor.</p>
+    <div class="code-card"><div class="code-head"><span>extract.mjs · chunk 2</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-k">const</span> defs = <span class="tok-k">new</span> Map();
+<span class="tok-k">const</span> stack = [tree.rootNode];
+<span class="tok-k">while</span> (stack.length) {
+  <span class="tok-k">const</span> node = stack.pop();
+  <span class="tok-k">if</span> (node.type === <span class="tok-s">"function_definition"</span>) {
+    <span class="tok-k">const</span> nameNode = node.childForFieldName(<span class="tok-s">"name"</span>);
+    <span class="tok-k">if</span> (nameNode) defs.set(nameNode.text, nameNode.startPosition.row + <span class="tok-n">1</span>);
+  }
+  stack.push(...node.children);
+}
+console.log(<span class="tok-s">"definitions:"</span>, defs);
+<span class="tok-c">// definitions: Map { 'decode_jwt' =&gt; 16, 'verify_token' =&gt; 40 }</span></code></pre></div>
+
+    <p><strong>Chunk 3 — extract and grade calls.</strong> Same ladder-bottom logic; note the same gotcha — <code>call</code> nodes hold either an <code>identifier</code> or an <code>attribute</code> in their <code>function</code> field.</p>
+    <div class="code-card"><div class="code-head"><span>extract.mjs · chunk 3</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-k">function</span> <span class="tok-f">callName</span>(callNode) {
+  <span class="tok-k">const</span> fn = callNode.childForFieldName(<span class="tok-s">"function"</span>);
+  <span class="tok-k">if</span> (!fn) <span class="tok-k">return</span> <span class="tok-k">null</span>;
+  <span class="tok-k">if</span> (fn.type === <span class="tok-s">"identifier"</span>) <span class="tok-k">return</span> fn.text;
+  <span class="tok-k">if</span> (fn.type === <span class="tok-s">"attribute"</span>)
+    <span class="tok-k">return</span> fn.childForFieldName(<span class="tok-s">"attribute"</span>)?.text ?? <span class="tok-k">null</span>;
+  <span class="tok-k">return</span> <span class="tok-k">null</span>;
+}
+
+<span class="tok-k">const</span> edges = [];
+<span class="tok-k">function</span> <span class="tok-f">walk</span>(node, owner) {
+  <span class="tok-k">if</span> (node.type === <span class="tok-s">"function_definition"</span>)
+    owner = node.childForFieldName(<span class="tok-s">"name"</span>)?.text ?? owner;
+  <span class="tok-k">if</span> (node.type === <span class="tok-s">"call"</span> &amp;&amp; owner) {
+    <span class="tok-k">const</span> target = <span class="tok-f">callName</span>(node);
+    <span class="tok-k">if</span> (target &amp;&amp; defs.has(target))
+      edges.push([owner, target, <span class="tok-s">"EXTRACTED"</span>]);
+  }
+  <span class="tok-k">for</span> (<span class="tok-k">const</span> child <span class="tok-k">of</span> node.children) <span class="tok-f">walk</span>(child, owner);
+}
+<span class="tok-f">walk</span>(tree.rootNode, <span class="tok-k">null</span>);
+edges.forEach(([s, d, p]) =&gt; console.log(<span class="tok-s">`${s} -&gt; ${d}  [${p}]`</span>));
+<span class="tok-c">// verify_token -&gt; decode_jwt  [EXTRACTED]</span></code></pre></div>
+  </div>
+
+  <div class="checkpoint"><span class="box-label">🔎 What Just Happened?</span>
+  <p>You built the front half of Graphify. One pass collected the <em>definition table</em> (the graph's nodes); a second pass found every <em>call site</em> and resolved it against that table, emitting a provenance-tagged edge when it matched and skipping external names instead of guessing. No LLM was involved, no API key exists in this file, and running it twice produces identical output. Scale this to 36 grammars, add import/inheritance queries, persist to <code>graph.json</code> — that's the whole structural layer, and you now know exactly which parts of it are facts.</p></div>
+</section>
+
+<!-- ===================== LAB ===================== -->
+<section class="section" id="lab">
+  <h2>Hands-on lab</h2>
+  <p>The full exercise lives in <code>labs/M03-tree-sitter-extraction/</code> — do it now while the walkthrough is fresh. It runs in four steps:</p>
+  <ol>
+    <li><strong>Parse one file</strong> — <code>shared/auth.py</code>, print the S-expression, find the <code>function_definition</code> nodes. (<em>Expected: a <code>(module ...)</code> expression.</em>)</li>
+    <li><strong>Prove fault tolerance</strong> — delete a closing parenthesis from a <em>copy</em>, re-parse, and observe the <code>ERROR</code> node island while every other function still parses. This is the step that should permanently change how you think about "the code doesn't compile."</li>
+    <li><strong>Extract defs and calls</strong> — the walkthrough code, extended with the full grading rules: same-module unique match → EXTRACTED; unique match elsewhere → INFERRED; multiple → AMBIGUOUS (emit all); zero → external, skip.</li>
+    <li><strong>Compare with the fallback</strong> — run <code>python ../shared_tools/kg_extract.py ../sample-project</code> (the course's stdlib-<code>ast</code> extractor) and diff its <code>shared.auth</code> edges against yours. Both must agree on <code>verify_token → decode_jwt (EXTRACTED)</code>.</li>
+  </ol>
+  <p><strong>Stretch goal</strong>: time both parsers on 1,000 synthetic copies of <code>auth.py</code>. The gap you measure is why Graphify and CodeGraph can index tens of thousands of files in minutes.</p>
+  <div class="callout-cost callout"><span class="box-label">💰 Cost note</span><p>This entire lab costs $0 in API calls — by design, and the design is the lesson. If a "code understanding" tool asks for an API key before it can tell you who calls a function, you now know to ask what, exactly, it needs an LLM for.</p></div>
+</section>
+
+<!-- ===================== QUIZ ===================== -->
+<section class="section" id="quiz">
+  <h2>Knowledge check</h2>
+
+  <div class="quiz-question" data-q="1">
+    <h4>1. Why is tree-sitter's fault tolerance essential for knowledge-graph extraction specifically?</h4>
+    <div class="quiz-option" data-correct="false">It makes parsing faster by skipping broken files entirely</div>
+    <div class="quiz-option" data-correct="true">Real repos always contain mid-edit, non-compiling code — partial ASTs mean one broken function costs one ERROR node instead of losing a whole file's nodes and edges</div>
+    <div class="quiz-option" data-correct="false">It automatically fixes syntax errors before parsing</div>
+    <div class="quiz-option" data-correct="false">It allows the parser to run without a language grammar</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="2">
+    <h4>2. A call edge is tagged INFERRED. What does that tell you?</h4>
+    <div class="quiz-option" data-correct="false">The edge was extracted by an LLM and may be hallucinated</div>
+    <div class="quiz-option" data-correct="false">The edge is wrong and should be deleted</div>
+    <div class="quiz-option" data-correct="true">The target was resolved by heuristic (e.g., exactly one project-wide name match) — probably correct, but a guess by construction, unlike a parse-tree fact</div>
+    <div class="quiz-option" data-correct="false">The edge crosses a language boundary</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="3">
+    <h4>3. Why can the structural pass not hallucinate?</h4>
+    <div class="quiz-option" data-correct="false">Because tree-sitter validates its output against the compiler</div>
+    <div class="quiz-option" data-correct="true">Because no LLM is involved: every EXTRACTED edge exists because a labeled node existed in a parse tree — it's deterministic, reproducible, and costs zero API tokens</div>
+    <div class="quiz-option" data-correct="false">Because the graph is checked by a human before saving</div>
+    <div class="quiz-option" data-correct="false">It can — all graph edges carry some hallucination risk</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="4">
+    <h4>4. What does <code>okf-rs generate --lsp</code> add over bare tree-sitter extraction?</h4>
+    <div class="quiz-option" data-correct="false">It makes generation fully deterministic</div>
+    <div class="quiz-option" data-correct="false">It adds LLM-written descriptions to each function</div>
+    <div class="quiz-option" data-correct="true">It resolves project-wide ambiguous names by asking the real language server (rust-analyzer, pyright) via textDocument/definition — trading startup time for resolution accuracy</div>
+    <div class="quiz-option" data-correct="false">It parses languages tree-sitter has no grammar for</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="5">
+    <h4>5. orderflow's <code>worker.py</code> registers <code>subscribe("payment.settled", send_receipt)</code>. What will static extraction see?</h4>
+    <div class="quiz-option" data-correct="true">The call to <code>subscribe</code> itself — but the eventual runtime invocation of <code>send_receipt</code> through the event table stays invisible; dynamic dispatch is a known blind spot of all static tools</div>
+    <div class="quiz-option" data-correct="false">A complete EXTRACTED edge from <code>publish</code> to <code>send_receipt</code></div>
+    <div class="quiz-option" data-correct="false">Nothing — callbacks are skipped entirely</div>
+    <div class="quiz-option" data-correct="false">An AMBIGUOUS edge to every function in the repo</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="6">
+    <h4>6. In Go, how does an extractor decide a function is part of the public API?</h4>
+    <div class="quiz-option" data-correct="false">It looks for a <code>public</code> keyword on the declaration</div>
+    <div class="quiz-option" data-correct="true">By capitalization: an initial uppercase letter (<code>Execute</code>) means exported; lowercase means package-private — visibility rules are language-specific judgments the extractor must encode</div>
+    <div class="quiz-option" data-correct="false">All Go functions are public</div>
+    <div class="quiz-option" data-correct="false">It checks a section label like <code>public:</code> above the function</div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<!-- ===================== SUMMARY ===================== -->
+<section class="section" id="summary">
+  <h2>Module summary</h2>
+  <div class="summary-grid">
+    <div class="summary-card"><h4>AST = the screenplay</h4><p>Source code reorganized into labeled structure; graph nodes/edges are relabeled tree nodes. Structure is a lookup, not a search.</p></div>
+    <div class="summary-card"><h4>tree-sitter won for 3 reasons</h4><p>Incremental (cheap watch mode), fault-tolerant (partial ASTs on broken code), fast (C-compiled grammars; one-time init cost).</p></div>
+    <div class="summary-card"><h4>Determinism is the product</h4><p>Zero LLM calls, zero hallucination in EXTRACTED edges, byte-identical reruns (okf-rs) — the structural pass is free and auditable.</p></div>
+    <div class="summary-card"><h4>The resolution ladder</h4><p>EXTRACTED (fact) → INFERRED (heuristic) → AMBIGUOUS (all candidates, labeled). LSP is the middle rung; dynamic dispatch stays invisible.</p></div>
+  </div>
+  <p><strong>What we built on orderflow</strong>: a working tree-sitter extractor that finds <code>decode_jwt</code> and <code>verify_token</code>, grades the edge between them EXTRACTED, and agrees with the course's stdlib fallback extractor.</p>
+  <p><strong>Next module preview</strong>: you've built a toy extractor; M04 hands you the production one. Graphify wraps everything from this module — 36 grammars, Leiden community detection, god-node identification — behind one command, and produces three artifacts you'll learn to read critically. Bring skepticism: M04 is also where we put the famous "71.5×" benchmark next to its replications.</p>
+</section>
+
+<!-- ===================== REFERENCES ===================== -->
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul class="ref-list">
+    <li>tree-sitter documentation — <a href="https://tree-sitter.github.io/tree-sitter/" rel="noopener">tree-sitter.github.io</a> (grammars, incremental parsing, query language)</li>
+    <li>py-tree-sitter and <code>tree-sitter-python</code> packages (PyPI); <code>tree-sitter</code> + <code>tree-sitter-python</code> (npm)</li>
+    <li>Graphify repository — 36-grammar AST extraction, EXTRACTED/INFERRED tagging</li>
+    <li>okf-rs repository — <a href="https://github.com/jyjeanne/okf-rs" rel="noopener">github.com/jyjeanne/okf-rs</a> (deterministic output, LSP-backed disambiguation, per-language visibility rules)</li>
+    <li>Course lab: <code>labs/M03-tree-sitter-extraction/</code> and fallback extractor <code>labs/shared_tools/kg_extract.py</code></li>
+  </ul>
+  <div class="prevnext">
+    <a href="M02-rag-baseline-limits.html"><span class="dir">← Previous</span> M02 · The RAG Baseline and Where It Breaks</a>
+    <a href="M04-graphify-in-practice.html" style="text-align:right;"><span class="dir">Next →</span> M04 · Graphify in Practice</a>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- copy buttons ---------- */
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.closest('.code-card').querySelector('pre');
+      var text = pre.innerText;
+      function done() { btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+        ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); done();
+      }
+    });
+  });
+
+  /* ---------- code tabs ---------- */
+  document.querySelectorAll('.code-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var group = tab.getAttribute('data-tabgroup'), name = tab.getAttribute('data-tab');
+      document.querySelectorAll('.code-tab[data-tabgroup="' + group + '"]').forEach(function (t) { t.classList.toggle('active', t === tab); });
+      document.querySelectorAll('.tab-panel[data-tabgroup="' + group + '"]').forEach(function (p) {
+        p.classList.toggle('active', p.getAttribute('data-tabname') === name);
+      });
+    });
+  });
+
+  /* ---------- quiz ---------- */
+  document.querySelectorAll('.quiz-question').forEach(function (q) {
+    var fb = q.querySelector('.quiz-feedback');
+    q.querySelectorAll('.quiz-option').forEach(function (opt) {
+      opt.setAttribute('tabindex', '0');
+      opt.setAttribute('role', 'button');
+      function answer() {
+        if (q.dataset.answered) return;
+        q.dataset.answered = '1';
+        var correct = opt.getAttribute('data-correct') === 'true';
+        opt.classList.add(correct ? 'correct' : 'incorrect');
+        if (!correct) {
+          q.querySelectorAll('.quiz-option[data-correct="true"]').forEach(function (c) { c.classList.add('correct'); });
+        }
+        fb.textContent = correct ? '✅ Correct. ' + explain(q) : '❌ Not quite. ' + explain(q);
+        fb.classList.add('show', correct ? 'good' : 'bad');
+      }
+      opt.addEventListener('click', answer);
+      opt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); answer(); } });
+    });
+  });
+  function explain(q) {
+    var map = {
+      '1': 'Development never happens in a permanently compilable state; partial ASTs keep the graph complete where development is most active.',
+      '2': 'INFERRED = resolved by heuristic. It is graded confidence, not an error — consumers can choose an EXTRACTED-only floor for high-stakes queries.',
+      '3': 'Structure comes from a parser, not a model: parse-tree facts, reproducible runs, $0 in tokens. Only the optional docs/images pass involves an LLM.',
+      '4': 'The LSP rung asks rust-analyzer/pyright to resolve names statically ambiguous to bare heuristics — slower, more accurate, still blind to dynamic dispatch.',
+      '5': 'Static tools see the registration call; the runtime dispatch through the handler table is invisible. Know this blind spot before trusting blast-radius queries.',
+      '6': 'Go encodes visibility in the identifier itself; Rust/Java use keywords, PHP/Kotlin are opt-out, C++ uses section labels. Extractors must encode each convention.'
+    };
+    return map[q.getAttribute('data-q')] || '';
+  }
+
+  /* ---------- scrollspy ---------- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.sidebar-nav a'));
+  var targets = links.map(function (l) { return document.getElementById(l.getAttribute('href').slice(1)); }).filter(Boolean);
+  function spy() {
+    var pos = window.scrollY + 120, active = targets[0];
+    targets.forEach(function (t) { if (t.offsetTop <= pos) active = t; });
+    links.forEach(function (l) { l.classList.toggle('active', l.getAttribute('href') === '#' + active.id); });
+  }
+  window.addEventListener('scroll', spy, { passive: true }); spy();
+
+  /* ---------- animation engine ---------- */
+  function timeline(steps) {
+    // steps: [{at: ms, fn: function}] — returns controller with play/pause/restart
+    var raf = null, start = null, elapsed = 0, done = {};
+    function frame(ts) {
+      if (start === null) start = ts - elapsed;
+      elapsed = ts - start;
+      steps.forEach(function (s, i) { if (elapsed >= s.at && !done[i]) { done[i] = true; s.fn(); } });
+      if (elapsed < steps[steps.length - 1].at + 400) raf = requestAnimationFrame(frame);
+    }
+    return {
+      play: function () { if (reduced) return; if (!raf) raf = requestAnimationFrame(frame); },
+      pause: function () { if (raf) { cancelAnimationFrame(raf); raf = null; } },
+      restart: function (resetFn) { this.pause(); start = null; elapsed = 0; done = {}; resetFn(); this.play(); }
+    };
+  }
+  function show(id, on) { var el = document.getElementById(id); if (el) el.style.opacity = on ? '1' : '0'; }
+  function fadeSetup(ids) { ids.forEach(function (id) { var el = document.getElementById(id); if (el) el.style.transition = 'opacity .5s'; show(id, false); }); }
+  function caption(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; }
+
+  var anims = {};
+
+  /* AST_GROW */
+  (function () {
+    var ids = ['ast-tree', 'ast-n1', 'ast-n2', 'ast-n3', 'ast-n4', 'ast-n5', 'ast-n6', 'ast-note'];
+    function reset() { fadeSetup(ids); caption('anim-ast-caption', 'Press play: the source lines light up and grow into labeled tree nodes.'); }
+    reset();
+    var tl = timeline([
+      { at: 200, fn: function () { show('ast-tree', 1); show('ast-n1', 1); caption('anim-ast-caption', 'The file itself becomes the module root…'); } },
+      { at: 900, fn: function () { show('ast-n2', 1); caption('anim-ast-caption', '…def verify_token becomes a function_definition node…'); } },
+      { at: 1700, fn: function () { show('ast-n3', 1); } },
+      { at: 2400, fn: function () { show('ast-n4', 1); caption('anim-ast-caption', '…its body is a block containing more labeled nodes…'); } },
+      { at: 3100, fn: function () { show('ast-n5', 1); show('ast-n6', 1); caption('anim-ast-caption', '…and every call site is an explicit, labeled call node.'); } },
+      { at: 3900, fn: function () { show('ast-note', 1); } }
+    ]);
+    anims.ast = { play: tl.play.bind(tl), pause: tl.pause.bind(tl), restart: function () { tl.restart(reset); } };
+  })();
+
+  /* EXTRACT_EDGES */
+  (function () {
+    var scan = document.getElementById('ex-scan');
+    var rows = [30, 90, 150, 210];
+    function reset() {
+      fadeSetup(['ex-g1', 'ex-g2', 'ex-e1']);
+      if (scan) { scan.style.transition = 'transform .5s, opacity .3s'; scan.style.opacity = '0'; scan.style.transform = 'translateY(0)'; }
+      caption('anim-extract-caption', 'The query cursor visits tree nodes; matching ones emit graph nodes and edges.');
+    }
+    reset();
+    var tl = timeline([
+      { at: 200, fn: function () { if (scan) scan.style.opacity = '1'; caption('anim-extract-caption', 'Query: match function_definition → emit a node…'); } },
+      { at: 900, fn: function () { if (scan) scan.style.transform = 'translateY(' + (rows[1] - rows[0]) + 'px)'; show('ex-g1', 1); } },
+      { at: 1700, fn: function () { if (scan) scan.style.transform = 'translateY(' + (rows[2] - rows[0]) + 'px)'; caption('anim-extract-caption', 'Query: match call → emit the target node and a calls edge…'); } },
+      { at: 2400, fn: function () { show('ex-g2', 1); show('ex-e1', 1); } },
+      { at: 3100, fn: function () { if (scan) scan.style.transform = 'translateY(' + (rows[3] - rows[0]) + 'px)'; caption('anim-extract-caption', 'Imports match a different query — every edge type has one. The graph is the sum of query hits.'); } }
+    ]);
+    anims.extract = { play: tl.play.bind(tl), pause: tl.pause.bind(tl), restart: function () { tl.restart(reset); } };
+  })();
+
+  /* RESOLVE_LADDER */
+  (function () {
+    var ids = ['lad-s1', 'lad-s2', 'lad-s3', 'lad-r1'];
+    function reset() { fadeSetup(ids); caption('anim-ladder-caption', 'Cheap first, exact second, honest last.'); }
+    reset();
+    var tl = timeline([
+      { at: 300, fn: function () { show('lad-s1', 1); caption('anim-ladder-caption', 'Rung 1: bare-name heuristic finds two candidates — inconclusive.'); } },
+      { at: 1400, fn: function () { show('lad-s2', 1); caption('anim-ladder-caption', 'Rung 2: ask the language server — textDocument/definition resolves it.'); } },
+      { at: 2500, fn: function () { show('lad-r1', 1); } },
+      { at: 3300, fn: function () { show('lad-s3', 1); caption('anim-ladder-caption', 'Rung 3 exists for what even the LSP can’t bind: emit AMBIGUOUS, all candidates labeled.'); } }
+    ]);
+    anims.ladder = { play: tl.play.bind(tl), pause: tl.pause.bind(tl), restart: function () { tl.restart(reset); } };
+  })();
+
+  /* controls */
+  document.querySelectorAll('.animation-controls button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var a = anims[btn.getAttribute('data-anim')], act = btn.getAttribute('data-act');
+      if (a && a[act]) a[act]();
+    });
+  });
+})();
+</script>
+</body>
+</html>

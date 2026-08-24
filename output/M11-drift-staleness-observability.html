@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M11 — Drift, Staleness &amp; Observability · Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-primary:#0A1628; --bg-secondary:#111D33; --bg-card:#162033; --bg-surface:#1A2740;
+  --text-primary:#E8ECF1; --text-secondary:#94A3B8; --text-muted:#64748B;
+  --accent-primary:#D4A843; --accent-hover:#E5BC5A; --accent-muted:rgba(212,168,67,0.15);
+  --success:#10B981; --success-bg:rgba(16,185,129,0.1);
+  --warning:#F59E0B; --warning-bg:rgba(245,158,11,0.1);
+  --error:#F43F5E; --error-bg:rgba(244,63,94,0.1);
+  --info:#3B82F6; --info-bg:rgba(59,130,246,0.1);
+  --track-overview:#D4A843; --track-foundations:#6366F1; --track-structural:#8B5CF6;
+  --track-narrative:#06B6D4; --track-serving:#F97316; --track-production:#22C55E; --track-capstone:#D4A843;
+  --track-color:var(--track-production);
+  --code-bg:#0D1117; --code-border:#21262D; --code-text:#C9D1D9; --code-comment:#8B949E;
+  --code-keyword:#FF7B72; --code-string:#A5D6FF; --code-function:#D2A8FF; --code-number:#79C0FF;
+  --transition-fast:150ms; --transition-normal:300ms; --transition-slow:500ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg-primary);color:var(--text-primary);font-family:'Source Sans 3',sans-serif;font-size:1.05rem;line-height:1.7}
+h1,h2,h3,h4{font-family:'Bricolage Grotesque',sans-serif;line-height:1.25}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.5rem;font-weight:700;margin:0 0 1rem;padding-top:.5rem}
+h3{font-size:1.25rem;font-weight:600;margin:1.75rem 0 .75rem}
+p{margin:0 0 1rem}
+a{color:var(--accent-primary)}
+ul,ol{margin:0 0 1rem 1.5rem}
+li{margin-bottom:.4rem}
+strong{font-weight:600}
+code{font-family:'JetBrains Mono',monospace;font-size:.9rem;background:var(--bg-surface);padding:.1em .35em;border-radius:4px;color:var(--code-text)}
+.page-container{max-width:1200px;margin:0 auto;padding:2rem;display:grid;grid-template-columns:240px 1fr;gap:3rem}
+.sidebar-nav{position:sticky;top:2rem;height:calc(100vh - 4rem);overflow-y:auto;font-family:'Bricolage Grotesque',sans-serif;font-size:.85rem;font-weight:600}
+.sidebar-nav .nav-title{color:var(--track-color);text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;margin-bottom:.75rem}
+.sidebar-nav a{display:block;color:var(--text-secondary);text-decoration:none;padding:.35rem .6rem;border-left:2px solid var(--code-border);transition:all var(--transition-fast)}
+.sidebar-nav a:hover{color:var(--text-primary);border-left-color:var(--track-color)}
+.content{max-width:800px;min-width:0}
+.section{margin-bottom:4rem}
+.course-header{background:var(--bg-secondary);border:1px solid var(--code-border);border-radius:16px;padding:2rem;margin-bottom:3rem}
+.course-kicker{font-family:'Bricolage Grotesque',sans-serif;font-size:.8rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+.track-badge{display:inline-block;font-family:'Bricolage Grotesque',sans-serif;font-size:.78rem;font-weight:700;color:var(--track-color);border:1px solid var(--track-color);border-radius:999px;padding:.15rem .75rem;margin:.75rem 0}
+.header-meta{display:flex;flex-wrap:wrap;gap:1.25rem;color:var(--text-secondary);font-size:.9rem;margin-top:1rem}
+.progress-bar{height:4px;background:var(--bg-surface);border-radius:2px;overflow:hidden;margin:1rem 0 .35rem}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--track-color),var(--accent-primary));border-radius:2px;transition:width var(--transition-slow)}
+.progress-label{font-size:.8rem;color:var(--text-muted)}
+.objectives{background:var(--bg-card);border-radius:12px;padding:1.5rem}
+.objectives .skill{font-family:'Bricolage Grotesque',sans-serif;font-size:.78rem;font-weight:700;color:var(--track-color)}
+.analogy-box{background:var(--accent-muted);border-left:4px solid var(--accent-primary);border-radius:0 8px 8px 0;padding:1.5rem;margin:1.5rem 0}
+.analogy-box::before{content:'💡 Everyday Analogy';font-family:'Bricolage Grotesque',sans-serif;font-weight:700;color:var(--accent-primary);display:block;margin-bottom:.5rem}
+.tech-def-box{background:var(--info-bg);border-left:4px solid var(--info);border-radius:0 8px 8px 0;padding:1.5rem;margin:1.5rem 0}
+.tech-def-box::before{content:'📐 Technical Definition';font-family:'Bricolage Grotesque',sans-serif;font-weight:700;color:var(--info);display:block;margin-bottom:.5rem}
+.callout{border-left:4px solid;border-radius:0 8px 8px 0;padding:1.5rem;margin:1.5rem 0}
+.callout .box-label{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;display:block;margin-bottom:.5rem}
+.callout-warning{background:var(--warning-bg);border-left-color:var(--warning)}
+.callout-warning .box-label{color:var(--warning)}
+.callout-why{background:var(--success-bg);border-left-color:var(--success)}
+.callout-why .box-label{color:var(--success)}
+.callout-cost{background:var(--warning-bg);border-left-color:var(--accent-primary)}
+.callout-cost .box-label{color:var(--accent-primary)}
+.callout-security{background:var(--error-bg);border-left-color:var(--error)}
+.callout-security .box-label{color:var(--error)}
+.bridge{font-style:italic;color:var(--text-secondary);border-top:1px dashed var(--code-border);border-bottom:1px dashed var(--code-border);padding:.9rem 0;margin:2rem 0}
+.checkpoint{background:var(--success-bg);border:1px solid var(--success);border-radius:12px;padding:1.25rem 1.5rem;margin:1.5rem 0}
+.checkpoint .box-label{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;color:var(--success);display:block;margin-bottom:.5rem}
+.term-tooltip{position:relative;color:var(--accent-primary);cursor:help;border-bottom:1px dashed var(--accent-primary)}
+.term-tooltip .tooltip-content{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--accent-primary);border-radius:8px;padding:.75rem 1rem;font-size:.85rem;color:var(--text-primary);width:280px;opacity:0;pointer-events:none;transition:opacity var(--transition-fast);z-index:10;font-style:normal;font-weight:400;line-height:1.5}
+.term-tooltip:hover .tooltip-content,.term-tooltip:focus .tooltip-content{opacity:1}
+.code-wrap{background:var(--code-bg);border:1px solid var(--code-border);border-radius:10px;margin:1.25rem 0;position:relative;overflow:hidden}
+.code-wrap pre{padding:1.1rem 1.25rem;overflow-x:auto}
+.code-wrap code{background:none;padding:0;font-size:.85rem;line-height:1.6;color:var(--code-text);display:block;white-space:pre}
+.code-title{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text-muted);padding:.5rem 1.25rem;border-bottom:1px solid var(--code-border)}
+.copy-btn{position:absolute;top:.4rem;right:.5rem;background:var(--bg-card);border:1px solid var(--code-border);color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:.7rem;border-radius:6px;padding:.25rem .6rem;cursor:pointer;transition:all var(--transition-fast)}
+.copy-btn:hover{border-color:var(--accent-primary);color:var(--accent-primary)}
+.tok-c{color:var(--code-comment)} .tok-s{color:var(--code-string)} .tok-k{color:var(--code-keyword)} .tok-f{color:var(--code-function)} .tok-n{color:var(--code-number)}
+.code-tabs{display:flex;gap:0;border-bottom:2px solid var(--code-border);margin-top:1.25rem}
+.code-tab{padding:.5rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:.8rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-muted);transition:all var(--transition-fast);background:none;border-top:none;border-left:none;border-right:none}
+.code-tab.active{color:var(--accent-primary);border-bottom-color:var(--accent-primary)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.animation-container{background:var(--bg-secondary);border:1px solid var(--code-border);border-radius:12px;padding:2rem;margin:2rem 0;position:relative;min-height:300px}
+.anim-title{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:.85rem;color:var(--track-color);text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem}
+.animation-controls{display:flex;gap:.5rem;position:absolute;bottom:1rem;right:1rem}
+.animation-controls button{background:var(--bg-card);border:1px solid var(--code-border);color:var(--text-primary);width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all var(--transition-fast)}
+.animation-controls button:hover{border-color:var(--accent-primary);color:var(--accent-primary)}
+.anim-caption{font-size:.85rem;color:var(--text-secondary);min-height:2.4em;margin-top:1rem;padding-right:9rem}
+.quiz-question{background:var(--bg-card);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.quiz-question h3{margin-top:0}
+.quiz-option{padding:.75rem 1rem;margin:.5rem 0;border:1px solid var(--code-border);border-radius:8px;cursor:pointer;transition:all var(--transition-fast)}
+.quiz-option:hover{border-color:var(--accent-primary)}
+.quiz-option.correct{border-color:var(--success);background:var(--success-bg)}
+.quiz-option.incorrect{border-color:var(--error);background:var(--error-bg)}
+.quiz-feedback{margin-top:.75rem;padding:.75rem;border-radius:8px;font-size:.9rem;display:none}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:.92rem}
+th,td{border:1px solid var(--code-border);padding:.6rem .8rem;text-align:left;vertical-align:top}
+th{background:var(--bg-card);font-family:'Bricolage Grotesque',sans-serif;font-weight:600}
+.table-scroll{overflow-x:auto}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0}
+.summary-card{background:var(--bg-card);border:1px solid var(--code-border);border-radius:12px;padding:1.1rem 1.25rem}
+.summary-card h4{color:var(--track-color);font-size:.95rem;margin-bottom:.4rem}
+.summary-card p{font-size:.9rem;color:var(--text-secondary);margin:0}
+.next-prev{display:flex;justify-content:space-between;gap:1rem;margin-top:3rem}
+.next-prev a{flex:1;background:var(--bg-card);border:1px solid var(--code-border);border-radius:12px;padding:1rem 1.25rem;text-decoration:none;transition:border-color var(--transition-fast)}
+.next-prev a:hover{border-color:var(--track-color)}
+.next-prev .dir{font-size:.75rem;color:var(--text-muted);display:block;font-family:'Bricolage Grotesque',sans-serif}
+.step-block{border:1px solid var(--code-border);border-radius:12px;padding:1.5rem;margin:1.5rem 0;background:var(--bg-secondary)}
+.step-block h3{margin-top:0}
+/* animation stages */
+.anim-stage{position:relative;height:270px;overflow:hidden}
+.actor{position:absolute;background:var(--bg-card);border:1.5px solid var(--code-border);border-radius:10px;padding:.5rem .7rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text-primary);transition:all .5s ease;text-align:center}
+.actor.lit{border-color:var(--track-color);box-shadow:0 0 14px rgba(34,197,94,.35)}
+.actor.bad{border-color:var(--error);box-shadow:0 0 14px rgba(244,63,94,.35)}
+.actor.dim{opacity:.35}
+.commit-dot{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--info);border:2px solid var(--bg-primary);transition:all .5s ease;opacity:0}
+.commit-dot.show{opacity:1}
+.gap-band{position:absolute;background:rgba(244,63,94,.12);border:1px dashed var(--error);border-radius:6px;transition:all .7s ease;opacity:0}
+.gap-band.show{opacity:1}
+.door{position:absolute;width:21%;top:60px;height:150px;background:var(--bg-card);border:1.5px solid var(--code-border);border-radius:10px;padding:.5rem .5rem;font-family:'JetBrains Mono',monospace;font-size:.63rem;text-align:center;transition:all .5s ease}
+.door .lamp{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--bg-surface);border:1px solid var(--code-border);margin-bottom:.35rem;transition:background .4s}
+.door.active{border-color:var(--warning)}
+.door.active .lamp{background:var(--success);box-shadow:0 0 10px rgba(16,185,129,.8)}
+.door .truth{display:block;margin-top:.4rem;color:var(--error);opacity:0;transition:opacity .5s}
+.door.active .truth{opacity:1}
+@media (max-width:900px){
+  .page-container{grid-template-columns:1fr;padding:1rem}
+  .sidebar-nav{position:static;height:auto;margin-bottom:1.5rem}
+  .summary-grid{grid-template-columns:1fr}
+  .anim-caption{padding-right:0}
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .actor,.commit-dot,.gap-band,.door,.door .lamp,.door .truth,.progress-fill{transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+<nav class="sidebar-nav" aria-label="Module sections">
+  <div class="nav-title">M11 · Production Ops</div>
+  <a href="#objectives">Learning Objectives</a>
+  <a href="#no-self-heal">Graphs Don't Self-Heal</a>
+  <a href="#silent-failures">Four Silent Failures</a>
+  <a href="#desync">Artifact Desync</a>
+  <a href="#scale-wall">The Scale Wall</a>
+  <a href="#checklist">The Production Checklist</a>
+  <a href="#gate-code">Build the Freshness Gate</a>
+  <a href="#okf-governance">OKF-Side Governance</a>
+  <a href="#defining-question">The Defining Question</a>
+  <a href="#hands-on">Hands-On Exercise</a>
+  <a href="#quiz">Knowledge Check</a>
+  <a href="#summary">Module Summary</a>
+  <a href="#references">References</a>
+</nav>
+<main class="content">
+
+<header class="course-header">
+  <div class="course-kicker">Knowledge Graphs for AI Agents</div>
+  <span class="track-badge">Track 5 — Production</span>
+  <h1>M11 · Production Operations: Drift, Staleness &amp; Observability</h1>
+  <div class="progress-bar" role="progressbar" aria-valuenow="12" aria-valuemin="0" aria-valuemax="14" aria-label="Course progress: module 12 of 14"><div class="progress-fill" style="width:86%"></div></div>
+  <div class="progress-label">Module 12 of 14</div>
+  <div class="header-meta">
+    <span>⏱ Estimated time: 60 minutes</span>
+    <span>📋 Prerequisites: M08 (enrichment hooks), M09 (MCP serving), M10 (the assembled stack)</span>
+    <span>🎚 Level: Advanced</span>
+  </div>
+</header>
+
+<section class="section" id="objectives">
+  <h2>Learning Objectives</h2>
+  <div class="objectives">
+    <p class="skill">SKILL LEVEL: ADVANCED</p>
+    <ul>
+      <li>Explain why a stale structural graph is worse than no graph, and why the dangerous failure mode is "wrong with zero signal," not "wrong once."</li>
+      <li>Recount the four documented mechanisms by which a rebuild hook fails silently — and identify which ones your own setup is exposed to.</li>
+      <li>Describe artifact desync among <code>graph.json</code>, <code>graph.html</code>, and <code>GRAPH_REPORT.md</code>, and the scale wall that makes "just rebuild" a non-answer on monorepos.</li>
+      <li>Implement the five-point production checklist, including a CI freshness gate that mechanically compares artifact timestamps against <code>git log -1</code>.</li>
+      <li>Answer the defining question — "how would you detect a stale graph within 24 hours?" — in specific, mechanical terms.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="no-self-heal">
+  <h2>Graphs Don't Self-Heal</h2>
+  <p>Open with the scenario this entire module defends against. Your coding agent confidently refactors a payments module using a knowledge graph that is <strong>three weeks out of date</strong> — and the system never warned anyone. Every update hook reported success. Every dashboard was green. The agent's mental model quietly diverged from reality, and you found out when the refactor shipped.</p>
+  <p>The root cause is a single sentence you first met in M09's cache trap, now generalized: <strong>Graphify builds a static index. It does not update automatically as developers commit code.</strong> Without hooks explicitly wired in — <em>and working correctly</em> — the graph silently drifts from the codebase, and nothing in the tool's happy-path output tells you it's happening.</p>
+  <p>This is not hypothetical. In one reported case, <code>GRAPH_SUMMARY.md</code> — the ~700-token "cheap orientation" file handed to agents before a task — was measured <strong>two weeks stale on <code>origin/main</code></strong>: last updated May 9, checked May 23. For that entire window it was served to agents as ground truth. As one GitHub issue discussion put it: <em>"An agent reasoning over a stale bundle gives confidently wrong answers. If you refactor a module and forget to rerun /graphify, your agent is navigating with a stale map."</em></p>
+  <div class="analogy-box">
+    <p><strong>BEFORE:</strong> Think of a city's paper street map versus its GPS feed. A paper map printed in May is honest about what it is — you know it can't show last week's road closure, so you double-check when something looks off.</p>
+    <p><strong>PAIN:</strong> Now imagine a GPS that shows a live-updating interface, timestamps, a cheerful "route recalculated" — but silently stopped receiving updates two weeks ago. You extend it full trust <em>because everything about it signals freshness</em>. You drive into the closed road at speed.</p>
+    <p><strong>MAPPING:</strong> A graph behind an MCP server is the fake-live GPS. The serving layer answers instantly and authoritatively whether the graph is an hour old or a month old — nothing in the answer's shape reveals its age. That's why a stale graph is <em>worse</em> than no graph: no graph sends the agent to read files (slow, but current); a stale graph delivers high-confidence wrong answers with no signal to distrust them.</p>
+  </div>
+  <div class="tech-def-box">
+    <p><strong>Graph drift</strong> is the accumulating divergence between a codebase's actual state and the state its knowledge artifacts describe. Some lag is inherent — graphs are always somewhat behind between rebuilds, and that's tolerable. <strong>The failure mode is not "the graph is wrong once." The failure mode is the graph being wrong with zero signal that it's wrong</strong>: <code>graphify update</code> reports success, the hook ran, nothing crashed — and the map is still lying.</p>
+  </div>
+
+  <div class="animation-container" id="anim-drift">
+    <div class="anim-title">Animation · DRIFT_TIMELINE — the gap nobody sees</div>
+    <div class="anim-stage" aria-label="Animated timeline: commits accumulate while the graph timestamp freezes; the divergence gap widens and an agent answers from the frozen side">
+      <div class="actor" style="left:2%;top:8px;width:130px">code (git HEAD)</div>
+      <div class="actor" id="dr-graph" style="left:2%;top:150px;width:150px">graph.json<br><span id="dr-stamp" style="color:var(--text-muted)">built: May 9 ✓</span></div>
+      <div class="commit-dot" id="dr-c1" style="left:24%;top:18px"></div>
+      <div class="commit-dot" id="dr-c2" style="left:36%;top:18px"></div>
+      <div class="commit-dot" id="dr-c3" style="left:48%;top:18px"></div>
+      <div class="commit-dot" id="dr-c4" style="left:60%;top:18px"></div>
+      <div class="commit-dot" id="dr-c5" style="left:72%;top:18px"></div>
+      <div class="gap-band" id="dr-gap" style="left:24%;top:44px;width:0;height:96px"></div>
+      <div class="actor" id="dr-agent" style="right:2%;top:210px;width:270px">🤖 "verify_token has one caller — safe to change." <span style="color:var(--error)">(from the May 9 graph)</span></div>
+    </div>
+    <div class="anim-caption" id="dr-cap">Press play: watch two weeks pass without a rebuild.</div>
+    <div class="animation-controls">
+      <button data-anim="drift" data-act="play" aria-label="Play drift timeline animation">▶</button>
+      <button data-anim="drift" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="drift" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <div class="callout-warning callout">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"We installed the hooks, so we're covered."</strong> — "We installed the hooks" and "we have a production-grade setup" are different claims. The next section documents four ways installed hooks fail while reporting success.</p>
+    <p><strong>"A slightly stale graph is slightly wrong."</strong> — Staleness isn't linear. One renamed function can invert a blast-radius answer completely; the graph doesn't degrade gracefully, it lies precisely.</p>
+    <p><strong>"OKF's freshness story is proven; only Graphify drifts."</strong> — OKF was six weeks old at spec level when these reports were written. Its freshness and synchronization promises are explicitly <em>unproven at organizational scale</em> — not dishonesty, just youth. Plan for the uncertainty.</p>
+  </div>
+  <div class="bridge">"The hook ran and reported success" should comfort you. It's about to stop doing that.</div>
+</section>
+
+<section class="section" id="silent-failures">
+  <h2>Anatomy of a Silent Failure: Four Documented Mechanisms</h2>
+  <p>Everything in this section comes from real issue-tracker reports on the tools you've been using — it reads like a postmortem because it effectively is one. Four independent mechanisms, each capable of stopping rebuilds while producing no visible error.</p>
+
+  <div class="animation-container" id="anim-doors">
+    <div class="anim-title">Animation · SILENT_FAILURES — green lights over red states</div>
+    <div class="anim-stage" aria-label="Animated diagram of four failure doors: each shows a green success lamp while the true state underneath is a failed rebuild">
+      <div class="door" id="do-1" style="left:2%"><span class="lamp"></span><br><b>nohup missing</b><br>Windows hook<br><span class="truth">rebuild never ran</span></div>
+      <div class="door" id="do-2" style="left:27%"><span class="lamp"></span><br><b>allowlist drift</b><br>CODE_EXTS vs detect.py<br><span class="truth">commit ignored</span></div>
+      <div class="door" id="do-3" style="left:52%"><span class="lamp"></span><br><b>resource gate</b><br>CPU&gt;50% → skip<br><span class="truth">stale, unbounded</span></div>
+      <div class="door" id="do-4" style="left:77%"><span class="lamp"></span><br><b>MCP cache</b><br>loaded at startup<br><span class="truth">fresh disk, stale memory</span></div>
+    </div>
+    <div class="anim-caption" id="do-cap">Press play: each door shows a green lamp — and the truth underneath it.</div>
+    <div class="animation-controls">
+      <button data-anim="doors" data-act="play" aria-label="Play silent failures animation">▶</button>
+      <button data-anim="doors" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="doors" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <h3 id="fail1">1 — Windows hooks fail silently: the missing <code>nohup</code></h3>
+  <p>The post-commit and post-checkout hooks that trigger rebuilds use <code>nohup</code> to detach the rebuild process. Git for Windows' shell <strong>doesn't have <code>nohup</code></strong>. The rebuild simply doesn't happen — and no error surfaces to the developer, because the hook framework doesn't treat a missing binary as a failure worth reporting loudly. Every Windows developer on the team commits daily, believes the graph updates, and is wrong. (This is why the M08 lab's hook deliberately avoids <code>nohup</code> and backgrounding entirely: loud and synchronous beats quiet and detached.)</p>
+  <h3 id="fail2">2 — The extension allowlist drifted from the source of truth</h3>
+  <p>The hook decides <em>whether</em> a commit warrants a rebuild by checking changed files against a hardcoded <code>CODE_EXTS</code> extension list. That list drifted out of sync with the authoritative list in <code>graphify/detect.py</code>. Result: commits touching valid, parseable code files <strong>silently skip triggering a rebuild</strong>, because the hook's gate logic doesn't recognize the extension. Note the shape of this bug — two copies of one fact, maintained separately, diverging. You'll see it again in the artifact-desync section, and it's the same disease OKF's "path is the identity" rule (M06) was designed to prevent.</p>
+  <h3 id="fail3">3 — Resource gating turns "busy" into "stale, indefinitely"</h3>
+  <p>Rebuilds are gated on a resource check before firing:</p>
+  <div class="code-wrap"><div class="code-title">the gate, as reported (Python)</div><pre><code>def _resources_ok():
+    cpu_ok = psutil.cpu_percent(interval=0.1) &lt;= 50 * cpu_count_fraction
+    mem_ok = psutil.virtual_memory().available &gt;= 2 * 1024**3   # 2GB
+    return cpu_ok and mem_ok
+
+if not _resources_ok():
+    # rebuild is silently skipped; next commit will retry
+    return</code></pre></div>
+  <p>Each line is reasonable in isolation — you don't want a graph rebuild fighting your CI job for CPU. But the skip is <em>silent</em>, and the recovery strategy is "the next commit will retrigger it." On a quiet branch, or a repo where commits are infrequent, that next commit might be days away. The graph doesn't just lag; it lags for an <strong>unbounded, unmonitored duration</strong>. A gate without a catch-up path converts a temporary condition (busy machine) into a permanent one (stale graph).</p>
+  <h3 id="fail4">4 — Caching outlives regeneration</h3>
+  <p>M09's trap, now in its production context: MCP server integrations cache <code>graph.json</code> at startup with no hot-reload. Even a <em>perfectly successful</em> <code>graphify update</code> may never reach the agent actually querying the graph until the server process restarts. Fresh graph on disk, stale graph in the agent's working memory, simultaneously — and no artifact anywhere records that the two have diverged.</p>
+  <div class="callout-security callout">
+    <span class="box-label">🔥 Why this list matters</span>
+    <p>Individually, each is a normal, fixable bug. Collectively, they describe a system whose entire value proposition — <em>"the graph is fresh, so the agent's answers are trustworthy"</em> — has multiple silent single points of failure, none of which announce themselves. Your defense cannot be "fix these four bugs"; new ones will ship. Your defense is refusing to <em>trust</em> freshness you haven't <em>measured</em> — which is the checklist below.</p>
+  </div>
+</section>
+
+<section class="section" id="desync">
+  <h2>Artifact Desync: When the Three Outputs Disagree</h2>
+  <p>Recall from M04 that one Graphify run produces three artifacts: <code>graph.json</code> (machine-readable), <code>graph.html</code> (visual), and <code>GRAPH_REPORT.md</code> (narrative). Three outputs from one run — which means three things that can stop agreeing.</p>
+  <p>If <code>graphify update</code> refuses to overwrite an existing <code>graph.json</code> under certain conditions, the three can desync: the human-readable report telling one story, the machine-readable graph another, <strong>with no built-in cross-check to flag the mismatch</strong>. A reviewer skims GRAPH_REPORT.md and sees the new module documented; the agent queries graph.json and doesn't know it exists. Both are "the graph," and they disagree.</p>
+  <p>There's an operational cousin to this problem: if <code>graphify-out/</code> is tracked in git, every regeneration dirties the working tree, which blocks clean CI/publish workflows. Teams that don't catch it early end up with commit-hygiene problems layered on top of freshness problems. The fix is one line in <code>.gitignore</code> — but it must be a decision, not an accident, because ignoring the artifacts also means your CI must <em>rebuild</em> them rather than trusting committed copies.</p>
+  <div class="callout-why callout">
+    <span class="box-label">✅ Why It Matters</span>
+    <p>Desync converts your redundancy into a liability. Three artifacts were supposed to serve three audiences (machines, eyes, reviewers); unsynchronized, they serve three <em>different versions of the truth</em>. The freshness gate you'll build below cross-checks them against each other precisely because nothing else does.</p>
+  </div>
+</section>
+
+<section class="section" id="scale-wall">
+  <h2>The Scale Wall: When Regeneration Itself Becomes the Bottleneck</h2>
+  <p>Assume every hook fires correctly, every time. Regeneration still isn't free — and at scale it isn't even bounded.</p>
+  <p>The worst offender is centrality. Graphify's <code>suggest_questions()</code> calls <span class="term-tooltip" tabindex="0">betweenness centrality<span class="tooltip-content">A graph metric scoring how often a node sits on shortest paths between other nodes — the god-node detector from M01. Computing it exactly requires touching a large share of all vertex-edge combinations.</span></span>, which is <strong>O(V×E)</strong>. On a monorepo measured at <strong>450,000 nodes and 690,000 edges</strong>, that's roughly <strong>310 billion operations</strong> — and it's a single-threaded graph algorithm, not an embarrassingly parallel one, so more cores barely help. In practice: a full rebuild on a <strong>96-core Xeon was killed after 114 minutes without completing</strong>, while the same class of rebuild took roughly <strong>10 minutes on an Apple M3 Pro</strong> on a different repo. Read those two data points together: cost here is non-linear in repo shape and nearly unpredictable from hardware specs alone.</p>
+  <p>"So use incremental updates" — yes, and calibrate your expectations. One reported case measured <strong>~0.8 seconds</strong> for a small incremental diff; another measured <strong>10+ seconds</strong> for incremental rebuilds against a full real monorepo. <strong>"Incremental" means "smaller than a full rebuild" — a much weaker guarantee than "fast."</strong> If your mental model says incremental ≈ instant, a 10-second post-commit hook will surprise you exactly where it hurts: in every developer's commit loop.</p>
+  <div class="callout-cost callout">
+    <span class="box-label">💰 The Honesty Rule, applied</span>
+    <p>This is also where the ~500-file payoff floor from M04 gets its production teeth. Below the floor, you pay tooling tax for savings that don't exist. <em>Above</em> it, you pay a different tax — regeneration time, gating complexity, desync monitoring — that grows with V×E. The honest question is never "should everyone run a graph?" It's "at my repo's size and churn, does the measured savings exceed the measured maintenance?" Both sides of that inequality are measurable. Measure them.</p>
+  </div>
+  <div class="bridge">Silent failures, desync, unbounded rebuilds. Put the pieces together and the conclusion writes itself: the mechanism meant to keep your graph fresh can fail without telling you — and even when it works, it may not finish in useful time. That's not a reason to abandon the stack. It's the reason production-grade means something specific.</div>
+</section>
+
+<section class="section" id="checklist">
+  <h2>What Production-Grade Actually Requires</h2>
+  <p>Five requirements. Each one exists because of a specific failure you've now seen. Treat <strong>graph freshness as an observable property, not an assumption</strong> — that's the headline over all five.</p>
+  <ol>
+    <li><strong>Log rebuild success/failure explicitly, with timestamps, somewhere you'll actually see it.</strong> Never trust hook exit codes alone — doors 1–3 all exit clean. A one-line append to a rebuild log turns "did it run?" from a belief into a query.</li>
+    <li><strong>Cross-check the three artifacts against each other AND against the latest commit.</strong> <code>graph.json</code>, <code>GRAPH_REPORT.md</code>, and <code>graph.html</code> should agree on when they were generated, and that timestamp should be recent relative to <code>git log -1</code>. A one-line CI comparison catches the two-week-stale scenario before an agent does.</li>
+    <li><strong>Restart or hot-reload MCP servers after regeneration.</strong> Don't assume a running process picks up a freshly written graph.json — verify it, or bounce it (door 4).</li>
+    <li><strong>Gate rebuilds on resources only WITH an explicit retry/alert path.</strong> A silent no-op under load is fine as a first line of defense; it is not fine as the only line. Pair the gate with a scheduled catch-up job, plus an alert when staleness exceeds a threshold you've consciously chosen (door 3's fix).</li>
+    <li><strong>Verify you're above the ~500-file payoff floor at all.</strong> Below it, the pipeline is ceremony, not engineering. Measure your own repo before adopting wholesale.</li>
+  </ol>
+
+  <div class="animation-container" id="anim-gate">
+    <div class="anim-title">Animation · FRESHNESS_GATE — the check that refuses to trust</div>
+    <div class="anim-stage" aria-label="Animated CI gate comparing artifact timestamps against the latest commit; a stale graph blocks the pipeline with an alarm">
+      <div class="actor" id="fg-head" style="left:3%;top:14px;width:170px">git log -1<br><span style="color:var(--text-muted)">HEAD: 14:02</span></div>
+      <div class="actor" id="fg-art" style="left:3%;top:84px;width:170px">graph.json<br><span id="fg-art-t" style="color:var(--text-muted)">mtime: 14:03</span></div>
+      <div class="actor" id="fg-gate" style="left:40%;top:48px;width:20%">🚦 freshness<br>gate</div>
+      <div class="actor" id="fg-pass" style="right:3%;top:14px;width:26%">✅ pipeline continues<br><span style="color:var(--text-muted)">agents may trust the graph</span></div>
+      <div class="actor" id="fg-block" style="right:3%;top:120px;width:26%">⛔ exit 1 — BLOCKED<br><span style="color:var(--text-muted)">"predates HEAD by 1 commit — rebuild + restart MCP"</span></div>
+    </div>
+    <div class="anim-caption" id="fg-cap">Press play: one fresh pass, then a stale commit hits the gate.</div>
+    <div class="animation-controls">
+      <button data-anim="gate" data-act="play" aria-label="Play freshness gate animation">▶</button>
+      <button data-anim="gate" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="gate" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="gate-code">
+  <h2>Code Walkthrough: Build the Freshness Gate</h2>
+  <p>Checklist items 2 and 4 are one small script. Let's build it in three chunks — this is the same gate you'll run in the lab, and the one the capstone wires into CI.</p>
+  <h3 id="g-chunk1">Chunk 1 — compare the graph's clock against git's</h3>
+  <p><strong>What:</strong> read graph.json's mtime and HEAD's commit time; fresh means the graph was generated at or after the last commit. <strong>Why:</strong> this single comparison mechanically detects every one of the four silent failures — however the rebuild died, the symptom is identical: the artifact predates HEAD. <strong>Gotcha:</strong> compare against <em>commit time</em>, not wall-clock age. A repo untouched for a month with a month-old graph is perfectly fresh.</p>
+  <div class="code-tabs" role="tablist">
+    <button class="code-tab active" role="tab" data-target="g1-py">Python</button>
+    <button class="code-tab" role="tab" data-target="g1-js">Node.js</button>
+  </div>
+  <div class="tab-panel active" id="g1-py">
+  <div class="code-wrap"><div class="code-title">freshness_gate.py — the core comparison</div><pre><code>import subprocess, sys
+from pathlib import Path
+
+def sh(args, cwd):
+    r = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+    if r.returncode != 0:
+        raise RuntimeError(f"{' '.join(args)}: {r.stderr.strip()}")
+    return r.stdout.strip()
+
+def check_fresh(repo: Path, graph: Path, max_age_commits: int = 0) -> int:
+    if not graph.exists():
+        print(f"STALE: {graph} does not exist — run the extractor")
+        return 1
+    graph_mtime = int(graph.stat().st_mtime)
+    head_time   = int(sh(["git", "log", "-1", "--format=%ct"], cwd=repo))
+    if graph_mtime &gt;= head_time:
+        print("FRESH: graph generated at/after HEAD commit")
+        return 0
+    lag = int(sh(["git", "rev-list", "--count",
+                  f"--since={graph_mtime}", "HEAD"], cwd=repo))
+    if lag &gt; max_age_commits:
+        print(f"STALE: graph predates HEAD by {lag} commit(s)")
+        print("  fix: rerun the extractor, then RESTART any MCP server "
+              "still holding the old graph in memory")
+        return 1
+    print(f"FRESH ENOUGH: lags by {lag}, within threshold {max_age_commits}")
+    return 0</code></pre></div>
+  </div>
+  <div class="tab-panel" id="g1-js">
+  <div class="code-wrap"><div class="code-title">freshness_gate.mjs — the core comparison</div><pre><code>import { execFileSync } from "node:child_process";
+import { statSync, existsSync } from "node:fs";
+
+const sh = (args, cwd) =&gt;
+  execFileSync(args[0], args.slice(1), { cwd, encoding: "utf-8" }).trim();
+
+function checkFresh(repo, graph, maxAgeCommits = 0) {
+  if (!existsSync(graph)) {
+    console.log(`STALE: ${graph} does not exist — run the extractor`);
+    return 1;
+  }
+  const graphMtime = Math.floor(statSync(graph).mtimeMs / 1000);
+  const headTime = parseInt(sh(["git", "log", "-1", "--format=%ct"], repo));
+  if (graphMtime &gt;= headTime) {
+    console.log("FRESH: graph generated at/after HEAD commit");
+    return 0;
+  }
+  const lag = parseInt(sh(["git", "rev-list", "--count",
+                           `--since=${graphMtime}`, "HEAD"], repo));
+  if (lag &gt; maxAgeCommits) {
+    console.log(`STALE: graph predates HEAD by ${lag} commit(s)`);
+    console.log("  fix: rerun the extractor, then RESTART any MCP server " +
+                "still holding the old graph in memory");
+    return 1;
+  }
+  console.log(`FRESH ENOUGH: lags by ${lag}, within threshold ${maxAgeCommits}`);
+  return 0;
+}</code></pre></div>
+  </div>
+  <h3 id="g-chunk2">Chunk 2 — cross-check the artifacts</h3>
+  <p><strong>What:</strong> re-extract into a throwaway file and compare node/edge counts against the stored graph. <strong>Why:</strong> a timestamp can be fresh while the content is wrong (a partial rebuild, a refused overwrite) — the count comparison catches desync that clocks can't. <strong>Gotcha:</strong> clean up the throwaway file in a <code>finally</code>; a leftover <code>.freshcheck.json</code> becomes tomorrow's confusing fourth artifact.</p>
+  <div class="code-wrap"><div class="code-title">freshness_gate.py — cross-check (Python; Node mirrors it)</div><pre><code>import json
+
+def cross_check(repo: Path, graph: Path, extractor: Path) -> int:
+    stored = json.loads(graph.read_text(encoding="utf-8"))
+    fresh_out = graph.with_suffix(".freshcheck.json")
+    try:
+        sh([sys.executable, str(extractor), str(repo),
+            "--out", str(fresh_out)], cwd=repo)
+        fresh = json.loads(fresh_out.read_text(encoding="utf-8"))
+    finally:
+        fresh_out.unlink(missing_ok=True)      # never leave a 4th artifact
+    if (len(stored["nodes"]), len(stored["edges"])) != \
+       (len(fresh["nodes"]),  len(fresh["edges"])):
+        print(f"DESYNC: stored {len(stored['nodes'])}n/{len(stored['edges'])}e "
+              f"vs fresh {len(fresh['nodes'])}n/{len(fresh['edges'])}e")
+        return 1
+    print("CROSS-CHECK OK: stored counts match a fresh extraction")
+    return 0</code></pre></div>
+  <h3 id="g-chunk3">Chunk 3 — wire it into CI, before anything trusts the graph</h3>
+  <p><strong>What:</strong> run the gate as a pipeline step ahead of any agent-consuming job. <strong>Why:</strong> placement is the point — the gate is worthless after an agent has already acted on a stale graph. <strong>Gotcha:</strong> a failing gate must <em>block</em> (exit nonzero), not warn. Warning-only freshness checks are ignored by their second week.</p>
+  <div class="code-wrap"><div class="code-title">ci.yml — the gate as a hard gate</div><pre><code>steps:
+  - name: Graph freshness gate
+    run: python ci/freshness_gate.py . --max-age-commits 0 --cross-check
+  - name: OKF bundle lint          # trust gates travel in pairs (next section)
+    run: python ci/validate.py knowledge
+  - name: Agent-consuming jobs
+    run: ...                        # only reachable if both gates passed</code></pre></div>
+  <div class="checkpoint"><span class="box-label">🔎 What Just Happened?</span>
+    <p>Roughly sixty lines convert freshness from a belief into a measurement: clock vs clock catches every silent hook death, count vs count catches desync, and CI placement guarantees no agent consumes what the gate hasn't blessed. Notice what the gate does <em>not</em> do — it doesn't fix anything. It refuses to proceed and names the fix. Detection and repair stay separate, so a broken repair path can't silence detection.</p>
+  </div>
+</section>
+
+<section class="section" id="okf-governance">
+  <h2>OKF-Side Governance: Lint as the Trust Gate</h2>
+  <p>The structural graph isn't the only artifact that rots. Recall OKF's deliberate leniency from M06: consumers must tolerate missing optional fields, unknown types, and <em>broken links</em>. That leniency is why adoption is easy — and it means a bundle can <strong>silently degrade into unlinked, out-of-date files without triggering any error anywhere</strong>. Drifted types ("API Endpoint" vs "Endpoint" vs "Route"), dangling cross-references, concepts nobody re-linked after a refactor: all of it is spec-conformant.</p>
+  <p>That's why lint holds the same position for the bundle that the freshness gate holds for the graph: <strong>run <code>okf lint</code> (13 built-in spec-compliance rules) as a hard CI gate before agents are allowed to act on the bundle.</strong> Given how lenient the spec itself is, lint is the only thing standing between "technically conformant" and "actually useful." The M08 pipeline already ends every enrichment pass with lint; CI re-running it is the backstop for edits that bypassed the pipeline.</p>
+</section>
+
+<section class="section" id="defining-question">
+  <h2>The Defining Question</h2>
+  <p>Everything in this module compresses into one test. Before you adopt Graphify+OKF — or before you audit a setup you already have — <strong>write down, concretely, how you would detect a stale graph within 24 hours.</strong></p>
+  <p>Acceptable answers are mechanical: <em>"CI runs the freshness gate on every push and blocks on lag &gt; 0"; "a nightly job compares artifact timestamps to HEAD and pages past a 6-hour threshold"; "the MCP server exposes a status tool and the orchestrator refuses graphs older than the last commit."</em> Unacceptable answers are beliefs: "the hooks handle it," "we'd notice," "it hasn't happened yet."</p>
+  <p><strong>If you can't answer in specific, mechanical terms, you don't have a production-grade setup. You have a demo that hasn't failed yet.</strong> The real production question was never "is it 71× or 7×" — that's a number you quote in a meeting. The question that determines whether your setup survives contact with a real codebase is whether you'll know the graph went stale within a day, or find out in a month, the hard way, after an agent has shipped a confidently wrong refactor.</p>
+</section>
+
+<section class="section" id="hands-on">
+  <h2>Hands-On Exercise</h2>
+  <p><strong>What you'll build:</strong> the freshness gate, run green, then deliberately broken and caught. <strong>Time:</strong> 30–45 min. <strong>Lab folder:</strong> <code>labs/M11-freshness-gate/</code>. <strong>Prerequisite:</strong> the M08 lab (a git repo whose graph updates on commit).</p>
+  <div class="step-block">
+    <h3>Step 1 — Run the gate on a fresh repo</h3>
+    <div class="code-wrap"><pre><code>cd labs/sample-project
+python ../M11-freshness-gate/solution/freshness_gate.py . --max-age-commits 0</code></pre></div>
+    <p>Expected: <code>FRESH: graph.json generated at/after HEAD commit</code>, exit 0.</p>
+    <div class="checkpoint"><span class="box-label">✅ Checkpoint</span><p>If it reports STALE immediately, your M08 hook isn't firing — which is itself the lesson: you just detected a silent failure mechanically.</p></div>
+  </div>
+  <div class="step-block">
+    <h3>Step 2 — Make it stale on purpose</h3>
+    <div class="code-wrap"><pre><code>git commit --allow-empty -qm "commit without rebuilding the graph"
+python ../M11-freshness-gate/solution/freshness_gate.py . --max-age-commits 0</code></pre></div>
+    <p>Expected: <code>STALE: graph.json predates HEAD by 1 commit(s)</code> + the fix command + exit 1. <strong>This is the step most "production" setups have never actually run.</strong></p>
+  </div>
+  <div class="step-block">
+    <h3>Step 3 — Cross-check the artifacts</h3>
+    <p>Re-run with <code>--cross-check</code>: the gate verifies stored node/edge counts against a fresh extraction, catching content desync that timestamps miss.</p>
+  </div>
+  <div class="step-block">
+    <h3>Step 4 — Wire it into CI</h3>
+    <div class="code-wrap"><pre><code>- run: python labs/M11-freshness-gate/solution/freshness_gate.py . --max-age-commits 0 --cross-check</code></pre></div>
+    <p>Place it before any agent-consuming step. <strong>Troubleshooting:</strong> gate errors with a git failure → you're not inside the repo; <code>graph.json does not exist</code> → run the extractor once first.</p>
+  </div>
+  <p><strong>Stretch goals:</strong> add a staleness-age alert (page past N hours, not just N commits); add an MCP <code>status</code> tool to your M09 server and make the gate query it, closing the fresh-disk/stale-memory gap.</p>
+</section>
+
+<section class="section" id="quiz">
+  <h2>Knowledge Check</h2>
+
+  <div class="quiz-question">
+    <h3>1. Why is a stale graph worse than no graph at all?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="Cost isn't the issue — a stale graph is cheap to query. The issue is what the answers do to the agent's decisions.">Stale graphs cost more tokens to query</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. No graph sends the agent to read current files — slow but true. A stale graph returns instant, authoritative, WRONG answers with nothing in their shape revealing their age.">No graph forces slow-but-current file reads; a stale graph delivers high-confidence wrong answers with no distrust signal</div>
+    <div class="quiz-option" data-correct="0" data-explain="Rebuilds have real costs (the scale wall), but that's a separate problem from why staleness is dangerous.">Stale graphs are expensive to rebuild</div>
+    <div class="quiz-option" data-correct="0" data-explain="It's not always worse — the claim is specifically about unsignaled staleness, which the module shows is the common case.">It isn't — some graph always beats no graph</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>2. A Windows developer commits daily; the team's rebuild hook uses <code>nohup</code>. What happens?</h3>
+    <div class="quiz-option" data-correct="1" data-explain="Correct — Git for Windows' shell has no nohup; the rebuild silently never runs, and the hook framework doesn't report a missing binary loudly. Door 1 of 4.">Rebuilds never run on that machine, with no visible error</div>
+    <div class="quiz-option" data-correct="0" data-explain="No error surfaces — that's exactly what makes it a SILENT failure.">The hook errors loudly on every commit</div>
+    <div class="quiz-option" data-correct="0" data-explain="There is no fallback; the process simply doesn't start.">Git falls back to running the rebuild in the foreground</div>
+    <div class="quiz-option" data-correct="0" data-explain="Windows runs hooks fine — via a shell that happens to lack this one binary.">Windows doesn't execute git hooks at all</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>3. What makes the psutil resource gate dangerous, given each check is individually reasonable?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="The thresholds are defensible; the danger is downstream of them.">The CPU threshold is set too low</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. The skip is silent and recovery is 'next commit retries' — on a quiet branch that's days away, so staleness becomes unbounded and unmonitored. The fix: keep the gate, add a scheduled catch-up + staleness alert.">The skip is silent and the retry depends on a future commit that may be days away — unbounded, unmonitored staleness</div>
+    <div class="quiz-option" data-correct="0" data-explain="psutil's readings are fine; the control flow around them is the problem.">psutil measures CPU incorrectly</div>
+    <div class="quiz-option" data-correct="0" data-explain="Skipping under load is sensible as a FIRST line of defense — just never as the only one.">Rebuilds should never be skipped for any reason</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>4. Your freshness gate compares graph.json's mtime to <code>git log -1 --format=%ct</code>. Why commit time instead of wall-clock age?</h3>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. Staleness means 'behind the code,' not 'old.' A month-old graph on a month-untouched repo is perfectly fresh; a 5-minute-old graph missing today's commit is stale.">Freshness is relative to the code's last change, not to the calendar</div>
+    <div class="quiz-option" data-correct="0" data-explain="Both are equally easy to read; correctness is the reason.">Commit time is easier to obtain</div>
+    <div class="quiz-option" data-correct="0" data-explain="mtimes are reliable enough here — and the cross-check backstops them.">File mtimes can't be trusted at all</div>
+    <div class="quiz-option" data-correct="0" data-explain="Timezones affect neither: both are epoch seconds.">To avoid timezone bugs</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>5. Why does the gate ALSO re-extract and compare node/edge counts (--cross-check)?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="It's slower, not faster — you pay a re-extraction. You pay it to catch what timestamps can't.">It's faster than comparing timestamps</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct. A fresh timestamp can sit on wrong content — partial rebuild, refused overwrite, artifact desync. Count comparison catches content divergence that clocks miss.">A timestamp can be fresh while the content is wrong; counts catch desync that clocks can't</div>
+    <div class="quiz-option" data-correct="0" data-explain="The cross-check compares stored vs fresh extraction of the SAME artifact — the three-artifact agreement is a separate (related) check.">To verify graph.html renders correctly</div>
+    <div class="quiz-option" data-correct="0" data-explain="Provenance tags are about edge confidence (M01), not freshness.">To validate EXTRACTED vs INFERRED tags</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>6. "How would you detect a stale graph within 24 hours?" Which answer passes the module's test?</h3>
+    <div class="quiz-option" data-correct="0" data-explain="A belief, not a mechanism — and doors 1–4 are precisely the ways hooks fail while you believe this.">"Our hooks handle it automatically"</div>
+    <div class="quiz-option" data-correct="0" data-explain="'We'd notice' is how the two-week-stale GRAPH_SUMMARY.md stayed in production for two weeks.">"The team would notice wrong answers quickly"</div>
+    <div class="quiz-option" data-correct="1" data-explain="Correct — specific and mechanical: a scheduled comparison, a threshold, an alert path. This is what 'observable property, not assumption' means in practice.">"A nightly CI job compares artifact timestamps to HEAD and pages us past a 6-hour lag threshold"</div>
+    <div class="quiz-option" data-correct="0" data-explain="Model quality can't reveal data staleness — the answers LOOK equally confident either way.">"We use a strong enough model that it compensates"</div>
+    <div class="quiz-feedback" role="status"></div>
+  </div>
+</section>
+
+<section class="section" id="summary">
+  <h2>Module Summary</h2>
+  <div class="summary-grid">
+    <div class="summary-card"><h4>The core insight</h4><p>Graphs don't self-heal. The dangerous failure isn't "wrong once" — it's wrong with zero signal: hooks report success while the map lies (two weeks stale, in production, documented).</p></div>
+    <div class="summary-card"><h4>Four silent failures</h4><p>Missing nohup on Windows; CODE_EXTS allowlist drift; silent resource-gate skips with unbounded retry; MCP startup caches. Plus artifact desync among the three outputs.</p></div>
+    <div class="summary-card"><h4>The scale wall</h4><p>Betweenness centrality is O(V×E): 450K×690K ≈ 310B ops; a 96-core Xeon killed at 114 min vs ~10 min on an M3 Pro. Incremental means smaller, not fast (0.8s vs 10+s). gitignore graphify-out/.</p></div>
+    <div class="summary-card"><h4>The defense</h4><p>Freshness as an observable: log rebuilds, cross-check artifacts vs HEAD in CI, restart MCP servers after regen, gate resources only with catch-up + alerts, verify the ~500-file floor. Lint is the bundle's twin gate.</p></div>
+  </div>
+  <p><strong>What we built on orderflow:</strong> a CI freshness gate that passes green, catches a deliberate no-rebuild commit with exit 1 and an actionable fix, and cross-checks artifact content — the mechanical answer to the 24-hour question.</p>
+  <p><strong>Next module preview:</strong> the machinery is production-grade; the last lever is human. M12 covers structuring projects so agents don't get lost in the first place — layered CLAUDE.md files, skills, subagents, deny rules — and where this 90-day-old ecosystem goes next.</p>
+</section>
+
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul>
+    <li>"Production-Grade OKF + Graphify Setup, Not Just a Demo" — the drift postmortem and checklist (Data Science Collective, Aug 2026)</li>
+    <li>Graphify issue tracker reports (silent hook failures, scale measurements)</li>
+    <li>okf CLI — <code>okf lint</code>, 13 spec-compliance rules (github.com/superops-team/okf)</li>
+    <li>Course labs: <code>labs/M11-freshness-gate/</code>, <code>labs/M08-enrichment-hook/</code></li>
+    <li>M01 (centrality), M04 (payoff floor), M09 (cache trap) — the concepts this module operationalizes</li>
+  </ul>
+  <nav class="next-prev" aria-label="Module navigation">
+    <a href="M10-hybrid-context-stack.html"><span class="dir">← Previous</span>M10 · The Hybrid Context Stack</a>
+    <a href="M12-structuring-projects-whats-next.html" style="text-align:right"><span class="dir">Next →</span>M12 · Structuring Projects + What's Next</a>
+  </nav>
+</section>
+
+</main>
+</div>
+<script>
+(function(){
+"use strict";
+var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+document.querySelectorAll('.code-wrap').forEach(function(w){
+  var btn=document.createElement('button');
+  btn.className='copy-btn'; btn.textContent='copy'; btn.setAttribute('aria-label','Copy code to clipboard');
+  btn.addEventListener('click',function(){
+    var code=w.querySelector('code');
+    if(navigator.clipboard){ navigator.clipboard.writeText(code.innerText).then(function(){ btn.textContent='copied!'; setTimeout(function(){btn.textContent='copy';},1400); }); }
+  });
+  w.appendChild(btn);
+});
+
+document.querySelectorAll('.code-tabs').forEach(function(tabs){
+  tabs.querySelectorAll('.code-tab').forEach(function(tab){
+    tab.addEventListener('click',function(){
+      tabs.querySelectorAll('.code-tab').forEach(function(t){t.classList.remove('active');});
+      tab.classList.add('active');
+      var p=tabs.nextElementSibling;
+      while(p && p.classList.contains('tab-panel')){ p.classList.remove('active'); p=p.nextElementSibling; }
+      var panel=document.getElementById(tab.dataset.target);
+      if(panel) panel.classList.add('active');
+    });
+  });
+});
+
+document.querySelectorAll('pre code').forEach(function(c){
+  var h=c.innerHTML;
+  h=h.replace(/(^|\n)(\s*)(#[^\n]*)/g,'$1$2<span class="tok-c">$3<\/span>');
+  h=h.replace(/(\/\/[^\n<]*)/g,'<span class="tok-c">$1<\/span>');
+  h=h.replace(/(&quot;[^&]*?&quot;|'[^'\n]*'|`[^`]*`)/g,'<span class="tok-s">$1<\/span>');
+  h=h.replace(/\b(def|class|import|from|return|if|else|elif|for|while|try|except|raise|with|as|const|let|var|function|await|async|new|export|None|True|False|null|true|false|not|in|finally)\b/g,'<span class="tok-k">$1<\/span>');
+  c.innerHTML=h;
+});
+
+document.querySelectorAll('.quiz-question').forEach(function(q){
+  q.querySelectorAll('.quiz-option').forEach(function(opt){
+    opt.setAttribute('tabindex','0'); opt.setAttribute('role','button');
+    function answer(){
+      if(q.dataset.answered) return; q.dataset.answered='1';
+      var correct=opt.dataset.correct==='1';
+      opt.classList.add(correct?'correct':'incorrect');
+      if(!correct){ var right=q.querySelector('.quiz-option[data-correct="1"]'); if(right) right.classList.add('correct'); }
+      var fb=q.querySelector('.quiz-feedback');
+      fb.style.display='block';
+      fb.style.background=correct?'var(--success-bg)':'var(--error-bg)';
+      fb.textContent=(correct?'✅ ':'❌ ')+(opt.dataset.explain||'');
+    }
+    opt.addEventListener('click',answer);
+    opt.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); answer(); }});
+  });
+});
+
+function Stepper(steps, interval){
+  this.steps=steps; this.interval=interval||1700; this.i=0; this.timer=null;
+  this.apply=function(){ this.steps[this.i](); };
+  this.play=function(){
+    if(reduced){ this.i=this.steps.length-1; this.apply(); return; }
+    if(this.timer) return;
+    var self=this;
+    this.timer=setInterval(function(){ self.i=(self.i+1)%self.steps.length; self.apply(); },this.interval);
+  };
+  this.pause=function(){ clearInterval(this.timer); this.timer=null; };
+  this.restart=function(){ this.pause(); this.i=0; this.apply(); this.play(); };
+}
+var anims={};
+document.querySelectorAll('.animation-controls button').forEach(function(btn){
+  btn.addEventListener('click',function(){ var a=anims[btn.dataset.anim]; if(a) a[btn.dataset.act](); });
+});
+
+/* DRIFT_TIMELINE */
+(function(){
+  var dots=['dr-c1','dr-c2','dr-c3','dr-c4','dr-c5'].map(function(id){return document.getElementById(id);});
+  var gap=document.getElementById('dr-gap'), agent=document.getElementById('dr-agent');
+  var g=document.getElementById('dr-graph'), cap=document.getElementById('dr-cap');
+  function state(n){
+    dots.forEach(function(d,k){ d.classList.toggle('show',k<n); });
+    gap.classList.toggle('show',n>=2);
+    gap.style.width=(n>=2?(Math.min(n,5)*12):0)+'%';
+    agent.classList.toggle('bad',n>=6);
+    g.classList.toggle('bad',n>=4);
+    var caps=[
+      'May 9: the graph is built. Code and map agree.',
+      'A commit lands. The hook should fire… (did it? nothing says.)',
+      'More commits. The graph timestamp hasn’t moved. The gap opens.',
+      'A refactor renames callers of verify_token. The map still shows the old world.',
+      'Two weeks of commits. Every rebuild "succeeded" — none ran.',
+      'May 23: the summary file is 14 days stale on origin/main, still served as ground truth.',
+      'The agent answers from May 9 — instantly, authoritatively, wrongly. Nothing crashed.'
+    ];
+    cap.textContent=caps[Math.min(n,caps.length-1)];
+  }
+  var steps=[];
+  for(var n=0;n<7;n++)(function(n){ steps.push(function(){state(n);}); })(n);
+  anims.drift=new Stepper(steps,1800);
+})();
+
+/* SILENT_FAILURES doors */
+(function(){
+  var doors=['do-1','do-2','do-3','do-4'].map(function(id){return document.getElementById(id);});
+  var cap=document.getElementById('do-cap');
+  var caps=[
+    'Door 1 — Windows hook calls nohup… which doesn’t exist there. Green lamp; no rebuild.',
+    'Door 2 — the hook’s CODE_EXTS list drifted from detect.py. Your .rs commit? "Not code." Green lamp; no rebuild.',
+    'Door 3 — CPU was busy, rebuild skipped silently; "next commit will retry" — on a quiet branch, that’s next week. Green lamp; stale, unbounded.',
+    'Door 4 — the rebuild RAN, but the MCP server cached graph.json at startup. Fresh disk, stale memory. Green lamp everywhere.',
+    'Four green lamps. Four red states. Exit codes are beliefs — measure freshness instead.'
+  ];
+  function state(n){
+    doors.forEach(function(d,k){ d.classList.toggle('active', n===4 ? true : k===n); });
+    cap.textContent=caps[n];
+  }
+  var steps=[];
+  for(var n=0;n<5;n++)(function(n){ steps.push(function(){state(n);}); })(n);
+  anims.doors=new Stepper(steps,2200);
+})();
+
+/* FRESHNESS_GATE */
+(function(){
+  var head=document.getElementById('fg-head'), art=document.getElementById('fg-art'),
+      gate=document.getElementById('fg-gate'), pass=document.getElementById('fg-pass'),
+      block=document.getElementById('fg-block'), artT=document.getElementById('fg-art-t'),
+      cap=document.getElementById('fg-cap');
+  function clear(){ [head,art,gate,pass,block].forEach(function(x){x.classList.remove('lit','bad','dim');}); }
+  var steps=[
+    function(){ clear(); artT.textContent='mtime: 14:03'; head.classList.add('lit'); art.classList.add('lit'); cap.textContent='CI starts: read HEAD’s commit time and graph.json’s mtime.'; },
+    function(){ clear(); artT.textContent='mtime: 14:03'; gate.classList.add('lit'); cap.textContent='Gate: 14:03 ≥ 14:02 — the graph was generated after the last commit.'; },
+    function(){ clear(); artT.textContent='mtime: 14:03'; pass.classList.add('lit'); block.classList.add('dim'); cap.textContent='FRESH → exit 0. Agent-consuming jobs may proceed.'; },
+    function(){ clear(); artT.textContent='mtime: 14:03 (old)'; head.classList.add('bad'); cap.textContent='A new commit lands at 15:40 — and no rebuild follows (pick any of the four doors).'; },
+    function(){ clear(); artT.textContent='mtime: 14:03 (old)'; gate.classList.add('bad'); cap.textContent='Gate: 14:03 &lt; 15:40 — the graph predates HEAD by 1 commit.'; },
+    function(){ clear(); artT.textContent='mtime: 14:03 (old)'; block.classList.add('bad'); pass.classList.add('dim'); cap.textContent='STALE → exit 1, pipeline BLOCKED, fix named: rebuild + restart the MCP server. Detected in minutes, not weeks.'; }
+  ];
+  anims.gate=new Stepper(steps,2000);
+})();
+
+Object.keys(anims).forEach(function(k){ anims[k].apply(); });
+})();
+</script>
+</body>
+</html>

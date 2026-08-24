@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M00 · The Context Problem &amp; the Knowledge Lifecycle — Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0A1628;
+  --bg-secondary: #111D33;
+  --bg-card: #162033;
+  --bg-surface: #1A2740;
+  --text-primary: #E8ECF1;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --accent-primary: #D4A843;
+  --accent-hover: #E5BC5A;
+  --accent-muted: rgba(212, 168, 67, 0.15);
+  --success: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --error: #F43F5E;
+  --error-bg: rgba(244, 63, 94, 0.1);
+  --info: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.1);
+  --track-overview: #D4A843;
+  --track-foundations: #6366F1;
+  --track-structural: #8B5CF6;
+  --track-narrative: #06B6D4;
+  --track-serving: #F97316;
+  --track-production: #22C55E;
+  --track-capstone: #D4A843;
+  --track-color: #D4A843;
+  --code-bg: #0D1117;
+  --code-border: #21262D;
+  --code-text: #C9D1D9;
+  --code-comment: #8B949E;
+  --code-keyword: #FF7B72;
+  --code-string: #A5D6FF;
+  --code-function: #D2A8FF;
+  --code-number: #79C0FF;
+  --transition-fast: 150ms;
+  --transition-normal: 300ms;
+  --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 3rem;
+}
+.sidebar-nav {
+  position: sticky;
+  top: 2rem;
+  height: calc(100vh - 4rem);
+  overflow-y: auto;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.sidebar-nav .nav-title {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  margin-bottom: 0.75rem;
+}
+.sidebar-nav a {
+  display: block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 0.4rem 0.6rem;
+  border-left: 2px solid var(--code-border);
+  transition: all var(--transition-fast);
+}
+.sidebar-nav a:hover {
+  color: var(--track-color);
+  border-left-color: var(--track-color);
+  background: var(--bg-secondary);
+}
+.content { max-width: 800px; min-width: 0; }
+h1, h2, h3, h4 { font-family: 'Bricolage Grotesque', sans-serif; }
+h1 { font-size: 2rem; font-weight: 700; line-height: 1.25; margin: 0.5rem 0 1rem; }
+h2 { font-size: 1.5rem; font-weight: 700; margin: 0 0 1.25rem; scroll-margin-top: 1.5rem; }
+h3 { font-size: 1.25rem; font-weight: 600; margin: 2rem 0 0.75rem; scroll-margin-top: 1.5rem; }
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem 1.5rem; }
+li { margin-bottom: 0.4rem; }
+strong { font-weight: 600; }
+a { color: var(--accent-primary); }
+.section { margin-bottom: 4rem; }
+.course-kicker {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.track-badge {
+  display: inline-block;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bg-primary);
+  background: var(--track-color);
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+  margin: 0.75rem 0 0.25rem;
+}
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+.progress-bar {
+  height: 4px;
+  background: var(--bg-surface);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--track-color), var(--accent-primary));
+  border-radius: 2px;
+  transition: width var(--transition-slow);
+}
+.objectives-box {
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.analogy-box, .tech-def-box, .callout {
+  border-radius: 0 8px 8px 0;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+.analogy-box {
+  background: var(--accent-muted);
+  border-left: 4px solid var(--accent-primary);
+}
+.analogy-box::before {
+  content: '💡 Everyday Analogy';
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  color: var(--accent-primary);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.tech-def-box {
+  background: var(--info-bg);
+  border-left: 4px solid var(--info);
+}
+.tech-def-box::before {
+  content: '📐 Technical Definition';
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  color: var(--info);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.callout { border-left: 4px solid; }
+.box-label {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-cost { background: var(--warning-bg); border-left-color: var(--accent-primary); }
+.callout-cost .box-label { color: var(--accent-primary); }
+.callout-security { background: var(--error-bg); border-left-color: var(--error); }
+.callout-security .box-label { color: var(--error); }
+.bridge {
+  border-left: 3px dotted var(--text-muted);
+  padding: 0.25rem 0 0.25rem 1.25rem;
+  margin: 2rem 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+.term-tooltip {
+  position: relative;
+  color: var(--accent-primary);
+  cursor: help;
+  border-bottom: 1px dashed var(--accent-primary);
+}
+.term-tooltip .tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--text-primary);
+  width: 280px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+  z-index: 10;
+  line-height: 1.5;
+}
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+table { border-collapse: collapse; width: 100%; margin: 1.25rem 0; font-size: 0.95rem; }
+th, td { border: 1px solid var(--code-border); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+th { background: var(--bg-card); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; }
+.table-scroll { overflow-x: auto; }
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+}
+.code-block {
+  position: relative;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  margin: 1.25rem 0;
+  overflow: hidden;
+}
+.code-block .code-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.9rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--code-border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.code-block pre {
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--code-text);
+}
+.copy-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--code-border);
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.tok-c { color: var(--code-comment); }
+.tok-s { color: var(--code-string); }
+.tok-k { color: var(--code-keyword); }
+.tok-n { color: var(--code-number); }
+.animation-container {
+  background: var(--bg-secondary);
+  border: 1px solid var(--code-border);
+  border-radius: 12px;
+  padding: 2rem 2rem 4rem;
+  margin: 2rem 0;
+  position: relative;
+  min-height: 300px;
+}
+.anim-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+.anim-stage { position: relative; }
+.anim-caption {
+  position: absolute;
+  bottom: 1rem;
+  left: 2rem;
+  right: 6rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  min-height: 1.2rem;
+}
+.animation-controls {
+  display: flex;
+  gap: 0.5rem;
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+}
+.animation-controls button {
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+}
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.checkpoint {
+  background: var(--success-bg);
+  border-left: 4px solid var(--success);
+  border-radius: 0 8px 8px 0;
+  padding: 1.25rem 1.5rem;
+  margin: 1.5rem 0;
+}
+.checkpoint .box-label { color: var(--success); }
+.quiz-question {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.quiz-question .q-text { font-weight: 600; margin-bottom: 0.75rem; }
+.quiz-option {
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 1rem;
+}
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-option.disabled { pointer-events: none; opacity: 0.85; }
+.quiz-feedback {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  display: none;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); color: var(--text-primary); }
+.quiz-feedback.bad { background: var(--error-bg); color: var(--text-primary); }
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.summary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-top: 3px solid var(--track-color);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  font-size: 0.95rem;
+}
+.summary-card h4 { font-size: 1rem; margin-bottom: 0.4rem; }
+.module-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 3rem 0 1rem;
+}
+.module-nav a {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+}
+.module-nav a:hover { border-color: var(--track-color); }
+.module-nav .dir {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  display: block;
+}
+.module-nav .next { text-align: right; }
+footer { color: var(--text-muted); font-size: 0.85rem; margin-top: 2rem; }
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; padding: 1rem; }
+  .sidebar-nav {
+    position: static;
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .sidebar-nav .nav-title { width: 100%; }
+  .sidebar-nav a { border: 1px solid var(--code-border); border-radius: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animation-controls { display: none; }
+  .anim-reduced-note { display: block !important; }
+}
+.anim-reduced-note { display: none; color: var(--text-muted); font-size: 0.8rem; position: absolute; bottom: 1rem; right: 1rem; }
+</style>
+</head>
+<body>
+<div class="page-container">
+<nav class="sidebar-nav" aria-label="Module sections">
+  <div class="nav-title">M00 · On this page</div>
+  <a href="#objectives">Learning objectives</a>
+  <a href="#story">The 147-file bug fix</a>
+  <a href="#exploration">Exploration vs reasoning</a>
+  <a href="#assembly">The context-assembly problem</a>
+  <a href="#timeline">The 90-day timeline</a>
+  <a href="#layers">The three context layers</a>
+  <a href="#lifecycle">The knowledge lifecycle</a>
+  <a href="#handson">Hands-on exercise</a>
+  <a href="#quiz">Knowledge check</a>
+  <a href="#summary">Module summary</a>
+  <a href="#references">References</a>
+</nav>
+
+<main class="content">
+<header class="section" id="top">
+  <div class="course-kicker">Knowledge Graphs for AI Agents · From RAG Limits to Self-Updating Codebase Brains</div>
+  <div class="track-badge">Track 0 — Overview</div>
+  <h1>M00 · The Context Problem &amp; the Knowledge Lifecycle</h1>
+  <div class="meta-row">
+    <span>📍 Module 1 of 14</span>
+    <span>⏱️ ~30 minutes</span>
+    <span>🧰 Prerequisites: none — this is the gateway module (code-free)</span>
+    <span>📶 Level: Beginner</span>
+  </div>
+  <div class="progress-bar" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="14" aria-label="Course progress: module 1 of 14">
+    <div class="progress-fill" style="width: 7.1%"></div>
+  </div>
+  <p>Welcome. Before you learn a single graph algorithm or file format, you need to <em>feel</em> the problem this whole course exists to solve: AI coding agents waste most of their effort — and your money — just <strong>finding</strong> things. This module shows you the problem, the 90 days in 2026 that produced an entire ecosystem of answers, and the map of what you'll build across the next 13 modules.</p>
+</header>
+
+<section class="section" id="objectives">
+  <h2>Learning objectives</h2>
+  <div class="objectives-box">
+    <p>By the end of this module you will be able to:</p>
+    <ul>
+      <li>Explain the difference between <strong>exploration tokens</strong> and <strong>reasoning tokens</strong>, and why the split matters more than model intelligence for day-to-day agent cost.</li>
+      <li>Describe the <strong>context-assembly problem</strong> — why every new agent re-derives the same organizational knowledge from scratch.</li>
+      <li>Recount the <strong>90-day timeline</strong> (April–July 2026) that took the field from a Karpathy post to Google's Open Knowledge Format.</li>
+      <li>Name the <strong>three context layers</strong> — structural, narrative, semantic — and say which kind of question each one answers.</li>
+      <li>State the four stages of the <strong>knowledge lifecycle</strong> (extract → curate → serve → maintain) and map each course track onto it.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="story">
+  <h2>The 147-file bug fix</h2>
+  <p>Here is a true story, the kind every developer who uses an AI coding assistant eventually collects. A developer asks Claude Code to fix a session-timeout bug in their authentication middleware. The fix, it will turn out, is <strong>three lines</strong> — a wrong comparison operator on one line, plus a small test.</p>
+  <p>But before the agent gets anywhere near those three lines, it starts <em>reading</em>. It reads the logging system. It reads the database migration history. It reads half the API endpoints. For reasons known only to itself, it reads the Terraform configs. The developer watches the file counter climb — 50, 90, 120 — and finally hits Escape at <strong>file 147</strong>.</p>
+  <p>The natural reaction is to blame the model: "it's not smart enough to know where to look." But that diagnosis is wrong, and the wrongness matters. The agent was doing exactly what any newcomer to that codebase would do without a guide: exploring. Every file it opened was a reasonable guess. The problem wasn't intelligence. <strong>The agent had no map.</strong></p>
+  <p>This course is about building that map — not by hand, and not once, but as a living system that stays true while the code underneath it keeps changing. By the capstone you will have built one: a structural graph extracted from code, a curated knowledge bundle describing what the code means, a server that lets any agent query both in a single call, and the monitoring that catches the map going stale before an agent trusts a lie.</p>
+
+  <div class="animation-container" data-anim="lostAgent">
+    <div class="anim-title">Animation · LOST_AGENT — the same question, with and without a map</div>
+    <div class="anim-stage" style="height: 300px;" aria-label="Animation comparing an agent exploring 147 files against an agent following a map to 4 files"></div>
+    <div class="anim-caption"></div>
+    <div class="animation-controls">
+      <button type="button" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+    <div class="anim-reduced-note">Reduced motion: showing final state.</div>
+  </div>
+</section>
+
+<section class="section" id="exploration">
+  <h2>Exploration tokens vs reasoning tokens</h2>
+
+  <div class="analogy-box">
+    <p><strong>Before</strong> ride-hailing apps, imagine hiring a taxi in a city with no street signs and a driver with no map. The meter starts the moment you get in — and it runs at the same rate whether the driver is making progress toward your destination or circling the same block trying to find it.</p>
+    <p><strong>The pain</strong>: at the end of the ride you pay a fortune, and most of the fare bought you nothing. You didn't pay for transportation; you paid for the driver's confusion. Worse, tomorrow's driver starts just as lost — the confusion is re-purchased every single trip.</p>
+    <p><strong>The mapping</strong>: an AI coding agent's <span class="term-tooltip" tabindex="0">context window<span class="tooltip-content">The fixed amount of text (measured in tokens) a model can consider at once — every file it reads, every instruction, every previous message counts against it.</span></span> is the taxi meter. Every file the agent opens costs its full size in <span class="term-tooltip" tabindex="0">tokens<span class="tooltip-content">The unit LLMs read and bill in — roughly 4 characters of text per token. A 500-line source file is about 2,000 tokens.</span></span>, whether that file contained the answer or not. When the agent explores instead of navigating, you pay for the circling. And the next session starts just as lost.</p>
+  </div>
+
+  <div class="tech-def-box">
+    <p>In an agentic coding session, spent tokens split into two kinds of work. <strong>Reasoning tokens</strong> are spent thinking about your actual question — designing the fix, weighing tradeoffs, writing code. <strong>Exploration tokens</strong> are spent locating the relevant code: reading files, grepping for symbols, tracing imports, opening related modules to check a hunch.</p>
+    <p>The uncomfortable empirical fact: on codebases of any real size, <strong>the majority of tokens are exploration</strong>. The agent isn't thinking hard about your question for most of the session. It is trying to find where the relevant code lives. And exploration has a second, sneakier cost: when the context window fills up and gets <span class="term-tooltip" tabindex="0">compacted<span class="tooltip-content">When a conversation outgrows the context window, older content is summarized or dropped. Files the agent read earlier are gone — re-consulting them means re-reading them at full price.</span></span>, files the agent already read are forgotten — and re-opened at full price. Context usage grows with session length even when the task doesn't.</p>
+    <p>Contrast that with a lookup. If a pre-built index can answer "who calls this function?" directly, the agent spends a handful of tokens on the answer instead of thousands on the search. The work of understanding the codebase's structure was done <em>once</em>, ahead of time — not re-paid on every query, by every agent, every day.</p>
+  </div>
+
+  <div class="callout callout-cost">
+    <span class="box-label">💰 Why it matters — real numbers</span>
+    <p>In one published benchmark across seven open-source projects (same model, same tasks, the only variable being whether a pre-built code graph was available), answering exploration-heavy questions on the VS Code repository dropped from <strong>2.8 million tokens to 601,000 tokens</strong> per benchmark run. On the Excalidraw repo: 3.5 million → 344,000. Aggregate across all seven projects: <strong>57% fewer tokens, 71% fewer tool calls, 46% faster answers, 35% lower cost</strong> — with zero change to the model. Every one of those saved tokens was mechanical file exploration that contributed nothing to answer quality. (You'll dissect these benchmarks — including where they get much less impressive — in M05.)</p>
+  </div>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Common misconceptions</span>
+    <p><strong>"Bigger context windows will fix this."</strong> — No. A bigger window lets the agent read <em>more</em> irrelevant files before answering, at proportionally higher cost. And models demonstrably degrade as context fills: they forget earlier instructions, re-read files they already saw, and make mistakes they wouldn't make with a clean context. The fix is keeping irrelevant content out, not making room for more of it.</p>
+    <p><strong>"Smarter models will fix this."</strong> — A model that needs to read 50 files and burn 3 million tokens to answer will never be used casually, no matter how intelligent it is. The friction is structural. As one analysis put it: the fastest way to make an AI coding tool better might not be to make it smarter — it might be to give it a map.</p>
+    <p><strong>"This is only about money."</strong> — It's also about correctness. An agent skimming dozens of half-relevant files picks up wrong assumptions along the way. Fewer, more targeted reads mean fewer wrong beliefs in the agent's working model of your system.</p>
+  </div>
+</section>
+
+<section class="section" id="assembly">
+  <h2>The context-assembly problem</h2>
+  <p class="bridge">Exploration waste is the symptom you can see on an invoice. The deeper disease has a name — Google's engineers called it the <em>context-assembly problem</em> — and it isn't about code at all.</p>
+
+  <p>Ask a seemingly simple question inside any real organization: <em>"How do we compute weekly active users from our event stream?"</em> The answer exists. But where? Usually scattered across a metadata catalog, a wiki page nobody has opened since last year, a code comment, a Slack argument between two data engineers, and the memory of one senior engineer who is on vacation this week.</p>
+  <p>Every time a team builds a new AI agent, that agent has to reassemble the answer from scratch — because none of those places agree on a format, and none of them was written to be read by a machine. Table schemas, metric definitions, JOIN paths, incident runbooks, API contracts: the knowledge that agents need most is exactly the knowledge that lives in the most fragmented places. The cost isn't one-time. It's a recurring tax on <strong>every task, every agent, every teammate running one</strong>.</p>
+  <p>And stale context isn't just slow — it's actively dangerous. An agent acting on an outdated mental model of a service's dependencies doesn't merely waste tokens; it can confidently change something it didn't know was connected to something else. (In M02 you'll watch an agent retrieve a stale metric definition and ship a wrong dashboard without a single error appearing anywhere.)</p>
+
+  <h3 id="karpathy">Karpathy's LLM Wiki</h3>
+  <p>In April 2026, Andrej Karpathy posted a thought experiment that crystallized the fix. Instead of having a model search the same raw documents over and over, let it <strong>build and maintain a living wiki</strong> — a compiled, cross-linked set of Markdown notes that serves as durable external memory. Drop papers, notes, screenshots, and architecture docs into a folder, and let an AI that understands their relationships keep the wiki current.</p>
+  <p>The insight that stuck with engineers was about temperament, not technology: humans abandon personal wikis because the upkeep is tedious — fixing cross-references, updating stale pages, logging changes. But as Google's own materials later put it: <em>"LLMs don't get bored, don't forget to update a cross-reference, and can touch 15 files in one pass. The bookkeeping that causes humans to abandon personal wikis is exactly what LLMs are good at."</em></p>
+  <p>Think of it as compilation. Source code isn't re-parsed from scratch every time you run a program — it's compiled once and reused. Stable knowledge about your systems deserves the same treatment: <strong>compiled once, kept current incrementally, and looked up instead of re-derived</strong>. That single idea — knowledge as a compiled artifact — is the seed of everything in this course.</p>
+</section>
+
+<section class="section" id="timeline">
+  <h2>The 90-day timeline</h2>
+  <p>What happened next is one of the fastest idea-to-ecosystem sprints in recent developer-tools history. Everything this course teaches emerged, matured, and started attracting serious scrutiny inside a single 90-day window:</p>
+
+  <div class="animation-container" data-anim="timeline">
+    <div class="anim-title">Animation · TIMELINE — from a post to an ecosystem in 90 days</div>
+    <div class="anim-stage" style="height: 280px;" aria-label="Animated timeline of six ecosystem events from April to July 2026"></div>
+    <div class="anim-caption"></div>
+    <div class="animation-controls">
+      <button type="button" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+    <div class="anim-reduced-note">Reduced motion: showing final state.</div>
+  </div>
+
+  <ul>
+    <li><strong>April 1, 2026</strong> — Karpathy posts the "LLM Wiki / knowledge compiler" concept on X.</li>
+    <li><strong>April 3, 2026</strong> — Safi Shamsi launches <strong>Graphify</strong> on GitHub, materializing the idea within 48 hours. The project enters Y Combinator's S26 batch.</li>
+    <li><strong>June 1, 2026</strong> — Graphify passes <strong>58,300 GitHub stars</strong> and 1.2 million PyPI downloads.</li>
+    <li><strong>June 12, 2026</strong> — Google Cloud publishes the <strong>Open Knowledge Format (OKF) v0.1</strong> spec: a vendor-neutral standard for exactly the kind of curated Markdown knowledge Karpathy described.</li>
+    <li><strong>July 1, 2026</strong> — a bidirectional Graphify ↔ OKF integration toolkit ships, claiming up to a 71.5× reduction in query tokens.</li>
+    <li><strong>July 5, 2026</strong> — Graphify reaches ~78,000 stars — and technical publications begin publicly scrutinizing the headline claims.</li>
+  </ul>
+
+  <p>Hold onto that last entry. A field that went from tweet to 78,000 stars in 90 days is a field where marketing outran measurement. One of this course's standing rules — you'll see it in every module that quotes a number — is the <strong>honesty rule</strong>: every vendor benchmark gets paired with its independently replicated range. The 71.5× claim, for instance, came from one favorable 52-file test corpus; replications on real codebases landed between <strong>6.8× and 49×</strong>, and one from-scratch benchmark on an ordinary Python codebase measured <strong>7.3×</strong>. Still excellent — but a different conversation than "70x".</p>
+</section>
+
+<section class="section" id="layers">
+  <h2>The three context layers</h2>
+  <p class="bridge">So the fix is "give the agent a map." But a codebase needs more than one kind of map — because agents ask more than one kind of question.</p>
+
+  <p>Consider three questions an agent might face about the same system:</p>
+  <ol>
+    <li><em>"What calls <code>verify_token</code>, and what breaks if I change its signature?"</em> — a question about <strong>structure</strong>. The answer is a fact about the code itself, mechanically derivable from source.</li>
+    <li><em>"Why does billing publish an event instead of calling notifications directly?"</em> — a question about <strong>intent</strong>. No parser can answer it; the answer lives in a design decision some engineer made and (hopefully) wrote down.</li>
+    <li><em>"Has anyone seen this timeout error before?"</em> — a question about the <strong>long tail</strong>: old tickets, Slack threads, incident channels. Unstructured, uncurated, and far too voluminous to organize by hand.</li>
+  </ol>
+  <p>Three questions, three fundamentally different knowledge sources — and three different technologies, each the subject of a track in this course:</p>
+
+  <div class="table-scroll">
+  <table>
+    <tr><th>Layer</th><th>Holds</th><th>Built by</th><th>Retrieval style</th><th>Course track</th></tr>
+    <tr>
+      <td><strong>Structural</strong> (what the code <em>is</em>)</td>
+      <td>Call graphs, imports, class hierarchies, communities</td>
+      <td>Deterministic <span class="term-tooltip" tabindex="0">AST<span class="tooltip-content">Abstract Syntax Tree — the tree-shaped representation of code's grammatical structure that parsers produce. M03 is entirely about this.</span></span> parsing (tree-sitter, Graphify, CodeGraph, okf-rs) — zero LLM calls</td>
+      <td>Exact graph traversal</td>
+      <td>Track 2 (M03–M05)</td>
+    </tr>
+    <tr>
+      <td><strong>Narrative</strong> (what engineers <em>know</em>)</td>
+      <td>Architecture rationale, schemas, metric definitions, runbooks</td>
+      <td>Humans + maintenance agents, in Markdown (OKF)</td>
+      <td>Deterministic file reads, link-following</td>
+      <td>Track 3 (M06–M08)</td>
+    </tr>
+    <tr>
+      <td><strong>Semantic</strong> (the messy remainder)</td>
+      <td>Tickets, Slack, one-off docs, PDFs</td>
+      <td>Chunking + <span class="term-tooltip" tabindex="0">embeddings<span class="tooltip-content">Numeric vector representations of text where similar meanings land near each other — the machinery behind vector search and RAG.</span></span> (vector RAG)</td>
+      <td>Probabilistic similarity search</td>
+      <td>Baseline (M02), integrated in M10</td>
+    </tr>
+  </table>
+  </div>
+
+  <div class="animation-container" data-anim="threeLayers">
+    <div class="anim-title">Animation · THREE_LAYERS — which layer answers which question</div>
+    <div class="anim-stage" style="height: 300px;" aria-label="Animation showing three context layers each answering their kind of question for one agent"></div>
+    <div class="anim-caption"></div>
+    <div class="animation-controls">
+      <button type="button" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+    <div class="anim-reduced-note">Reduced motion: showing final state.</div>
+  </div>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Common misconceptions</span>
+    <p><strong>"Knowledge graphs replace RAG."</strong> — The single most viral misframing in this entire field, and this course will push back on it repeatedly. Graph tools' own benchmarks show they <em>tie</em> well-tuned vector RAG on retrieval accuracy (M04 has the exact numbers). Their real advantages are determinism, ingest cost, and structural queries RAG cannot express. The three layers are complements. Teams that rip out RAG to install a graph are solving a problem they don't have.</p>
+    <p><strong>"One tool will cover all three layers."</strong> — Every tool you'll meet specializes. Graphify extracts what the code is; OKF curates what engineers know; vector search handles the remainder. The architecture question is never "which one wins" but "which layer owns which context" (M10 gives you the decision matrix).</p>
+  </div>
+</section>
+
+<section class="section" id="lifecycle">
+  <h2>The knowledge lifecycle — and your map of this course</h2>
+  <p>Whatever the layer, knowledge that serves agents goes through the same four stages. This lifecycle is the spine of the course — every module slots into one stage:</p>
+
+  <div class="table-scroll">
+  <table>
+    <tr><th>Stage</th><th>The work</th><th>Where you'll learn it</th></tr>
+    <tr><td><strong>1 · EXTRACT</strong></td><td>Parse code into a structural graph: nodes, typed edges, communities, provenance tags</td><td>M01 (fundamentals), M03 (tree-sitter), M04 (Graphify), M05 (the tool landscape)</td></tr>
+    <tr><td><strong>2 · CURATE</strong></td><td>Write down the knowledge parsers can't see — intent, definitions, runbooks — in a standard, agent-readable format</td><td>M06 (the OKF spec), M07 (OKF for codebases)</td></tr>
+    <tr><td><strong>3 · SERVE</strong></td><td>Let agents query it all cheaply: MCP servers, progressive disclosure, hybrid routing</td><td>M09 (MCP), M10 (the hybrid stack)</td></tr>
+    <tr><td><strong>4 · MAINTAIN</strong></td><td>Keep it true while the code changes: enrichment pipelines, hooks, lint gates, freshness monitoring</td><td>M08 (self-updating pipelines), M11 (drift &amp; observability), M12 (project structure)</td></tr>
+  </table>
+  </div>
+
+  <p>Two framing notes before you start. First, the baseline: M02 makes you build and break the RAG-only approach so you understand precisely which failures the later layers fix — you cannot evaluate a cure without seeing the disease. Second, the capstone: everything converges on a single build where you wire all four stages together over a small mock monorepo called <strong>orderflow</strong> — a billing service, an orders service, a notifications worker — which you'll come to know embarrassingly well. Every lab in the course graphs, describes, serves, or monitors that one repo, so you can always check the machine's answers by hand.</p>
+
+  <div class="callout callout-why">
+    <span class="box-label">✅ Why this order</span>
+    <p>The course teaches extraction before curation because extraction is free and deterministic — you can trust it blindly and build intuition fast. It teaches curation before serving because a server with nothing worth serving teaches nothing. And it teaches maintenance last but insists it matters most: the field's own production postmortems (M11 walks through four of them) show that <strong>the demo is easy and staying-true-over-time is the actual engineering problem</strong>. A stale map is worse than no map, because the agent trusts it.</p>
+  </div>
+</section>
+
+<section class="section" id="handson">
+  <h2>Hands-on exercise (no code required)</h2>
+  <p><strong>What you'll produce</strong>: a one-page baseline observation of your own AI assistant's exploration behavior — the "before" photo you'll compare against in the capstone. <strong>Time</strong>: 15 minutes.</p>
+  <ol>
+    <li>
+      <p><strong>Step 1 — Pick a codebase you know.</strong> Any repo with 30+ files where you already know the answer to a structural question (so you can grade the agent).</p>
+    </li>
+    <li>
+      <p><strong>Step 2 — Ask a structural question.</strong> In your AI coding assistant, ask something like: <em>"Which functions call [some function], directly or indirectly? What would break if I renamed it?"</em></p>
+    </li>
+    <li>
+      <p><strong>Step 3 — Count, don't vibe.</strong> While it works, tally: how many files did it open? How many searches did it run? Did it re-open any file twice? If your assistant reports token usage, record it.</p>
+    </li>
+    <li>
+      <p><strong>Step 4 — Grade the answer.</strong> Was it right? Complete? Did it miss an indirect caller? Write down one sentence: <em>"To answer a question I could answer from memory, the agent read N files and made M searches."</em></p>
+    </li>
+  </ol>
+  <div class="checkpoint">
+    <span class="box-label">✅ Checkpoint</span>
+    <p>You have a note with three numbers on it: files read, searches run, correctness. Keep it — the capstone's Phase 1 repeats this measurement formally on the orderflow repo, and Phase 7 makes you compare honestly. If the agent read fewer than 5 files, congratulations: your repo is small enough that (as M04 and M11 teach) graph tooling may genuinely not be worth it. That's a course lesson too.</p>
+  </div>
+</section>
+
+<section class="section" id="quiz">
+  <h2>Knowledge check</h2>
+  <p>Six questions. Pick an answer to see immediate feedback.</p>
+
+  <div class="quiz-question" data-q="1">
+    <div class="q-text">1. In a typical agentic coding session on a large codebase, where do most tokens go?</div>
+    <div class="quiz-option" data-correct="false">Reasoning about the user's actual question</div>
+    <div class="quiz-option" data-correct="true">Exploration — finding where the relevant code lives</div>
+    <div class="quiz-option" data-correct="false">Writing the final code</div>
+    <div class="quiz-option" data-correct="false">Safety filtering</div>
+    <div class="quiz-feedback" data-good="Right. The majority of tokens are spent locating code — reading files, grepping, tracing imports — not thinking about the question. That's why a pre-built map cuts cost without touching the model." data-bad="Not quite. The empirical pattern is that exploration dominates: the agent spends most tokens finding code, not reasoning about it. That's the waste a knowledge graph attacks."></div>
+  </div>
+
+  <div class="quiz-question" data-q="2">
+    <div class="q-text">2. Which context layer answers <em>"Why does billing publish an event instead of calling notifications directly?"</em></div>
+    <div class="quiz-option" data-correct="false">The structural layer (AST call graph)</div>
+    <div class="quiz-option" data-correct="true">The narrative layer (curated knowledge, e.g. OKF)</div>
+    <div class="quiz-option" data-correct="false">The semantic layer (vector RAG)</div>
+    <div class="quiz-feedback" data-good="Correct. 'Why' is intent — a design decision. No parser can extract it from source; it must be written down, which is the narrative layer's job." data-bad="Not this one. A call graph can show WHAT calls what, and vector search can find similar text — but WHY a design decision was made only exists if someone wrote it down: the narrative layer."></div>
+  </div>
+
+  <div class="quiz-question" data-q="3">
+    <div class="q-text">3. What is the correct order of the knowledge lifecycle?</div>
+    <div class="quiz-option" data-correct="false">Serve → extract → maintain → curate</div>
+    <div class="quiz-option" data-correct="false">Curate → extract → serve → maintain</div>
+    <div class="quiz-option" data-correct="true">Extract → curate → serve → maintain</div>
+    <div class="quiz-option" data-correct="false">Extract → serve → curate → maintain</div>
+    <div class="quiz-feedback" data-good="Yes: parse the code into a graph (extract), write down what parsers can't see (curate), let agents query it (serve), keep it true over time (maintain)." data-bad="The course spine is: EXTRACT the structural graph, CURATE the narrative knowledge, SERVE both to agents, MAINTAIN them as code changes."></div>
+  </div>
+
+  <div class="quiz-question" data-q="4">
+    <div class="q-text">4. What was the core idea of Karpathy's "LLM Wiki" concept?</div>
+    <div class="quiz-option" data-correct="false">Fine-tune a model on your codebase so it memorizes the structure</div>
+    <div class="quiz-option" data-correct="true">Let a model build and maintain a living, cross-linked Markdown wiki as durable external memory</div>
+    <div class="quiz-option" data-correct="false">Replace documentation with automatically generated code comments</div>
+    <div class="quiz-option" data-correct="false">Store all knowledge in a proprietary graph database</div>
+    <div class="quiz-feedback" data-good="Exactly — and the key temperament insight: the tedious cross-reference bookkeeping that makes humans abandon wikis is precisely what LLMs are good at." data-bad="The LLM Wiki idea is compiled external memory: a living Markdown wiki the model itself maintains — because models don't get bored of the upkeep that makes humans abandon wikis."></div>
+  </div>
+
+  <div class="quiz-question" data-q="5">
+    <div class="q-text">5. Why don't bigger context windows solve the exploration problem?</div>
+    <div class="quiz-option" data-correct="false">They do — a large enough window makes graphs unnecessary</div>
+    <div class="quiz-option" data-correct="true">They let the agent read more irrelevant content at higher cost, and model performance degrades as context fills</div>
+    <div class="quiz-option" data-correct="false">Context windows can't hold source code</div>
+    <div class="quiz-feedback" data-good="Right. More room means more (paid) irrelevant reading, and models measurably degrade in crowded contexts — forgetting instructions and re-reading files. The fix is keeping irrelevant content out." data-bad="Bigger windows make the problem more affordable to have, not solved: the agent reads MORE irrelevant files at higher cost, and models degrade as context fills. Selectivity beats capacity."></div>
+  </div>
+
+  <div class="quiz-question" data-q="6">
+    <div class="q-text">6. What shipped on June 12, 2026, and what is it?</div>
+    <div class="quiz-option" data-correct="false">Graphify — a YC-backed AST graph extractor</div>
+    <div class="quiz-option" data-correct="true">Google Cloud's Open Knowledge Format (OKF) v0.1 — a vendor-neutral Markdown+YAML standard for curated knowledge</div>
+    <div class="quiz-option" data-correct="false">CodeGraph — a SQLite-based local code index</div>
+    <div class="quiz-option" data-correct="false">A new Claude model with a larger context window</div>
+    <div class="quiz-feedback" data-good="Correct. OKF v0.1: a deliberately minimal spec (one required field!) that standardizes the LLM-Wiki pattern. Track 3 is devoted to it." data-bad="June 12, 2026 was Google Cloud's Open Knowledge Format (OKF) v0.1 — the vendor-neutral Markdown standard for curated agent knowledge. Graphify launched April 3."></div>
+  </div>
+</section>
+
+<section class="section" id="summary">
+  <h2>Module summary</h2>
+  <div class="summary-grid">
+    <div class="summary-card"><h4>The problem</h4>Agents burn most tokens on exploration, not reasoning — re-purchasing the same confusion every session. 147 files for a 3-line fix.</div>
+    <div class="summary-card"><h4>The disease behind it</h4>The context-assembly problem: organizational knowledge scattered across catalogs, wikis, comments, and vacationing brains — reassembled from scratch by every agent.</div>
+    <div class="summary-card"><h4>The idea</h4>Karpathy's LLM Wiki: compile stable knowledge once, like source code, and let models do the upkeep humans abandon.</div>
+    <div class="summary-card"><h4>The ecosystem</h4>90 days in 2026: Karpathy post → Graphify (Apr 3) → OKF v0.1 (Jun 12) → integration toolkit → scrutiny. Hype outran measurement; this course pairs every claim with its replicated range.</div>
+    <div class="summary-card"><h4>The architecture</h4>Three complementary layers: structural (what code IS), narrative (what engineers KNOW), semantic (the messy rest). Complements — not competitors.</div>
+    <div class="summary-card"><h4>Your map</h4>Extract (T2) → curate (T3) → serve (T4) → maintain (T5), all converging on one capstone build over the orderflow repo.</div>
+  </div>
+  <p><strong>Next up — M01: Knowledge Graph Fundamentals.</strong> Before touching any tool, you'll build a real (tiny) code graph by hand in pure Python: nodes, typed edges, traversal, communities, god nodes, blast radius, and the EXTRACTED/INFERRED honesty labels every serious tool ships. Everything later in the course is these primitives wearing better clothes.</p>
+</section>
+
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul>
+    <li>Google Cloud — <em>Introducing the Open Knowledge Format</em> (cloud.google.com/blog/products/data-analytics)</li>
+    <li>OKF Specification v0.1 — github.com/GoogleCloudPlatform/knowledge-catalog</li>
+    <li>Karpathy — LLM Wiki memory pattern (April 2026)</li>
+    <li>Graphify — github.com/safishamsi/graphify · graphify.net</li>
+    <li>CodeGraph benchmark methodology (seven-project comparison) — course corpus, detailed in M05</li>
+    <li>Course lab repo — <code>labs/</code> in this repository; the running example is <code>labs/sample-project</code> (orderflow)</li>
+  </ul>
+</section>
+
+<nav class="module-nav" aria-label="Module navigation">
+  <a href="index.html"><span class="dir">◀ Course home</span>Course overview &amp; all modules</a>
+  <a class="next" href="M01-knowledge-graph-fundamentals.html"><span class="dir">Next ▶</span>M01 · Knowledge Graph Fundamentals</a>
+</nav>
+<footer>Knowledge Graphs for AI Agents · Track 0 — Overview · Module 1 of 14</footer>
+</main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- copy buttons ---- */
+  document.querySelectorAll('.code-block').forEach(function (block) {
+    var head = block.querySelector('.code-head');
+    if (!head) return;
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'copy';
+    btn.setAttribute('aria-label', 'Copy code to clipboard');
+    btn.addEventListener('click', function () {
+      var code = block.querySelector('pre');
+      if (!code) return;
+      navigator.clipboard.writeText(code.textContent).then(function () {
+        btn.textContent = 'copied!';
+        setTimeout(function () { btn.textContent = 'copy'; }, 1500);
+      });
+    });
+    head.appendChild(btn);
+  });
+
+  /* ---- quiz ---- */
+  document.querySelectorAll('.quiz-question').forEach(function (q) {
+    var feedback = q.querySelector('.quiz-feedback');
+    q.querySelectorAll('.quiz-option').forEach(function (opt) {
+      opt.setAttribute('role', 'button');
+      opt.setAttribute('tabindex', '0');
+      function answer() {
+        if (q.classList.contains('answered')) return;
+        q.classList.add('answered');
+        var correct = opt.getAttribute('data-correct') === 'true';
+        opt.classList.add(correct ? 'correct' : 'incorrect');
+        q.querySelectorAll('.quiz-option').forEach(function (o) {
+          o.classList.add('disabled');
+          if (o.getAttribute('data-correct') === 'true') o.classList.add('correct');
+        });
+        feedback.textContent = correct ? feedback.getAttribute('data-good') : feedback.getAttribute('data-bad');
+        feedback.classList.add('show', correct ? 'good' : 'bad');
+      }
+      opt.addEventListener('click', answer);
+      opt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); answer(); } });
+    });
+  });
+
+  /* ---- tiny step-sequencer for animations ---- */
+  function Seq(container, build) {
+    var stage = container.querySelector('.anim-stage');
+    var caption = container.querySelector('.anim-caption');
+    var api = {
+      stage: stage,
+      caption: function (t) { if (caption) caption.textContent = t; },
+      steps: [],
+      i: 0, timer: null, playing: false, interval: 900
+    };
+    function runStep() {
+      if (api.i >= api.steps.length) { api.playing = false; return; }
+      api.steps[api.i++]();
+      if (api.playing) api.timer = setTimeout(runStep, api.interval);
+    }
+    api.play = function () {
+      if (api.playing) return;
+      if (api.i >= api.steps.length) api.restart(true);
+      api.playing = true; runStep();
+    };
+    api.pause = function () { api.playing = false; clearTimeout(api.timer); };
+    api.restart = function (silent) {
+      api.pause(); api.i = 0; stage.innerHTML = ''; api.caption('');
+      build(api);
+      if (!silent) api.play();
+    };
+    api.finish = function () { // reduced-motion: jump to final state
+      api.pause(); api.i = 0; stage.innerHTML = ''; api.caption('');
+      build(api);
+      while (api.i < api.steps.length) api.steps[api.i++]();
+    };
+    build(api);
+    var controls = container.querySelector('.animation-controls');
+    if (controls) {
+      controls.addEventListener('click', function (e) {
+        var act = e.target.getAttribute('data-act');
+        if (act === 'play') api.play();
+        if (act === 'pause') api.pause();
+        if (act === 'restart') api.restart();
+      });
+    }
+    if (reduced) api.finish();
+    return api;
+  }
+
+  function el(parent, cls, css, text) {
+    var d = document.createElement('div');
+    d.className = cls || '';
+    if (css) for (var k in css) d.style[k] = css[k];
+    if (text !== undefined) d.textContent = text;
+    parent.appendChild(d);
+    return d;
+  }
+
+  /* ---- LOST_AGENT ---- */
+  var lostC = document.querySelector('[data-anim="lostAgent"]');
+  if (lostC) Seq(lostC, function (api) {
+    var s = api.stage;
+    s.style.display = 'grid';
+    s.style.gridTemplateColumns = '1fr 1fr';
+    s.style.gap = '1rem';
+    function panel(title) {
+      var p = el(s, '', { position: 'relative', background: 'var(--bg-card)', border: '1px solid var(--code-border)', borderRadius: '10px', padding: '2.2rem 0.8rem 0.8rem', minHeight: '260px' });
+      el(p, '', { position: 'absolute', top: '0.5rem', left: '0.8rem', fontFamily: "'Bricolage Grotesque',sans-serif", fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--text-muted)' }, title);
+      return p;
+    }
+    var left = panel('No map — exploration');
+    var right = panel('With a map — navigation');
+    // file grid on the left
+    var files = [];
+    var grid = el(left, '', { display: 'grid', gridTemplateColumns: 'repeat(8,1fr)', gap: '4px', marginTop: '0.4rem' });
+    for (var i = 0; i < 40; i++) {
+      files.push(el(grid, '', { height: '14px', borderRadius: '3px', background: 'var(--bg-surface)', transition: 'background .3s' }));
+    }
+    var meterL = el(left, '', { marginTop: '0.7rem', height: '10px', background: 'var(--bg-surface)', borderRadius: '5px', overflow: 'hidden' });
+    var fillL = el(meterL, '', { height: '100%', width: '0%', background: 'var(--warning)', transition: 'width .5s, background .5s' });
+    var countL = el(left, '', { marginTop: '0.35rem', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.75rem', color: 'var(--text-secondary)' }, 'files read: 0 · tokens: 0');
+    // map path on the right
+    var mapBox = el(right, '', { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '6px', marginTop: '0.4rem' });
+    var mapCells = [];
+    ['index', 'graph', 'auth.py', 'test'].forEach(function (n) {
+      mapCells.push(el(mapBox, '', { padding: '0.45rem 0.2rem', textAlign: 'center', borderRadius: '6px', background: 'var(--bg-surface)', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.68rem', color: 'var(--text-secondary)', transition: 'all .3s' }, n));
+    });
+    var meterR = el(right, '', { marginTop: '0.7rem', height: '10px', background: 'var(--bg-surface)', borderRadius: '5px', overflow: 'hidden' });
+    var fillR = el(meterR, '', { height: '100%', width: '0%', background: 'var(--success)', transition: 'width .5s' });
+    var countR = el(right, '', { marginTop: '0.35rem', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.75rem', color: 'var(--text-secondary)' }, 'files read: 0 · tokens: 0');
+
+    var read = 0, tok = 0;
+    for (var step = 0; step < 8; step++) {
+      (function (step) {
+        api.steps.push(function () {
+          api.caption('The mapless agent keeps opening plausible-looking files… every read billed at full size.');
+          for (var j = 0; j < 5; j++) {
+            var idx = (step * 5 + j) % files.length;
+            files[idx].style.background = 'var(--warning)';
+          }
+          read += 18; tok += 38000;
+          var pct = Math.min(100, read / 147 * 100);
+          fillL.style.width = pct + '%';
+          if (pct > 70) fillL.style.background = 'var(--error)';
+          countL.textContent = 'files read: ' + Math.min(147, read) + ' · tokens: ' + tok.toLocaleString();
+        });
+      })(step);
+    }
+    api.steps.push(function () {
+      api.caption('Escape pressed at file 147. Now the same question, asked with a pre-built map:');
+      countL.textContent = 'files read: 147 · tokens: 310,000 — Esc pressed';
+    });
+    mapCells.forEach(function (c, i2) {
+      api.steps.push(function () {
+        api.caption(['Read the index — one small file.', 'One graph query: who calls this?', 'Open exactly the file that matters.', 'Fix + test. Done at 4 reads.'][i2]);
+        c.style.background = 'var(--success-bg)';
+        c.style.color = 'var(--text-primary)';
+        c.style.outline = '1px solid var(--success)';
+        fillR.style.width = ((i2 + 1) * 4) + '%';
+        countR.textContent = 'files read: ' + (i2 + 1) + ' · tokens: ' + ((i2 + 1) * 2500).toLocaleString();
+      });
+    });
+    api.steps.push(function () {
+      api.caption('Same model, same question. The difference is a map: ~310K exploration tokens vs ~10K. That gap is what this course is about.');
+    });
+  });
+
+  /* ---- TIMELINE ---- */
+  var tlC = document.querySelector('[data-anim="timeline"]');
+  if (tlC) Seq(tlC, function (api) {
+    var s = api.stage;
+    s.style.position = 'relative';
+    el(s, '', { position: 'absolute', top: '50%', left: '2%', right: '2%', height: '2px', background: 'var(--code-border)' });
+    var events = [
+      ['Apr 1', 'Karpathy posts the LLM Wiki idea', 'var(--text-secondary)'],
+      ['Apr 3', 'Graphify launches (YC S26)', 'var(--track-structural)'],
+      ['Jun 1', '58.3K stars · 1.2M downloads', 'var(--track-structural)'],
+      ['Jun 12', 'Google ships OKF v0.1', 'var(--track-narrative)'],
+      ['Jul 1', 'Graphify ↔ OKF toolkit · "71.5x"', 'var(--track-serving)'],
+      ['Jul 5', '~78K stars · scrutiny begins', 'var(--warning)']
+    ];
+    events.forEach(function (ev, i) {
+      var x = 4 + i * 18;
+      var up = i % 2 === 0;
+      var dot = el(s, '', { position: 'absolute', top: 'calc(50% - 7px)', left: x + '%', width: '14px', height: '14px', borderRadius: '50%', background: ev[2], opacity: '0', transform: 'scale(0.3)', transition: 'all .4s' });
+      var lbl = el(s, '', { position: 'absolute', left: 'calc(' + x + '% - 55px)', width: '130px', textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', opacity: '0', transition: 'opacity .4s' });
+      lbl.style[up ? 'bottom' : 'top'] = '58%';
+      lbl.innerHTML = '<strong style="color:var(--text-primary)">' + ev[0] + ' 2026</strong><br>' + ev[1];
+      api.steps.push(function () {
+        dot.style.opacity = '1'; dot.style.transform = 'scale(1)';
+        lbl.style.opacity = '1';
+        api.caption(ev[0] + ' 2026 — ' + ev[1]);
+      });
+    });
+    api.steps.push(function () {
+      api.caption('Idea → 78,000 stars → public scrutiny, in 90 days. When ecosystems move this fast, marketing outruns measurement — hence this course’s honesty rule.');
+    });
+  });
+
+  /* ---- THREE_LAYERS ---- */
+  var l3C = document.querySelector('[data-anim="threeLayers"]');
+  if (l3C) Seq(l3C, function (api) {
+    var s = api.stage;
+    s.style.display = 'grid';
+    s.style.gridTemplateColumns = '1fr 90px 1fr';
+    s.style.alignItems = 'center';
+    var colL = el(s, '', { display: 'flex', flexDirection: 'column', gap: '0.6rem' });
+    var mid = el(s, '', { position: 'relative', height: '100%' });
+    var colR = el(s, '', { display: 'flex', flexDirection: 'column', gap: '0.6rem' });
+    var defs = [
+      ['STRUCTURAL', 'AST call graph — what the code IS', 'var(--track-structural)', '“What calls verify_token?”'],
+      ['NARRATIVE', 'OKF bundle — what engineers KNOW', 'var(--track-narrative)', '“Why events instead of direct calls?”'],
+      ['SEMANTIC', 'Vector RAG — the messy long tail', 'var(--track-serving)', '“Anyone seen this timeout before?”']
+    ];
+    var layerEls = [], qEls = [];
+    defs.forEach(function (d) {
+      var b = el(colL, '', { border: '1px solid ' + d[2], borderRadius: '10px', padding: '0.6rem 0.8rem', background: 'var(--bg-card)', opacity: '0.25', transition: 'opacity .4s, box-shadow .4s' });
+      b.innerHTML = '<strong style="color:' + d[2] + ';font-family:\'Bricolage Grotesque\',sans-serif;font-size:.75rem;letter-spacing:.05em">' + d[0] + '</strong><br><span style="font-size:.82rem;color:var(--text-secondary)">' + d[1] + '</span>';
+      layerEls.push(b);
+      var q = el(colR, '', { border: '1px solid var(--code-border)', borderRadius: '10px', padding: '0.6rem 0.8rem', background: 'var(--bg-card)', fontSize: '0.85rem', color: 'var(--text-secondary)', opacity: '0.25', transition: 'opacity .4s' }, d[3]);
+      qEls.push(q);
+    });
+    el(mid, '', { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '64px', height: '64px', borderRadius: '50%', background: 'var(--bg-surface)', border: '2px solid var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }, '🤖');
+    defs.forEach(function (d, i) {
+      api.steps.push(function () {
+        layerEls.forEach(function (b2, j) { b2.style.opacity = j === i ? '1' : '0.25'; b2.style.boxShadow = j === i ? '0 0 18px ' + defs[j][2] : 'none'; });
+        qEls.forEach(function (q2, j) { q2.style.opacity = j === i ? '1' : '0.25'; });
+        api.caption(d[3] + '  →  answered by the ' + d[0].toLowerCase() + ' layer.');
+      });
+    });
+    api.steps.push(function () {
+      layerEls.forEach(function (b2, j) { b2.style.opacity = '1'; b2.style.boxShadow = '0 0 12px ' + defs[j][2]; });
+      qEls.forEach(function (q2) { q2.style.opacity = '1'; });
+      api.caption('One agent, three complementary layers. Not competitors — the M10 architecture routes each question to the layer that owns it.');
+    });
+  });
+})();
+</script>
+</body>
+</html>

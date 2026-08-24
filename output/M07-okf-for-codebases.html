@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M07 · OKF for Codebases — Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0A1628; --bg-secondary: #111D33; --bg-card: #162033; --bg-surface: #1A2740;
+  --text-primary: #E8ECF1; --text-secondary: #94A3B8; --text-muted: #64748B;
+  --accent-primary: #D4A843; --accent-hover: #E5BC5A; --accent-muted: rgba(212, 168, 67, 0.15);
+  --success: #10B981; --success-bg: rgba(16, 185, 129, 0.1);
+  --warning: #F59E0B; --warning-bg: rgba(245, 158, 11, 0.1);
+  --error: #F43F5E; --error-bg: rgba(244, 63, 94, 0.1);
+  --info: #3B82F6; --info-bg: rgba(59, 130, 246, 0.1);
+  --track-overview: #D4A843; --track-foundations: #6366F1; --track-structural: #8B5CF6;
+  --track-narrative: #06B6D4; --track-serving: #F97316; --track-production: #22C55E; --track-capstone: #D4A843;
+  --track-color: #06B6D4;
+  --code-bg: #0D1117; --code-border: #21262D; --code-text: #C9D1D9; --code-comment: #8B949E;
+  --code-keyword: #FF7B72; --code-string: #A5D6FF; --code-function: #D2A8FF; --code-number: #79C0FF;
+  --transition-fast: 150ms; --transition-normal: 300ms; --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Source Sans 3', sans-serif; font-size: 1.05rem; line-height: 1.7; }
+.page-container { max-width: 1200px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: 240px 1fr; gap: 3rem; }
+.sidebar-nav { position: sticky; top: 2rem; height: calc(100vh - 4rem); overflow-y: auto; font-family: 'Bricolage Grotesque', sans-serif; font-size: 0.85rem; }
+.sidebar-nav h4 { color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.7rem; margin-bottom: 0.75rem; }
+.sidebar-nav a { display: block; color: var(--text-secondary); text-decoration: none; padding: 0.4rem 0.6rem; border-left: 2px solid var(--code-border); transition: all var(--transition-fast); }
+.sidebar-nav a:hover, .sidebar-nav a.active { color: var(--track-color); border-left-color: var(--track-color); background: rgba(6,182,212,0.06); }
+.content { max-width: 800px; min-width: 0; }
+.section { margin-bottom: 4rem; }
+h1, h2, h3 { font-family: 'Bricolage Grotesque', sans-serif; }
+h1 { font-weight: 700; font-size: 2rem; margin: 0.5rem 0 1rem; }
+h2 { font-weight: 700; font-size: 1.5rem; margin: 2.5rem 0 1rem; scroll-margin-top: 1rem; }
+h3 { font-weight: 600; font-size: 1.25rem; margin: 2rem 0 0.75rem; scroll-margin-top: 1rem; }
+p { margin-bottom: 1rem; }
+ul, ol { margin: 0 0 1rem 1.5rem; }
+li { margin-bottom: 0.4rem; }
+a { color: var(--track-color); }
+.course-kicker { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--accent-primary); letter-spacing: 0.04em; }
+.track-chip { display: inline-block; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: 0.75rem; color: var(--track-color); border: 1px solid var(--track-color); border-radius: 999px; padding: 0.15rem 0.7rem; margin: 0.6rem 0; letter-spacing: 0.06em; text-transform: uppercase; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 1.25rem; color: var(--text-secondary); font-size: 0.9rem; margin: 0.75rem 0 0.5rem; }
+.meta-row span strong { color: var(--text-primary); }
+.progress-bar { height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; margin: 1rem 0; }
+.progress-fill { height: 100%; width: 57%; background: linear-gradient(90deg, var(--track-color), var(--accent-primary)); border-radius: 2px; }
+.progress-label { font-size: 0.8rem; color: var(--text-muted); font-family: 'Bricolage Grotesque', sans-serif; }
+.objective-list { list-style: none; margin-left: 0; }
+.objective-list li { padding-left: 1.75rem; position: relative; margin-bottom: 0.6rem; }
+.objective-list li::before { content: '◈'; position: absolute; left: 0.25rem; color: var(--track-color); }
+.level-chip { display: inline-block; background: var(--info-bg); color: var(--info); border-radius: 6px; font-size: 0.8rem; padding: 0.1rem 0.6rem; font-family: 'Bricolage Grotesque', sans-serif; }
+.analogy-box, .tech-def-box, .callout { border-radius: 0 8px 8px 0; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid; }
+.analogy-box { background: var(--accent-muted); border-left-color: var(--accent-primary); }
+.analogy-box::before { content: '💡 Everyday Analogy'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--accent-primary); display: block; margin-bottom: 0.5rem; }
+.tech-def-box { background: var(--info-bg); border-left-color: var(--info); }
+.tech-def-box::before { content: '📐 Technical Definition'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--info); display: block; margin-bottom: 0.5rem; }
+.box-label { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: 0.5rem; }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-info { background: var(--info-bg); border-left-color: var(--info); }
+.callout-info .box-label { color: var(--info); }
+.callout p:last-child, .analogy-box p:last-child, .tech-def-box p:last-child { margin-bottom: 0; }
+.term-tooltip { position: relative; color: var(--accent-primary); cursor: help; border-bottom: 1px dashed var(--accent-primary); }
+.term-tooltip .tooltip-content { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--accent-primary); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--text-primary); width: 280px; opacity: 0; pointer-events: none; transition: opacity var(--transition-fast); z-index: 10; }
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+.code-block { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 10px; margin: 1.25rem 0; overflow: hidden; }
+.code-head { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 1rem; border-bottom: 1px solid var(--code-border); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); }
+.copy-btn { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; border-radius: 6px; padding: 0.2rem 0.6rem; cursor: pointer; transition: all var(--transition-fast); }
+.copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+pre { padding: 1rem; overflow-x: auto; }
+code { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; color: var(--code-text); }
+p code, li code, td code { background: var(--bg-surface); border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.85rem; }
+.tok-c { color: var(--code-comment); font-style: italic; }
+.tok-k { color: var(--code-keyword); }
+.tok-s { color: var(--code-string); }
+.tok-f { color: var(--code-function); }
+.tok-n { color: var(--code-number); }
+.code-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--code-border); margin-top: 1.25rem; }
+.code-tab { padding: 0.5rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px; color: var(--text-muted); transition: all var(--transition-fast); }
+.code-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+.code-panel { display: none; }
+.code-panel.active { display: block; }
+.code-panel .code-block { margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
+table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.95rem; }
+th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--code-border); vertical-align: top; }
+th { font-family: 'Bricolage Grotesque', sans-serif; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+.table-wrap { overflow-x: auto; }
+.animation-container { background: var(--bg-secondary); border: 1px solid var(--code-border); border-radius: 12px; padding: 2rem 2rem 4rem; margin: 2rem 0; position: relative; min-height: 300px; }
+.anim-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--track-color); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
+.animation-controls { display: flex; gap: 0.5rem; position: absolute; bottom: 1rem; right: 1rem; }
+.animation-controls button { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-primary); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all var(--transition-fast); }
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.anim-caption { position: absolute; bottom: 1.2rem; left: 2rem; right: 10rem; font-size: 0.85rem; color: var(--text-secondary); font-style: italic; min-height: 1.4em; }
+.anim-fallback { display: none; color: var(--text-secondary); font-size: 0.9rem; }
+.quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.quiz-question h3 { margin-top: 0; font-size: 1.05rem; }
+.quiz-option { padding: 0.75rem 1rem; margin: 0.5rem 0; border: 1px solid var(--code-border); border-radius: 8px; cursor: pointer; transition: all var(--transition-fast); }
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-option[aria-disabled="true"] { cursor: default; }
+.quiz-feedback { margin-top: 0.75rem; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; display: none; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); }
+.quiz-feedback.bad { background: var(--error-bg); }
+.cheat-sheet { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.cheat-card { background: var(--bg-card); border: 1px solid var(--code-border); border-left: 3px solid var(--track-color); border-radius: 10px; padding: 1rem; font-size: 0.9rem; }
+.cheat-card strong { font-family: 'Bricolage Grotesque', sans-serif; display: block; margin-bottom: 0.3rem; color: var(--track-color); }
+.nav-links { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; }
+.nav-links a { flex: 1; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 10px; padding: 1rem 1.25rem; text-decoration: none; color: var(--text-primary); font-family: 'Bricolage Grotesque', sans-serif; transition: all var(--transition-fast); }
+.nav-links a:hover { border-color: var(--track-color); }
+.nav-links .dir { display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.nav-links .next { text-align: right; }
+/* stage primitives */
+.stage { position: relative; min-height: 240px; }
+.morph-card { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 10px; padding: 1rem; white-space: pre-wrap; }
+.morph-line { display: block; border-radius: 4px; padding: 0 0.2rem; transition: all 600ms ease; }
+.morph-line.out { background: var(--error-bg); text-decoration: line-through; color: var(--text-muted); }
+.morph-line.in { background: var(--success-bg); color: var(--success); }
+.node-box { position: absolute; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 8px; padding: 0.35rem 0.6rem; opacity: 0; transform: scale(0.85); transition: all 600ms ease; }
+.node-box.shown { opacity: 1; transform: none; }
+.node-box.hl { border-color: var(--track-color); box-shadow: 0 0 12px rgba(6,182,212,0.35); }
+.edge-line { position: absolute; height: 2px; background: var(--track-color); transform-origin: left center; opacity: 0; transition: opacity 500ms; }
+.edge-line.shown { opacity: 0.85; }
+.edge-label { position: absolute; font-size: 0.65rem; color: var(--track-color); font-family: 'Bricolage Grotesque', sans-serif; opacity: 0; transition: opacity 500ms; }
+.edge-label.shown { opacity: 1; }
+.tree-row { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; padding: 0.18rem 0.5rem; opacity: 0; transform: translateX(-12px); transition: all 500ms ease; border-radius: 6px; white-space: pre; }
+.tree-row.shown { opacity: 1; transform: none; }
+.tree-row.hl { background: rgba(6,182,212,0.14); color: var(--track-color); }
+.meter { height: 14px; background: var(--bg-surface); border-radius: 7px; overflow: hidden; border: 1px solid var(--code-border); }
+.meter-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--success), var(--warning), var(--error)); transition: width 900ms ease; }
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; }
+  .sidebar-nav { position: static; height: auto; margin-bottom: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+  .anim-live { display: none; }
+  .anim-fallback { display: block; }
+  .animation-controls { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+<nav class="sidebar-nav" aria-label="Module sections">
+  <h4>Module 7 · Contents</h4>
+  <a href="#objectives">Learning Objectives</a>
+  <a href="#pivot">The Pivot to Code</a>
+  <a href="#service-concept">The Service Concept</a>
+  <a href="#link-graph">Links as a Dependency Graph</a>
+  <a href="#preflight">index.md as Pre-Flight Read</a>
+  <a href="#okf-cli">The okf CLI</a>
+  <a href="#governance">Consistency, Attestation, Drift</a>
+  <a href="#code-walkthrough">Code: Lint with Link Checks</a>
+  <a href="#hands-on">Hands-On Exercise</a>
+  <a href="#quiz">Knowledge Check</a>
+  <a href="#summary">Summary</a>
+  <a href="#references">References</a>
+</nav>
+<main class="content">
+
+<header class="section">
+  <div class="course-kicker">KNOWLEDGE GRAPHS FOR AI AGENTS</div>
+  <div class="track-chip">Track 3 · Narrative Knowledge</div>
+  <h1>M07 — OKF for Codebases</h1>
+  <div class="meta-row">
+    <span>⏱ <strong>~45 min</strong></span>
+    <span>📋 Prerequisites: <strong>M06</strong></span>
+    <span class="level-chip">Intermediate</span>
+  </div>
+  <div class="progress-bar" role="progressbar" aria-valuenow="8" aria-valuemin="1" aria-valuemax="14" aria-label="Course progress: module 8 of 14"><div class="progress-fill"></div></div>
+  <div class="progress-label">Module 8 of 14</div>
+</header>
+
+<section class="section" id="objectives">
+  <h2>Learning Objectives</h2>
+  <ul class="objective-list">
+    <li>Translate the OKF concept shape from Google's data-asset use case to services, modules, and APIs.</li>
+    <li>Author a complete <code>type: Service</code> concept with Responsibilities, Dependencies, and Citations sections.</li>
+    <li>Explain why cross-links form a dependency graph richer than the filesystem tree — and why it's <em>curated</em>, not <em>verified</em>.</li>
+    <li>Use the okf CLI: <code>init</code>, <code>hook install</code>, <code>search</code>, and <code>lint</code> (13 rules), plus the Go library primitives.</li>
+    <li>Recognize and prevent the governance failure modes: inconsistent body structure, unattested computations, and type drift.</li>
+  </ul>
+</section>
+
+<section class="section" id="pivot">
+  <h2>The Pivot: From BigQuery Tables to Your Repo</h2>
+  <p>Google's reference use case for OKF is BigQuery metadata: their demo agent walks a dataset and drafts one concept per table. Useful — but this course is about <em>codebases</em>. The pivot that matters for software teams is recognizing that <strong>the exact same concept shape maps directly onto services, modules, and APIs</strong>. You swap two things and keep everything else:</p>
+  <ul>
+    <li><code>resource:</code> stops being a BigQuery console URL and becomes a <strong>repo path</strong>.</li>
+    <li>The <code># Schema</code> body section becomes <strong><code># Responsibilities</code> and <code># Dependencies</code></strong>.</li>
+  </ul>
+  <p>Watch the morph, field by field:</p>
+
+  <div class="animation-container" id="anim-morph">
+    <div class="anim-title">SCHEMA_TO_SERVICE — one shape, two domains</div>
+    <div class="anim-live stage" aria-hidden="true" style="min-height:330px">
+      <div class="morph-card">---
+<span class="morph-line" id="mo-1">type: BigQuery Table</span><span class="morph-line" id="mi-1" style="display:none">type: Service</span><span class="morph-line" id="mo-2">title: Orders</span><span class="morph-line" id="mi-2" style="display:none">title: billing-service</span><span class="morph-line" id="mo-3">resource: https://console.cloud.google.com/bigquery?p=acme&amp;d=sales&amp;t=orders</span><span class="morph-line" id="mi-3" style="display:none">resource: https://github.com/acme/monorepo/tree/main/services/billing</span>tags: [sales, revenue] → [billing, payments, python]
+---
+<span class="morph-line" id="mo-4"># Schema
+| order_id | STRING | unique id |</span><span class="morph-line" id="mi-4" style="display:none"># Responsibilities
+Owns the Invoice and PaymentEvent domain models.
+# Dependencies
+- Calls [customer-service](/services/customer-service.md)</span></div>
+    </div>
+    <div class="anim-fallback">Static view: the data-asset concept and the service concept share one skeleton. type: BigQuery Table becomes type: Service; the resource console URL becomes a repo path; the # Schema section becomes # Responsibilities and # Dependencies. Everything else — frontmatter, links, body structure — is unchanged.</div>
+    <div class="anim-caption" aria-live="polite"></div>
+    <div class="animation-controls">
+      <button type="button" data-anim="anim-morph" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-anim="anim-morph" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-anim="anim-morph" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <div class="callout callout-why">
+    <span class="box-label">✅ Why It Matters</span>
+    <p>This pivot is why a one-page data-metadata spec became an AI-coding-agent story at all. A coding agent that can read <em>"billing-service owns Invoice, calls customer-service, publishes to notifications-service"</em> before touching the repo skips exactly the exploration phase M00 measured at 147 file reads. One concept file — a few hundred tokens — replaces a discovery crawl that costs tens of thousands.</p>
+  </div>
+</section>
+
+<section class="section" id="service-concept">
+  <h2>The Service Concept, In Full</h2>
+  <p>Here is the canonical service concept — the one this course's orderflow bundle is built around. Read it top to bottom once as a human, then we'll re-read it as an agent would:</p>
+
+  <div class="code-block"><div class="code-head"><span>services/billing-service.md</span><button class="copy-btn" type="button">Copy</button></div><pre><code>---
+type: Service
+title: billing-service
+description: Handles subscription billing, invoicing, and payment webhooks.
+resource: https://github.com/acme/monorepo/tree/main/services/billing
+tags: [billing, payments, python]
+timestamp: 2026-06-30T09:12:00Z
+---
+
+# Responsibilities
+Owns the `Invoice` and `PaymentEvent` domain models. Consumes Stripe webhooks via
+[stripe-webhook-handler](/services/billing/stripe-webhook-handler.md).
+
+# Dependencies
+- Calls [customer-service](/services/customer-service.md) to resolve account state.
+- Publishes events consumed by [notifications-service](/services/notifications-service.md).
+
+# Citations
+[1] [Billing runbook](https://wiki.internal/billing-runbook)</code></pre></div>
+
+  <p>Now the agent's reading. The frontmatter answers "is this file relevant?" in ~40 tokens: it's a Service, it's about billing and payments, it lives at that repo path, it was last updated June 30. The <code># Responsibilities</code> section answers "what does it own?" — the domain models an agent must not casually rename. The <code># Dependencies</code> section answers "what breaks if I change it?" — with links the agent can follow for exactly as deep as the task requires. The <code># Citations</code> section anchors the narrative to human-maintained sources, which is what separates documented knowledge from plausible-sounding text (M08 automates keeping this honest).</p>
+  <p>One production tip from the field carries more weight than any individual field: <strong>consistency of body structure across concept files matters more for agent consumption than any single field does.</strong> If every Service concept has the same three sections in the same order, an agent can parse fifty of them mechanically. If each author invents their own headings, every read becomes an interpretation problem. Write a template; enforce it in review.</p>
+</section>
+
+<section class="section" id="link-graph">
+  <h2>Cross-Links: A Dependency Graph Richer Than the Tree</h2>
+  <p>The links in that concept aren't decoration. <span class="term-tooltip" tabindex="0">Bundle-relative links<span class="tooltip-content">Markdown links whose target is a path inside the bundle (e.g. /services/customer-service.md). They connect concepts regardless of where the described code lives in the actual repo tree.</span></span> turn a flat directory into a dependency graph that is <em>richer than your filesystem's parent/child hierarchy</em>: billing-service formally points at everything it calls and everything it emits to, independent of where those services physically sit in the repo tree. A filesystem can only express "contains." Links express "calls," "publishes to," "consumes," "supersedes" — whatever the prose around them says.</p>
+
+  <div class="animation-container" id="anim-linkgraph">
+    <div class="anim-title">LINK_GRAPH — the graph the folder tree can't see</div>
+    <div class="anim-live stage" aria-hidden="true" style="min-height:300px">
+      <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:1.5rem;">
+        <div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;">Folder tree (only “contains”)</div>
+          <div class="tree-row" data-lg="t0">knowledge/services/</div>
+          <div class="tree-row" data-lg="t1">├── billing-service.md</div>
+          <div class="tree-row" data-lg="t2">├── customer-service.md</div>
+          <div class="tree-row" data-lg="t3">└── notifications-service.md</div>
+        </div>
+        <div class="stage" style="min-height:230px">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;">Link graph (typed by prose)</div>
+          <div class="node-box" id="lg-b" style="top:40px;left:8px;">billing-service</div>
+          <div class="node-box" id="lg-c" style="top:110px;left:190px;">customer-service</div>
+          <div class="node-box" id="lg-n" style="top:180px;left:30px;">notifications-service</div>
+          <div class="edge-line" id="lg-e1" style="top:58px;left:120px;width:105px;transform:rotate(28deg);"></div>
+          <div class="edge-label" id="lg-l1" style="top:52px;left:140px;">calls</div>
+          <div class="edge-line" id="lg-e2" style="top:70px;left:70px;width:112px;transform:rotate(80deg);"></div>
+          <div class="edge-label" id="lg-l2" style="top:118px;left:88px;">publishes to</div>
+        </div>
+      </div>
+    </div>
+    <div class="anim-fallback">Static view: on the left, the folder tree shows three sibling files — the only relationship it can express is "contains." On the right, the links inside those files draw a real dependency graph: billing-service → calls → customer-service; billing-service → publishes to → notifications-service. Same files, far more knowledge.</div>
+    <div class="anim-caption" aria-live="polite"></div>
+    <div class="animation-controls">
+      <button type="button" data-anim="anim-linkgraph" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-anim="anim-linkgraph" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-anim="anim-linkgraph" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Curated Is Not Verified</span>
+    <p>Do not treat this link graph as a substitute for the static analysis you built in Track 2. OKF links are whatever a human or enrichment agent wrote — the spec even requires consumers to tolerate broken ones. Graphify's AST edges are <em>verified</em> ("the code demonstrably calls this"); OKF's links are <em>curated</em> ("we assert this relationship matters"). You want both: the curated summary for orientation and intent, the verified graph for impact analysis. When they disagree, the AST is right about structure and the bundle is right about <em>why</em> — and the disagreement itself is a maintenance signal (M08).</p>
+  </div>
+</section>
+
+<section class="section" id="preflight">
+  <h2>index.md as the Agent's Pre-Flight Read</h2>
+  <p>M06 introduced <code>index.md</code> as a token-budget lever. For codebases it has a sharper job description: it is the file a coding agent reads <strong>before touching the repo</strong>. Google's framing is precise: the bundle acts as <em>"a pre-flight context load, not a search index you query mid-task."</em> Here's a root index for a billing domain:</p>
+
+  <div class="code-block"><div class="code-head"><span>knowledge/index.md</span><button class="copy-btn" type="button">Copy</button></div><pre><code># Billing Domain
+* [billing-service](services/billing-service.md) - subscription billing, invoicing, webhooks
+* [customer-service](services/customer-service.md) - account and subscription state
+* [Runbooks](runbooks/) - on-call playbooks for billing incidents</code></pre></div>
+
+  <p>Three lines. That single file replaces a full-repo re-scan or a re-embed. A coding agent reads it, knows the territory, and loads only the concept the task touches. A data assistant consults it before generating SQL. The discipline from M06 applies doubly here: title plus one-line description, pulled straight from each concept's frontmatter, nothing more.</p>
+
+  <div class="animation-container" id="anim-preflight">
+    <div class="anim-title">PREFLIGHT — read the map before entering the territory</div>
+    <div class="anim-live stage" aria-hidden="true" style="min-height:260px">
+      <div class="tree-row" data-pf="0">🤖 task: “add a retry to the payment webhook”</div>
+      <div class="tree-row" data-pf="1">📄 read knowledge/index.md            (~120 tokens)</div>
+      <div class="tree-row" data-pf="2">📄 read services/billing-service.md   (~380 tokens)</div>
+      <div class="tree-row" data-pf="3">📄 read runbooks/billing-incidents.md (~450 tokens)</div>
+      <div class="tree-row" data-pf="4">🛠 open services/billing/webhooks.py — ALREADY knowing what it owns, calls, publishes</div>
+      <div style="margin-top:0.8rem;font-size:0.8rem;color:var(--text-secondary);">pre-flight context spend:</div>
+      <div class="meter" style="max-width:280px;"><div class="meter-fill" id="pf-meter"></div></div>
+      <div style="font-size:0.78rem;color:var(--text-muted);" id="pf-count">0 tokens</div>
+    </div>
+    <div class="anim-fallback">Static view: before editing, the agent reads index.md (~120 tokens), the billing-service concept (~380), and one runbook (~450) — under 1,000 tokens of pre-flight context. It then opens the code already knowing what the service owns, calls, and publishes, instead of discovering that through dozens of exploratory file reads.</div>
+    <div class="anim-caption" aria-live="polite"></div>
+    <div class="animation-controls">
+      <button type="button" data-anim="anim-preflight" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-anim="anim-preflight" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-anim="anim-preflight" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="okf-cli">
+  <h2>The okf CLI: Tooling You Don't Have to Build</h2>
+  <p>OKF is a spec, so the tooling is third-party — and the reference CLI proves the shape works. The <strong>okf CLI</strong> (written in Go, Apache-2.0, by the superops-team, <em>independent of Google</em>) covers the full loop:</p>
+
+  <div class="code-block"><div class="code-head"><span>terminal</span><button class="copy-btn" type="button">Copy</button></div><pre><code><span class="tok-c"># Scan the current repo and scaffold a .okf/knowledge bundle</span>
+okf init
+
+<span class="tok-c"># Install a git hook so the bundle auto-updates on every commit</span>
+okf hook install
+
+<span class="tok-c"># Query concepts by keyword</span>
+okf search -q <span class="tok-s">"billing"</span>
+
+<span class="tok-c"># Enforce the 13 built-in spec-compliance rules</span>
+okf lint</code></pre></div>
+
+  <p>Each command maps to a phase of the lifecycle this course teaches. <code>init</code> is EXTRACT-and-scaffold. <code>hook install</code> is the whole MAINTAIN pitch in one line: on every commit, rescan and refresh the affected concepts so the graph never drifts far before something forces it back into sync (M08 builds this pipeline by hand so you understand it; M11 shows how it fails silently). <code>search</code> is the minimal SERVE story. And <code>lint</code> — <strong>13 built-in spec-compliance rules</strong> — is your strictness layered on top of the spec's leniency.</p>
+  <p>For orchestration code, the same project exposes Go primitives you can bolt into an agent pipeline:</p>
+
+  <div class="code-block"><div class="code-head"><span>Go · orchestrator wiring</span><button class="copy-btn" type="button">Copy</button></div><pre><code>bundle, err := okf.<span class="tok-f">LoadBundle</span>(<span class="tok-s">".okf/knowledge"</span>, nil)
+<span class="tok-k">if</span> err != nil {
+    log.<span class="tok-f">Fatal</span>(err)
+}
+results := bundle.<span class="tok-f">Search</span>(<span class="tok-s">"billing"</span>)
+report  := lint.<span class="tok-f">LintBundle</span>(concepts, lint.<span class="tok-f">DefaultConfig</span>())</code></pre></div>
+
+  <p>The division of labor is exact: <strong><code>bundle.Search</code> is what your orchestrator calls before dispatching a sub-agent</strong> (which concepts does this subtask need?), and <strong><code>lint.LintBundle</code> is what your CI calls before trusting the bundle</strong> enough to let agents act on it. Run lint as a hard gate: given how lenient the spec is, lint is the only thing standing between "technically conformant" and "actually useful."</p>
+  <p>One more ecosystem piece worth knowing: <strong>Kiso</strong>, a third-party publishing engine that compiles an OKF bundle into a static site — HTML for humans, plus auto-generated <code>llms.txt</code> and <code>sitemap.xml</code> for crawler-style agents — designed to run in CI on every merge so the published bundle never lags the source of truth.</p>
+</section>
+
+<section class="section" id="governance">
+  <h2>Governance: Attested Computations and Type Drift</h2>
+  <h3 id="attested">The attested computation</h3>
+  <p>The spec includes a concept type worth singling out: the <span class="term-tooltip" tabindex="0">attested computation<span class="tooltip-content">An OKF concept documenting a sanctioned, checkable way to COMPUTE a value — the code path or query that produces it — as distinct from prose describing what the value means.</span></span> — a sanctioned, checkable way to compute a value, distinct from just documenting what the value means. "WAU means weekly unique actives" is a description; "WAU is computed by <code>services/orders/metrics.py::weekly_active_users</code>, which excludes these three tester accounts" is an attestation. For governed metrics that need a single source of truth for <em>how</em> they're calculated — revenue, churn, anything finance signs off on — give the computation its own concept file rather than folding logic into a general description. orderflow's WAU concept does exactly this.</p>
+
+  <h3 id="type-drift">Type drift</h3>
+  <p>Because <code>type</code> is producer-defined with no external registry, multiple teams contributing to one bundle <em>will</em> drift: one team writes <code>API Endpoint</code>, another <code>Endpoint</code>, a third <code>Route</code>. Nothing in the spec prevents it — three different strings are all conformant, and every agent filtering on <code>type</code> now silently misses two-thirds of the endpoints. Only your own lint rules and review conventions hold the line: pick a canonical type list, publish it in the bundle's root, and make lint reject strays. This is the first of the governance problems that get <em>harder</em> at scale — a bundle maintained by three people stays coherent by convention; one touched by thirty needs enforcement (M11 returns to this).</p>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"The links give me impact analysis."</strong> — They give you <em>claimed</em> impact. Verified impact analysis comes from the AST graph (Track 2). Use links for orientation, edges for guarantees.</p>
+    <p><strong>"We'll fix type naming later."</strong> — Later never comes cheaper. Every agent query written against the drifted types bakes the inconsistency in. Canonicalize on day one; it's one lint rule.</p>
+    <p><strong>"A bundle is documentation, so writers own it."</strong> — A consumed bundle is <em>infrastructure</em>: it has an SLA (freshness), a test suite (lint), and consumers that break when it lies. Treat it with code discipline — that's the entire premise of the next module.</p>
+  </div>
+</section>
+
+<section class="section" id="code-walkthrough">
+  <h2>Code Walkthrough: Lint with Dangling-Link Detection</h2>
+  <p>M06's validator checked one rule. Production lint needs at least two more: <em>links must resolve</em> and <em>types must be canonical</em>. <strong>Chunk 1 — collect the link targets.</strong> WHAT: regex out every relative <code>.md</code> link from each body. WHY: the spec tolerates dangling links, so nothing else will ever flag them. GOTCHA: resolve targets relative to the <em>linking file</em>, then normalize — <code>../tables/x.md</code> from two different folders points at two different files.</p>
+
+  <div class="code-tabs" role="tablist" aria-label="Language choice">
+    <button class="code-tab active" role="tab" data-group="lint" data-lang="py">Python</button>
+    <button class="code-tab" role="tab" data-group="lint" data-lang="js">Node.js</button>
+  </div>
+  <div class="code-panel active" data-group="lint" data-lang="py">
+  <div class="code-block"><div class="code-head"><span>lint_bundle.py</span><button class="copy-btn" type="button">Copy</button></div><pre><code><span class="tok-k">import</span> re, sys
+<span class="tok-k">from</span> pathlib <span class="tok-k">import</span> Path
+<span class="tok-k">import</span> frontmatter
+
+CANONICAL_TYPES = {<span class="tok-s">"Service"</span>, <span class="tok-s">"metric"</span>, <span class="tok-s">"table"</span>, <span class="tok-s">"runbook"</span>, <span class="tok-s">"ADR"</span>}
+LINK_RE = re.<span class="tok-f">compile</span>(<span class="tok-s">r"\[[^\]]*\]\(([^)#]+\.md)\)"</span>)
+
+<span class="tok-k">def</span> <span class="tok-f">lint</span>(root: Path) -&gt; <span class="tok-f">int</span>:
+    errors = <span class="tok-n">0</span>
+    <span class="tok-k">for</span> path <span class="tok-k">in</span> <span class="tok-f">sorted</span>(root.rglob(<span class="tok-s">"*.md"</span>)):
+        <span class="tok-k">if</span> path.name <span class="tok-k">in</span> {<span class="tok-s">"index.md"</span>, <span class="tok-s">"log.md"</span>}:
+            <span class="tok-k">continue</span>
+        <span class="tok-k">try</span>:
+            post = frontmatter.load(path)
+        <span class="tok-k">except</span> Exception <span class="tok-k">as</span> exc:
+            <span class="tok-f">print</span>(<span class="tok-s">f"ERROR {path}: unparseable ({exc})"</span>); errors += <span class="tok-n">1</span>; <span class="tok-k">continue</span>
+        ctype = post.metadata.get(<span class="tok-s">"type"</span>)
+        <span class="tok-k">if</span> <span class="tok-k">not</span> ctype:
+            <span class="tok-f">print</span>(<span class="tok-s">f"ERROR {path}: missing 'type'"</span>); errors += <span class="tok-n">1</span>
+        <span class="tok-k">elif</span> ctype <span class="tok-k">not</span> <span class="tok-k">in</span> CANONICAL_TYPES:   <span class="tok-c"># stricter than the spec — deliberately</span>
+            <span class="tok-f">print</span>(<span class="tok-s">f"ERROR {path}: non-canonical type {ctype!r}"</span>); errors += <span class="tok-n">1</span>
+        <span class="tok-k">for</span> target <span class="tok-k">in</span> LINK_RE.findall(post.content):
+            resolved = (path.parent / target).resolve() <span class="tok-k">if</span> <span class="tok-k">not</span> target.startswith(<span class="tok-s">"/"</span>) \
+                       <span class="tok-k">else</span> (root / target.lstrip(<span class="tok-s">"/"</span>)).resolve()
+            <span class="tok-k">if</span> <span class="tok-k">not</span> resolved.exists():          <span class="tok-c"># dangling: conformant, but rot</span>
+                <span class="tok-f">print</span>(<span class="tok-s">f"ERROR {path}: dangling link -&gt; {target}"</span>); errors += <span class="tok-n">1</span>
+    <span class="tok-f">print</span>(<span class="tok-s">f"{errors} error(s)"</span>)
+    <span class="tok-k">return</span> <span class="tok-n">1</span> <span class="tok-k">if</span> errors <span class="tok-k">else</span> <span class="tok-n">0</span>
+
+<span class="tok-k">if</span> __name__ == <span class="tok-s">"__main__"</span>:
+    <span class="tok-k">raise</span> SystemExit(lint(Path(sys.argv[<span class="tok-n">1</span>])))</code></pre></div>
+  </div>
+  <div class="code-panel" data-group="lint" data-lang="js">
+  <div class="code-block"><div class="code-head"><span>lint_bundle.mjs</span><button class="copy-btn" type="button">Copy</button></div><pre><code><span class="tok-k">import</span> fs <span class="tok-k">from</span> <span class="tok-s">"node:fs"</span>;
+<span class="tok-k">import</span> path <span class="tok-k">from</span> <span class="tok-s">"node:path"</span>;
+<span class="tok-k">import</span> matter <span class="tok-k">from</span> <span class="tok-s">"gray-matter"</span>;
+
+<span class="tok-k">const</span> CANONICAL = <span class="tok-k">new</span> Set([<span class="tok-s">"Service"</span>, <span class="tok-s">"metric"</span>, <span class="tok-s">"table"</span>, <span class="tok-s">"runbook"</span>, <span class="tok-s">"ADR"</span>]);
+<span class="tok-k">const</span> LINK_RE = <span class="tok-s">/\[[^\]]*\]\(([^)#]+\.md)\)/g</span>;
+<span class="tok-k">const</span> root = path.resolve(process.argv[<span class="tok-n">2</span>]);
+<span class="tok-k">let</span> errors = <span class="tok-n">0</span>;
+
+<span class="tok-k">function</span> <span class="tok-f">walk</span>(dir) {
+  <span class="tok-k">return</span> fs.readdirSync(dir, { withFileTypes: <span class="tok-k">true</span> }).flatMap((e) =&gt;
+    e.isDirectory() ? <span class="tok-f">walk</span>(path.join(dir, e.name))
+      : e.name.endsWith(<span class="tok-s">".md"</span>) ? [path.join(dir, e.name)] : []);
+}
+
+<span class="tok-k">for</span> (<span class="tok-k">const</span> file <span class="tok-k">of</span> <span class="tok-f">walk</span>(root)) {
+  <span class="tok-k">const</span> base = path.basename(file);
+  <span class="tok-k">if</span> (base === <span class="tok-s">"index.md"</span> || base === <span class="tok-s">"log.md"</span>) <span class="tok-k">continue</span>;
+  <span class="tok-k">try</span> {
+    <span class="tok-k">const</span> { data, content } = <span class="tok-f">matter</span>(fs.readFileSync(file, <span class="tok-s">"utf8"</span>));
+    <span class="tok-k">if</span> (!data.type) { console.error(<span class="tok-s">`ERROR ${file}: missing 'type'`</span>); errors++; }
+    <span class="tok-k">else</span> <span class="tok-k">if</span> (!CANONICAL.has(data.type)) { console.error(<span class="tok-s">`ERROR ${file}: non-canonical type '${data.type}'`</span>); errors++; }
+    <span class="tok-k">for</span> (<span class="tok-k">const</span> m <span class="tok-k">of</span> content.matchAll(LINK_RE)) {
+      <span class="tok-k">const</span> target = m[<span class="tok-n">1</span>];
+      <span class="tok-k">const</span> resolved = target.startsWith(<span class="tok-s">"/"</span>)
+        ? path.join(root, target) : path.resolve(path.dirname(file), target);
+      <span class="tok-k">if</span> (!fs.existsSync(resolved)) { console.error(<span class="tok-s">`ERROR ${file}: dangling link -&gt; ${target}`</span>); errors++; }
+    }
+  } <span class="tok-k">catch</span> (exc) { console.error(<span class="tok-s">`ERROR ${file}: unparseable (${exc.message})`</span>); errors++; }
+}
+console.log(<span class="tok-s">`${errors} error(s)`</span>);
+process.exit(errors ? <span class="tok-n">1</span> : <span class="tok-n">0</span>);</code></pre></div>
+  </div>
+
+  <div class="callout callout-why">
+    <span class="box-label">✅ What Just Happened?</span>
+    <p>You built a lint that is deliberately <em>stricter than the spec</em>: canonical types only, no dangling links, hard failures. That inversion — lenient spec, strict pipeline — is the operating principle of every production OKF deployment. Your CI runs this before any agent is allowed to trust the bundle.</p>
+  </div>
+</section>
+
+<section class="section" id="hands-on">
+  <h2>Hands-On Exercise: The orderflow Bundle</h2>
+  <p><strong>What you'll build:</strong> the complete bundle in <code>labs/M07-orderflow-bundle/</code> — root <code>index.md</code>, five cross-linked concepts (three services + the two M06 analytics concepts), and <code>log.md</code> — validated by the M06 lint. <strong>Time:</strong> 45–60 min.</p>
+  <ol>
+    <li><strong>Step 1 — Author the three Service concepts</strong> (billing, orders, notifications) using the canonical shape above. Keep body sections identical across all three: Responsibilities, then Dependencies, then Citations.
+      <div class="callout callout-why"><span class="box-label">✅ Checkpoint</span><p>Diff your three files' heading structure — it should be byte-identical.</p></div></li>
+    <li><strong>Step 2 — Write index.md.</strong> One line per concept: title + one-line description from frontmatter. If your index exceeds ~15 lines for 5 concepts, you're hoarding detail that belongs in the concepts.</li>
+    <li><strong>Step 3 — Cross-link both directions.</strong> billing-service links to notifications-service ("publishes to") AND notifications-service links back ("consumes from"). One-directional links are how bundles silently rot.</li>
+    <li><strong>Step 4 — Lint.</strong>
+      <div class="code-block"><div class="code-head"><span>terminal</span><button class="copy-btn" type="button">Copy</button></div><pre><code>python ../M06-okf-authoring/solution/validate.py knowledge</code></pre></div>
+      Expected: <code>5 concepts valid, 0 errors</code>.
+      <div class="callout callout-why"><span class="box-label">✅ Checkpoint</span><p>Now rename one linked file WITHOUT updating its inbound links and run your M07 dangling-link lint from the walkthrough. It must fail. Restore the file.</p></div></li>
+    <li><strong>Step 5 — Measure progressive disclosure.</strong> Count tokens (≈ chars/4) for index.md + one concept vs the whole <code>services/</code> source tree. Record both numbers — the capstone reuses them.</li>
+  </ol>
+</section>
+
+<section class="section" id="quiz">
+  <h2>Knowledge Check</h2>
+
+  <div class="quiz-question">
+    <h3>1. What are the TWO substitutions that turn Google's table concept into a code concept?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q1" data-correct="false">Change the file extension and add an id field</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q1" data-correct="true">resource: console URL → repo path; # Schema → # Responsibilities / # Dependencies</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q1" data-correct="false">Replace YAML frontmatter with JSON and add a version field</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q1" data-correct="false">Move the file into .well-known/ and rename it AGENTS.md</div>
+    <div class="quiz-feedback" data-q="q1" data-good="Correct — same skeleton, two swaps. That minimal pivot is why a data-metadata spec became a codebase-context story." data-bad="Only two things change: the resource field points at a repo path instead of a console URL, and the body's # Schema becomes # Responsibilities and # Dependencies. Everything else carries over unchanged."></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>2. Why is the bundle's link graph "richer than the filesystem tree"?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q2" data-correct="false">It contains more files than the repo</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q2" data-correct="true">The tree only expresses "contains"; links express calls/publishes/consumes, independent of where files physically live</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q2" data-correct="false">Links are validated by the spec while directories are not</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q2" data-correct="false">The link graph is generated from the AST</div>
+    <div class="quiz-feedback" data-q="q2" data-good="Correct — a hierarchy has exactly one relationship type. Prose-typed links can express any relationship, across any distance in the tree." data-bad="A filesystem hierarchy can only say 'contains.' Bundle links let billing-service point at everything it calls and emits to regardless of repo layout. (And no — links are curated by authors, not generated from the AST; that's the structural layer's job.)"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>3. Your orchestrator is about to dispatch a sub-agent, and your CI is about to publish a bundle. Which okf primitive does each call?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q3" data-correct="false">Both call LintBundle</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q3" data-correct="true">Orchestrator: bundle.Search (which concepts does this subtask need?); CI: lint.LintBundle (can agents trust this bundle?)</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q3" data-correct="false">Orchestrator: LoadBundle; CI: bundle.Search</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q3" data-correct="false">Both call okf init</div>
+    <div class="quiz-feedback" data-q="q3" data-good="Correct — Search routes context to sub-agents before dispatch; LintBundle gates trust before publication. Different phases, different primitives." data-bad="The division is exact: bundle.Search is the pre-dispatch routing call; lint.LintBundle (13 rules) is the pre-trust CI gate."></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>4. What is an "attested computation" concept for?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q4" data-correct="false">Recording who approved each PR that touched a metric</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q4" data-correct="true">Documenting the sanctioned, checkable way to COMPUTE a value — not just what the value means</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q4" data-correct="false">Cryptographically signing a bundle before publication</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q4" data-correct="false">Marking a concept as generated by an LLM</div>
+    <div class="quiz-feedback" data-q="q4" data-good="Correct — description tells you WHAT a metric means; attestation tells you exactly HOW it's computed (orderflow: metrics.py::weekly_active_users with its tester exclusions). Governed metrics get their own attested concept." data-bad="An attested computation is the sanctioned way to compute a value — the code path or query — distinct from prose describing meaning. It's how a metric gets ONE source of truth for its calculation."></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>5. Two teams write type: "API Endpoint" and type: "Route" for the same kind of concept. What does the spec do about it?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q5" data-correct="false">Rejects the second bundle at load time</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q5" data-correct="false">Normalizes both to a canonical registry entry</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q5" data-correct="true">Nothing — type is producer-defined and unvalidated; only your own lint and conventions hold the line</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q5" data-correct="false">Emits a deprecation warning</div>
+    <div class="quiz-feedback" data-q="q5" data-good="Correct — no registry, no enforcement. Both are conformant, and every type-filtering agent now silently misses concepts. Canonicalize in lint from day one." data-bad="The spec has no type registry and validates nothing — both strings are conformant. Type drift is YOUR problem to prevent, via a canonical list enforced in lint."></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3>6. When the OKF link graph and the Graphify AST graph disagree about a dependency, what's the right reading?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q6" data-correct="false">Trust the bundle — humans curated it</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q6" data-correct="false">Trust neither and fall back to grep</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q6" data-correct="true">The AST is right about structure, the bundle about intent — and the disagreement itself is a maintenance signal</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q6" data-correct="false">Delete the bundle link so they agree</div>
+    <div class="quiz-feedback" data-q="q6" data-good="Correct — verified vs curated. The AST can't be wrong about what the code calls; the bundle can't be replaced as the record of why. A mismatch means the bundle needs refreshing — exactly what M08's pipeline automates." data-bad="AST edges are verified (parsed from source); bundle links are curated (asserted by authors). Structure disputes go to the AST; intent lives in the bundle; and the mismatch is your cue that enrichment is overdue."></div>
+  </div>
+</section>
+
+<section class="section" id="summary">
+  <h2>Module Summary</h2>
+  <div class="cheat-sheet">
+    <div class="cheat-card"><strong>The pivot</strong>Same concept skeleton; swap resource → repo path and # Schema → # Responsibilities / # Dependencies. type: Service is your workhorse.</div>
+    <div class="cheat-card"><strong>Links ≠ tree</strong>Bundle-relative links form a dependency graph richer than the folder hierarchy — but curated, not verified. AST edges stay the source of structural truth.</div>
+    <div class="cheat-card"><strong>Pre-flight, not mid-task</strong>index.md is what a coding agent reads BEFORE touching the repo — a few hundred tokens replacing a discovery crawl.</div>
+    <div class="cheat-card"><strong>okf CLI</strong>init / hook install / search / lint (13 rules). Go primitives: bundle.Search before dispatch; lint.LintBundle before trust.</div>
+    <div class="cheat-card"><strong>Governance</strong>Identical body structure across concepts; attested computations for governed metrics; a canonical type list enforced in lint — because the spec never will.</div>
+    <div class="cheat-card"><strong>Ecosystem</strong>Kiso compiles bundles to static sites (HTML + llms.txt) in CI on every merge.</div>
+  </div>
+  <p><strong>What we built:</strong> orderflow's full narrative layer — three service concepts, two analytics concepts, a root index, bidirectional links, and a lint that's stricter than the spec.</p>
+  <p><strong>Next module preview:</strong> a bundle that humans maintain by hand is a bundle that rots. M08 builds the enrichment pipeline — the git-hook-triggered, diff-scoped, two-pass agent process that keeps the graph honest while your team ships forty commits a day.</p>
+</section>
+
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul>
+    <li>OKF Specification v0.1 — github.com/GoogleCloudPlatform/knowledge-catalog</li>
+    <li>okf CLI (Go, Apache-2.0) — github.com/superops-team/okf</li>
+    <li>Kiso publishing engine — github.com/oak-invest/kiso</li>
+    <li>Course corpus: "Standardizing Agent Memory: Building a Self-Updating Codebase Knowledge Graph with Google's OKF"; "Open Knowledge Format (OKF): A Complete Guide"</li>
+  </ul>
+</section>
+
+<nav class="nav-links" aria-label="Module navigation">
+  <a href="M06-okf-specification.html"><span class="dir">← Previous</span>M06 · The OKF Specification</a>
+  <a href="M08-enrichment-pipeline.html" class="next"><span class="dir">Next →</span>M08 · The Enrichment Pipeline</a>
+</nav>
+
+</main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.closest(".code-block").querySelector("pre");
+      navigator.clipboard.writeText(pre.textContent).then(function () {
+        var old = btn.textContent; btn.textContent = "Copied!";
+        setTimeout(function () { btn.textContent = old; }, 1200);
+      });
+    });
+  });
+  document.querySelectorAll(".code-tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      var group = tab.dataset.group, lang = tab.dataset.lang;
+      document.querySelectorAll('.code-tab[data-group="' + group + '"]').forEach(function (t) { t.classList.toggle("active", t === tab); });
+      document.querySelectorAll('.code-panel[data-group="' + group + '"]').forEach(function (p) { p.classList.toggle("active", p.dataset.lang === lang); });
+    });
+  });
+  document.querySelectorAll(".quiz-option").forEach(function (opt) {
+    function answer() {
+      if (opt.getAttribute("aria-disabled") === "true") return;
+      var q = opt.dataset.q;
+      var opts = document.querySelectorAll('.quiz-option[data-q="' + q + '"]');
+      opts.forEach(function (o) { o.setAttribute("aria-disabled", "true"); });
+      var correct = opt.dataset.correct === "true";
+      opt.classList.add(correct ? "correct" : "incorrect");
+      opts.forEach(function (o) { if (o.dataset.correct === "true") o.classList.add("correct"); });
+      var fb = document.querySelector('.quiz-feedback[data-q="' + q + '"]');
+      fb.textContent = correct ? fb.dataset.good : fb.dataset.bad;
+      fb.classList.add("show", correct ? "good" : "bad");
+    }
+    opt.addEventListener("click", answer);
+    opt.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); answer(); } });
+  });
+  var sections = document.querySelectorAll("main section[id]");
+  var navLinks = document.querySelectorAll(".sidebar-nav a");
+  if ("IntersectionObserver" in window) {
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) navLinks.forEach(function (l) { l.classList.toggle("active", l.getAttribute("href") === "#" + en.target.id); });
+      });
+    }, { rootMargin: "-30% 0px -60% 0px" });
+    sections.forEach(function (s) { spy.observe(s); });
+  }
+  var anims = {};
+  function register(id, cfg) { anims[id] = { cfg: cfg, i: -1, timer: null }; }
+  function play(id) { var a = anims[id]; if (!a || a.timer) return; a.timer = setInterval(function () { step(id); }, a.cfg.interval || 1500); step(id); }
+  function pause(id) { var a = anims[id]; if (a && a.timer) { clearInterval(a.timer); a.timer = null; } }
+  function restart(id) { var a = anims[id]; if (!a) return; pause(id); a.i = -1; a.cfg.reset(); var cap = document.querySelector("#" + id + " .anim-caption"); if (cap) cap.textContent = ""; play(id); }
+  function step(id) {
+    var a = anims[id]; a.i++;
+    if (a.i >= a.cfg.steps.length) { pause(id); return; }
+    var s = a.cfg.steps[a.i];
+    if (s.on) s.on();
+    var cap = document.querySelector("#" + id + " .anim-caption");
+    if (cap && s.cap) cap.textContent = s.cap;
+  }
+  document.querySelectorAll(".animation-controls button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var id = b.dataset.anim;
+      if (b.dataset.act === "play") play(id);
+      else if (b.dataset.act === "pause") pause(id);
+      else restart(id);
+    });
+  });
+
+  /* SCHEMA_TO_SERVICE */
+  (function () {
+    function pair(n) {
+      var out = document.getElementById("mo-" + n), inn = document.getElementById("mi-" + n);
+      return { out: out, inn: inn };
+    }
+    var pairs = [pair(1), pair(2), pair(3), pair(4)];
+    var caps = [
+      "Google's reference concept describes a BigQuery table…",
+      "type: BigQuery Table becomes type: Service — the shape doesn't change.",
+      "title: a table name becomes a service name.",
+      "resource: the console URL becomes a REPO PATH — the one-field pivot.",
+      "…and # Schema becomes # Responsibilities + # Dependencies. Same spec, now describing code."
+    ];
+    register("anim-morph", {
+      interval: 1900,
+      steps: [
+        { cap: caps[0], on: function () {} },
+        { cap: caps[1], on: function () { swap(pairs[0]); } },
+        { cap: caps[2], on: function () { swap(pairs[1]); } },
+        { cap: caps[3], on: function () { swap(pairs[2]); } },
+        { cap: caps[4], on: function () { swap(pairs[3]); } }
+      ],
+      reset: function () {
+        pairs.forEach(function (p) {
+          p.out.style.display = ""; p.out.classList.remove("out");
+          p.inn.style.display = "none"; p.inn.classList.remove("in");
+        });
+      }
+    });
+    function swap(p) {
+      p.out.classList.add("out");
+      setTimeout(function () {
+        p.out.style.display = "none";
+        p.inn.style.display = ""; p.inn.classList.add("in");
+      }, 550);
+    }
+  })();
+
+  /* LINK_GRAPH */
+  (function () {
+    var t = ["t0", "t1", "t2", "t3"].map(function (id) { return document.querySelector('[data-lg="' + id + '"]'); });
+    var b = document.getElementById("lg-b"), c = document.getElementById("lg-c"), n = document.getElementById("lg-n");
+    var e1 = document.getElementById("lg-e1"), e2 = document.getElementById("lg-e2");
+    var l1 = document.getElementById("lg-l1"), l2 = document.getElementById("lg-l2");
+    register("anim-linkgraph", {
+      interval: 1500,
+      steps: [
+        { cap: "The folder tree: three sibling files. All it can say is 'contains.'", on: function () { t.forEach(function (r) { r.classList.add("shown"); }); } },
+        { cap: "But read the files' links, and nodes appear…", on: function () { [b, c, n].forEach(function (x) { x.classList.add("shown"); }); } },
+        { cap: "billing-service CALLS customer-service — an edge the tree cannot express.", on: function () { b.classList.add("hl"); c.classList.add("hl"); e1.classList.add("shown"); l1.classList.add("shown"); } },
+        { cap: "…and PUBLISHES TO notifications-service. Same three files — a real dependency graph.", on: function () { n.classList.add("hl"); e2.classList.add("shown"); l2.classList.add("shown"); } },
+        { cap: "Curated, not verified: these edges are assertions. Track 2's AST graph stays the structural truth.", on: function () {} }
+      ],
+      reset: function () {
+        t.forEach(function (r) { r.classList.remove("shown", "hl"); });
+        [b, c, n].forEach(function (x) { x.classList.remove("shown", "hl"); });
+        [e1, e2].forEach(function (x) { x.classList.remove("shown"); });
+        [l1, l2].forEach(function (x) { x.classList.remove("shown"); });
+      }
+    });
+  })();
+
+  /* PREFLIGHT */
+  (function () {
+    var rows = document.querySelectorAll('#anim-preflight .tree-row');
+    var meter = document.getElementById("pf-meter"), count = document.getElementById("pf-count");
+    register("anim-preflight", {
+      interval: 1600,
+      steps: [
+        { cap: "A task arrives.", on: function () { rows[0].classList.add("shown", "hl"); } },
+        { cap: "Pre-flight read 1: the root index — the map of the territory.", on: function () { rows[1].classList.add("shown"); meter.style.width = "4%"; count.textContent = "120 tokens"; } },
+        { cap: "Pre-flight read 2: exactly the one service concept the task touches.", on: function () { rows[2].classList.add("shown"); meter.style.width = "12%"; count.textContent = "500 tokens"; } },
+        { cap: "Pre-flight read 3: the runbook the concept links to.", on: function () { rows[3].classList.add("shown"); meter.style.width = "22%"; count.textContent = "950 tokens"; } },
+        { cap: "Now open the code — already knowing what it owns, calls, and publishes. Under 1K tokens of orientation instead of a discovery crawl.", on: function () { rows[4].classList.add("shown", "hl"); } }
+      ],
+      reset: function () {
+        rows.forEach(function (r) { r.classList.remove("shown", "hl"); });
+        meter.style.width = "0%"; count.textContent = "0 tokens";
+      }
+    });
+  })();
+})();
+</script>
+</body>
+</html>

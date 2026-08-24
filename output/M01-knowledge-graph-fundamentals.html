@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M01 · Knowledge Graph Fundamentals — Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0A1628;
+  --bg-secondary: #111D33;
+  --bg-card: #162033;
+  --bg-surface: #1A2740;
+  --text-primary: #E8ECF1;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --accent-primary: #D4A843;
+  --accent-hover: #E5BC5A;
+  --accent-muted: rgba(212, 168, 67, 0.15);
+  --success: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --error: #F43F5E;
+  --error-bg: rgba(244, 63, 94, 0.1);
+  --info: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.1);
+  --track-overview: #D4A843;
+  --track-foundations: #6366F1;
+  --track-structural: #8B5CF6;
+  --track-narrative: #06B6D4;
+  --track-serving: #F97316;
+  --track-production: #22C55E;
+  --track-capstone: #D4A843;
+  --track-color: #6366F1;
+  --code-bg: #0D1117;
+  --code-border: #21262D;
+  --code-text: #C9D1D9;
+  --code-comment: #8B949E;
+  --code-keyword: #FF7B72;
+  --code-string: #A5D6FF;
+  --code-function: #D2A8FF;
+  --code-number: #79C0FF;
+  --transition-fast: 150ms;
+  --transition-normal: 300ms;
+  --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 3rem;
+}
+.sidebar-nav {
+  position: sticky;
+  top: 2rem;
+  height: calc(100vh - 4rem);
+  overflow-y: auto;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.sidebar-nav .nav-title {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  margin-bottom: 0.75rem;
+}
+.sidebar-nav a {
+  display: block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 0.4rem 0.6rem;
+  border-left: 2px solid var(--code-border);
+  transition: all var(--transition-fast);
+}
+.sidebar-nav a:hover {
+  color: var(--track-color);
+  border-left-color: var(--track-color);
+  background: var(--bg-secondary);
+}
+.content { max-width: 800px; min-width: 0; }
+h1, h2, h3, h4 { font-family: 'Bricolage Grotesque', sans-serif; }
+h1 { font-size: 2rem; font-weight: 700; line-height: 1.25; margin: 0.5rem 0 1rem; }
+h2 { font-size: 1.5rem; font-weight: 700; margin: 0 0 1.25rem; scroll-margin-top: 1.5rem; }
+h3 { font-size: 1.25rem; font-weight: 600; margin: 2rem 0 0.75rem; scroll-margin-top: 1.5rem; }
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem 1.5rem; }
+li { margin-bottom: 0.4rem; }
+strong { font-weight: 600; }
+a { color: var(--accent-primary); }
+.section { margin-bottom: 4rem; }
+.course-kicker {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.track-badge {
+  display: inline-block;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bg-primary);
+  background: var(--track-color);
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+  margin: 0.75rem 0 0.25rem;
+}
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+.progress-bar {
+  height: 4px;
+  background: var(--bg-surface);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--track-color), var(--accent-primary));
+  border-radius: 2px;
+  transition: width var(--transition-slow);
+}
+.objectives-box {
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.analogy-box, .tech-def-box, .callout {
+  border-radius: 0 8px 8px 0;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+.analogy-box {
+  background: var(--accent-muted);
+  border-left: 4px solid var(--accent-primary);
+}
+.analogy-box::before {
+  content: '💡 Everyday Analogy';
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  color: var(--accent-primary);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.tech-def-box {
+  background: var(--info-bg);
+  border-left: 4px solid var(--info);
+}
+.tech-def-box::before {
+  content: '📐 Technical Definition';
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  color: var(--info);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.callout { border-left: 4px solid; }
+.box-label {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-cost { background: var(--warning-bg); border-left-color: var(--accent-primary); }
+.callout-cost .box-label { color: var(--accent-primary); }
+.callout-security { background: var(--error-bg); border-left-color: var(--error); }
+.callout-security .box-label { color: var(--error); }
+.bridge {
+  border-left: 3px dotted var(--text-muted);
+  padding: 0.25rem 0 0.25rem 1.25rem;
+  margin: 2rem 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+.term-tooltip {
+  position: relative;
+  color: var(--accent-primary);
+  cursor: help;
+  border-bottom: 1px dashed var(--accent-primary);
+}
+.term-tooltip .tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--text-primary);
+  width: 280px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+  z-index: 10;
+  line-height: 1.5;
+}
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+table { border-collapse: collapse; width: 100%; margin: 1.25rem 0; font-size: 0.95rem; }
+th, td { border: 1px solid var(--code-border); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+th { background: var(--bg-card); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; }
+.table-scroll { overflow-x: auto; }
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+}
+.code-block {
+  position: relative;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  margin: 1.25rem 0;
+  overflow: hidden;
+}
+.code-block .code-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.9rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--code-border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.code-block pre {
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--code-text);
+}
+.copy-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--code-border);
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.tok-c { color: var(--code-comment); }
+.tok-s { color: var(--code-string); }
+.tok-k { color: var(--code-keyword); }
+.tok-n { color: var(--code-number); }
+.code-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--code-border);
+  margin-top: 1.25rem;
+}
+.code-tab {
+  padding: 0.5rem 1.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+.code-tab.active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+}
+.code-panel { display: none; }
+.code-panel.active { display: block; }
+.code-panel .code-block { margin-top: 0.75rem; }
+.animation-container {
+  background: var(--bg-secondary);
+  border: 1px solid var(--code-border);
+  border-radius: 12px;
+  padding: 2rem 2rem 4rem;
+  margin: 2rem 0;
+  position: relative;
+  min-height: 300px;
+}
+.anim-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+.anim-stage { position: relative; }
+.anim-caption {
+  position: absolute;
+  bottom: 1rem;
+  left: 2rem;
+  right: 6rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  min-height: 1.2rem;
+}
+.animation-controls {
+  display: flex;
+  gap: 0.5rem;
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+}
+.animation-controls button {
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+}
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.checkpoint {
+  background: var(--success-bg);
+  border-left: 4px solid var(--success);
+  border-radius: 0 8px 8px 0;
+  padding: 1.25rem 1.5rem;
+  margin: 1.5rem 0;
+}
+.checkpoint .box-label { color: var(--success); }
+.quiz-question {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.quiz-question .q-text { font-weight: 600; margin-bottom: 0.75rem; }
+.quiz-option {
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 1rem;
+}
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-option.disabled { pointer-events: none; opacity: 0.85; }
+.quiz-feedback {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  display: none;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); color: var(--text-primary); }
+.quiz-feedback.bad { background: var(--error-bg); color: var(--text-primary); }
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.summary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-top: 3px solid var(--track-color);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  font-size: 0.95rem;
+}
+.summary-card h4 { font-size: 1rem; margin-bottom: 0.4rem; }
+.module-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 3rem 0 1rem;
+}
+.module-nav a {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+}
+.module-nav a:hover { border-color: var(--track-color); }
+.module-nav .dir {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  display: block;
+}
+.module-nav .next { text-align: right; }
+footer { color: var(--text-muted); font-size: 0.85rem; margin-top: 2rem; }
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; padding: 1rem; }
+  .sidebar-nav {
+    position: static;
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .sidebar-nav .nav-title { width: 100%; }
+  .sidebar-nav a { border: 1px solid var(--code-border); border-radius: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animation-controls { display: none; }
+  .anim-reduced-note { display: block !important; }
+}
+.anim-reduced-note { display: none; color: var(--text-muted); font-size: 0.8rem; position: absolute; bottom: 1rem; right: 1rem; }
+</style>
+</head>
+<body>
+<div class="page-container">
+<nav class="sidebar-nav" aria-label="Module sections">
+  <div class="nav-title">M01 · On this page</div>
+  <a href="#objectives">Learning objectives</a>
+  <a href="#nodes-edges">Nodes, edges &amp; types</a>
+  <a href="#traversal">Traversal vs search</a>
+  <a href="#multihop">Multi-hop reasoning</a>
+  <a href="#communities">Communities</a>
+  <a href="#god-nodes">God nodes &amp; centrality</a>
+  <a href="#blast-radius">Blast radius</a>
+  <a href="#provenance">Provenance tags</a>
+  <a href="#code">Code walkthrough</a>
+  <a href="#handson">Hands-on lab</a>
+  <a href="#quiz">Knowledge check</a>
+  <a href="#summary">Module summary</a>
+  <a href="#references">References</a>
+</nav>
+
+<main class="content">
+<header class="section" id="top">
+  <div class="course-kicker">Knowledge Graphs for AI Agents · From RAG Limits to Self-Updating Codebase Brains</div>
+  <div class="track-badge">Track 1 — Foundations</div>
+  <h1>M01 · Knowledge Graph Fundamentals</h1>
+  <div class="meta-row">
+    <span>📍 Module 2 of 14</span>
+    <span>⏱️ ~45 minutes</span>
+    <span>🧰 Prerequisites: M00</span>
+    <span>📶 Level: Beginner</span>
+  </div>
+  <div class="progress-bar" role="progressbar" aria-valuenow="2" aria-valuemin="1" aria-valuemax="14" aria-label="Course progress: module 2 of 14">
+    <div class="progress-fill" style="width: 14.3%"></div>
+  </div>
+  <p>Every tool in this course — Graphify, CodeGraph, okf-rs, even OKF's humble Markdown links — is built from the same seven primitives: nodes, typed edges, traversal, multi-hop paths, communities, centrality, and provenance. In this module you build all seven by hand, in ~40 lines of dependency-free code, over the <strong>orderflow</strong> repo. When a tool's README later says "Leiden community detection identified 13 subsystems," you'll know exactly what happened.</p>
+</header>
+
+<section class="section" id="objectives">
+  <h2>Learning objectives</h2>
+  <div class="objectives-box">
+    <p>By the end of this module you will be able to:</p>
+    <ul>
+      <li>Model a codebase as a <strong>directed graph of typed edges</strong> and explain why "code is a social network, not a book."</li>
+      <li>Contrast <strong>deterministic traversal</strong> with probabilistic search, including the cost model of each.</li>
+      <li>Explain what <strong>communities</strong> and <strong>god nodes</strong> reveal about software architecture — and what computing them costs at scale.</li>
+      <li>Compute a <strong>blast radius</strong> (transitive impact set) with a breadth-first search you wrote yourself.</li>
+      <li>Apply the <strong>EXTRACTED / INFERRED / AMBIGUOUS</strong> provenance discipline that separates honest graphs from confident guessers.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="nodes-edges">
+  <h2>Nodes, edges, and why the types matter</h2>
+
+  <div class="analogy-box">
+    <p><strong>Before</strong>: think of how you read a novel — front to back, page by page, because a book's structure IS its reading order. Now think about how you actually navigate a city: nobody reads a city front to back. You use a map of <em>places</em> and the <em>roads between them</em>, and you care what KIND of road each one is — footpath, one-way street, highway.</p>
+    <p><strong>The pain</strong>: your IDE — and a mapless AI agent — treats code like the novel: files and line numbers, read in order. But nobody experiences a codebase that way. You experience it as "this function calls that one," "this class inherits from that one," "this module imports those three." Reading files front-to-back to answer a relationship question is like reading every street sign in a city to find one address.</p>
+    <p><strong>The mapping</strong>: a knowledge graph is the city map for code. Functions, classes, and modules are the <em>places</em> (nodes). Calls, imports, and inheritance are the <em>roads</em> (edges) — and each road is labeled with its kind and its direction. One article in this course's corpus put it perfectly: your code isn't a book; it's a <strong>social network of narcissistic objects all trying to talk over each other</strong>. A graph is just the honest picture of who talks to whom.</p>
+  </div>
+
+  <div class="tech-def-box">
+    <p>A <span class="term-tooltip" tabindex="0">graph<span class="tooltip-content">A data structure made of nodes (things) and edges (relationships between pairs of things). Nothing more exotic than that.</span></span> is a set of <strong>nodes</strong> and a set of <strong>edges</strong> connecting pairs of nodes. For code, the nodes are program entities: modules, classes, functions, methods — and in richer graphs, database tables, API routes, documents, even diagrams.</p>
+    <p>The edges are what elevate this above a file listing, and two properties do the work. First, edges are <strong>directed</strong>: <code>verify_token → decode_jwt</code> means verify_token calls decode_jwt, and emphatically not the reverse — direction is the difference between "what do I depend on?" and "who depends on me?", two completely different questions. Second, edges are <strong>typed</strong>: <code>calls</code>, <code>imports</code>, <code>inherits</code>, <code>implements</code>, <code>publishes_to</code>. A typed edge is a fact with a precise meaning; an untyped line between two boxes is just decoration.</p>
+    <p>Here is what one node and one edge actually look like in the machine-readable form every tool in this course emits — this exact shape comes from the course's own extractor running on orderflow:</p>
+  </div>
+
+  <div class="code-block"><div class="code-head"><span>graph.json (excerpt) · one node, one edge</span></div><pre>{
+  "nodes": [
+    { "id": "function:shared.auth.decode_jwt",
+      "kind": "function",
+      "name": "decode_jwt",
+      "file": "shared/auth.py", "line": 16 }
+  ],
+  "edges": [
+    { "source": "function:shared.auth.verify_token",
+      "target": "function:shared.auth.decode_jwt",
+      "type": "calls",
+      "provenance": "EXTRACTED" }
+  ]
+}</pre></div>
+
+  <p>Read that edge aloud and you get a sentence: <em>"verify_token calls decode_jwt — and we extracted that fact directly from the source."</em> A graph is a database of such sentences. Everything else in this course is machinery for producing, storing, serving, and trusting them.</p>
+
+  <div class="animation-container" data-anim="graphBuild">
+    <div class="anim-title">Animation · GRAPH_BUILD — files become nodes, relationships become edges</div>
+    <div class="anim-stage" style="height: 320px;" aria-label="Animation of orderflow source files turning into labeled graph nodes with typed edges drawn between them"></div>
+    <div class="anim-caption"></div>
+    <div class="animation-controls">
+      <button type="button" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+    <div class="anim-reduced-note">Reduced motion: showing final state.</div>
+  </div>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Common misconceptions</span>
+    <p><strong>"A knowledge graph needs a graph database."</strong> — No. Every tool you'll meet stores its graph in ordinary things: a JSON file (Graphify), a SQLite file (CodeGraph), a folder of Markdown files with links (OKF, okf-rs). The graph is the <em>shape of the data</em>, not a product you install.</p>
+    <p><strong>"More edges = better graph."</strong> — The opposite, usually. An edge is a claim; false or noisy claims poison every query that touches them. That's why provenance tags (below) exist, and why messy code produces graphs "like a ball of yarn after a cat attack."</p>
+    <p><strong>"The folder tree is already a graph."</strong> — It is — but of the wrong relationship. Directories encode <em>where files sit</em>, not <em>who talks to whom</em>. orderflow's <code>billing</code> and <code>notifications</code> folders are siblings, yet at runtime they're intimate: billing publishes the very events notifications consumes. Only an edge can say that.</p>
+  </div>
+</section>
+
+<section class="section" id="traversal">
+  <h2>Traversal vs search — the determinism dividend</h2>
+  <p class="bridge">A map is only useful if following it is cheaper than wandering. Here's the precise sense in which it is.</p>
+
+  <p>To answer <em>"who calls <code>decode_jwt</code>?"</em> without a graph, an agent <strong>searches</strong>: grep for the name (getting every mention — imports, comments, strings), open each candidate file, and read enough surrounding code to judge which hits are real call sites. The cost is proportional to the number and size of files touched, and the result is a judgment call. Run it twice, phrase the question differently, and you may get different answers.</p>
+  <p>With a graph, the agent <strong>traverses</strong>: look up the node, follow its incoming <code>calls</code> edges, done. The cost is proportional to the number of edges followed — usually a handful — and the answer is <em>a fact retrieved</em>, not a text interpreted. Same question, every time, same answer. That repeatability is what the course means by <strong>deterministic</strong>: no similarity thresholds, no ranking, no luck.</p>
+  <p>This is also the moment to name the complexity honestly. Search costs <em>O(files × file size)</em> in tokens per query, paid every query. Traversal costs <em>O(edges followed)</em> — after a one-time extraction cost paid when the graph is built. Extraction moved the expensive work out of the query path. You'll hear this called "compile once, query forever," and it's the same economic trick a database index plays.</p>
+
+  <div class="animation-container" data-anim="traversal">
+    <div class="anim-title">Animation · TRAVERSAL — answering "who calls decode_jwt?" by following edges</div>
+    <div class="anim-stage" style="height: 320px;" aria-label="Animation of a query walking backwards along call edges from decode_jwt while a token counter stays flat"></div>
+    <div class="anim-caption"></div>
+    <div class="animation-controls">
+      <button type="button" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+    <div class="anim-reduced-note">Reduced motion: showing final state.</div>
+  </div>
+
+  <div class="callout callout-cost">
+    <span class="box-label">💰 Why it matters — the arithmetic you'll reuse all course</span>
+    <p>A real measured example from the corpus (you'll rebuild it in M09): answering "who calls <code>cmd_generate</code>?" by hand meant opening a 672-line, ~24&nbsp;KB file and reading enough of it to find the caller — roughly <strong>6,000 tokens</strong>. The equivalent graph query returned one line: about <strong>15 tokens</strong>. That's ~400× for a single question — and it compounds, because the agent never re-opens that file after context compaction either. Per query and per session, traversal's cost stays flat while search's cost grows.</p>
+  </div>
+</section>
+
+<section class="section" id="multihop">
+  <h2>Multi-hop reasoning — where flat retrieval structurally fails</h2>
+  <p>Some questions cannot be answered from any single file, no matter how cleverly you retrieve it. Consider: <em>"What breaks in the API layer if I alter the schema in <code>db/migrations/04_users.sql</code>?"</em> The answer requires <em>chaining</em> facts: the migration alters a table → a model class maps that table → a repository uses the model → three route handlers call the repository. Four files. The connecting facts never co-occur in one place; each hop lives in a different file, and some hops (the model↔table mapping) are implicit.</p>
+  <p>A graph answers this by construction: it's a path. Start at the table node, walk <code>maps_to</code> → <code>used_by</code> → <code>called_by</code> edges, and the four-file chain falls out as a sequence of lookups. In orderflow miniature: change <code>decode_jwt</code>'s claims format, and the graph walks <code>decode_jwt ← verify_token ← post_invoice</code> — two hops from an auth helper to a billing route that never mentions JWTs at all.</p>
+  <p>Hold this example: in M02 you'll see exactly why chunk-based retrieval cannot make this chain (the hops are never co-located in a chunk), and in M10 "multi-hop reasoning failure" becomes the first of two formal triggers that justify adding a structural graph to a production stack.</p>
+</section>
+
+<section class="section" id="communities">
+  <h2>Communities — subsystems the graph discovers by itself</h2>
+
+  <div class="analogy-box">
+    <p><strong>Before</strong>: at a wedding reception with 100 guests, nobody hands you a seating chart of who knows whom. Yet watch the room for ten minutes and the structure is obvious — clusters form: the bride's university friends, the groom's coworkers, the extended family. Nobody assigned those clusters; they emerge from who actually talks to whom.</p>
+    <p><strong>The pain</strong>: codebases have the same latent structure — the billing code all calls other billing code — but nothing in the file system <em>enforces</em> that the folders match the conversation patterns. In old codebases they often don't: the "utils" folder talks to everyone, and a "microservices" architecture turns out to be, as the corpus memorably put it, a secret monolith in a trench coat.</p>
+    <p><strong>The mapping</strong>: <strong>community detection</strong> is the algorithm that watches the room. It clusters nodes that are densely connected to each other and sparsely connected to everyone else. The clusters it finds are your <em>actual</em> subsystems — the architecture as practiced, not as drawn on the wiki.</p>
+  </div>
+
+  <div class="tech-def-box">
+    <p>Community detection algorithms maximize <span class="term-tooltip" tabindex="0">modularity<span class="tooltip-content">A score measuring how much denser connections are inside clusters than you'd expect by random chance. High modularity = crisp subsystems.</span></span> — the degree to which edges concentrate inside clusters rather than between them. Two algorithms matter for this course. <strong>Leiden</strong> (used by Graphify) is a refinement of the classic Louvain method: fast, and guarantees well-connected communities. <strong>Clauset–Newman–Moore</strong> (used by okf-rs) is an agglomerative modularity maximizer — okf-rs's own dogfooding showed it correctly splitting an 18-crate workspace that naive connected-components analysis collapsed into one blob.</p>
+    <p>That last contrast deserves one more sentence, because it's a common trap: <em>connected components</em> only asks "is there ANY path between these nodes?" — and in real code, everything reaches everything through shared utilities, so you get one giant component. Modularity-based methods ask the sharper question: "are these nodes <em>unusually densely</em> connected?" — which is what separates billing from notifications even though both touch the database pool.</p>
+    <p>On orderflow, community detection finds three clusters — billing, orders, notifications — matching the service boundaries. On a healthy codebase that's typical. On an unhealthy one, the mismatch IS the finding: a "shared" module that community detection assigns to billing is a module that only billing really uses.</p>
+  </div>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Where it breaks (file this for M11)</span>
+    <p>In legacy enterprise monoliths, community detection often clusters <em>unrelated</em> modules together merely because they all reference shared infrastructure — logging singletons, telemetry helpers. The wedding-party equivalent: everyone talks to the bartender, but that doesn't make the whole room one friend group. Treat detected communities as a strong hint, not gospel, and expect noise proportional to how tangled the codebase already is.</p>
+  </div>
+
+  <div class="animation-container" data-anim="communities">
+    <div class="anim-title">Animation · COMMUNITY_DETECT — orderflow's nodes cluster; the god node emerges</div>
+    <div class="anim-stage" style="height: 340px;" aria-label="Animation of scattered nodes clustering into three colored communities with a pulsing god node in the center"></div>
+    <div class="anim-caption"></div>
+    <div class="animation-controls">
+      <button type="button" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+    <div class="anim-reduced-note">Reduced motion: showing final state.</div>
+  </div>
+</section>
+
+<section class="section" id="god-nodes">
+  <h2>God nodes and the price of centrality</h2>
+  <p>Watch the animation's final frame: one node sits between all three communities, connected to everything. In orderflow that's <code>shared/db.py</code> — every service imports it. Graph tools call these <strong>god nodes</strong>: the main characters of your codebase, identified by <span class="term-tooltip" tabindex="0">centrality<span class="tooltip-content">A family of graph measures scoring how "important" a node is — by how many edges it has (degree), or how many shortest paths run through it (betweenness).</span></span> measures. The corpus definition is memorable and accurate: <em>"the classes everything else depends on — we call these God Nodes because if they die, the universe ends."</em></p>
+  <p>Why you care, concretely: a god node is where refactoring risk, review scrutiny, and onboarding attention should concentrate. Any change to <code>shared/db.py</code> has, by definition, the largest possible blast radius. A new engineer (or agent) reading the graph learns in seconds what might take weeks of tribal exposure: <em>this</em> is the file you don't touch casually.</p>
+  <p>Now the honest cost accounting. The strictest centrality measure — <strong>betweenness centrality</strong>, which counts how many shortest paths pass through each node — costs <strong>O(V×E)</strong>: nodes times edges. On orderflow (36 nodes, 22 edges) that's nothing. On a real monorepo it's a wall: one documented case in the corpus involved a <strong>450,000-node, 690,000-edge</strong> graph — roughly <strong>310 billion operations</strong>, single-threaded, because the algorithm doesn't parallelize cleanly. A full rebuild on a 96-core Xeon was <strong>killed after 114 minutes without completing</strong>, while a different (smaller) repo finished in ~10 minutes on a laptop. Remember this number in M11: it's why "just rebuild the graph on every commit" stops being a plan at scale, and why cheap proxies like plain degree count (which our lab uses) are often the right engineering choice.</p>
+</section>
+
+<section class="section" id="blast-radius">
+  <h2>Blast radius — impact analysis as a graph walk</h2>
+  <p>The single most valuable query a code graph answers is the one that prevents outages: <em>"if I change this, what could break?"</em> The graph formulation is clean: the <strong>blast radius</strong> of a node is everything reachable by walking <em>incoming</em> call edges transitively — callers, callers-of-callers, and so on. It's a <span class="term-tooltip" tabindex="0">breadth-first search<span class="tooltip-content">BFS: explore a graph level by level from a starting node, using a queue and a visited-set so nothing is processed twice.</span></span> over the reversed graph, about ten lines of code, and you write it below.</p>
+  <p>Mature tools score the result rather than just listing it. okf-rs's <code>impact</code> command, for instance, ranks every changed concept between two git refs by three factors: <strong>transitive-caller count</strong> (the raw radius), <strong>public-API membership</strong> (external consumers can't be refactored alongside you), and <strong>cycle participation</strong> (changes inside dependency cycles propagate unpredictably). Its <code>review</code> subcommand turns that into a PR comment with a <code>--fail-on-risk</code> CI gate — impact analysis promoted from a query to a policy.</p>
+  <p>The corpus example that sells the feature: a developer asks, "if I delete this 'deprecated' method, will the payment gateway explode?" — and the graph shows <em>the 14 hidden dependencies that say Yes</em>. Fourteen facts no one person remembered, retrieved in milliseconds.</p>
+</section>
+
+<section class="section" id="provenance">
+  <h2>Provenance — the honesty layer</h2>
+  <p class="bridge">One primitive remains, and it's the one that separates trustworthy graphs from confident guessers.</p>
+  <p>Not every edge is equally certain. When a parser sees <code>decode_jwt(token)</code> inside <code>verify_token</code>'s body in the same module, the call edge is a <strong>fact</strong>. But when code calls <code>execute(...)</code> and three different classes define an <code>execute</code> method, the extractor must guess — or admit it can't. Serious tools label every edge:</p>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Tag</th><th>Meaning</th><th>Trust level</th></tr>
+    <tr><td><code>EXTRACTED</code></td><td>Parsed directly from source; the relationship is explicit</td><td>Ground truth — act on it</td></tr>
+    <tr><td><code>INFERRED</code></td><td>Resolved by heuristic (name matching, proximity, "this variable is named xyzAuth and gets passed to a validator, so they're probably best friends")</td><td>Probably right — verify before a destructive action</td></tr>
+    <tr><td><code>AMBIGUOUS</code></td><td>Multiple candidate targets; all emitted, none confirmed</td><td>A question, not an answer</td></tr>
+  </table>
+  </div>
+  <p>One reviewer in the corpus called this labeling <em>"the whole argument"</em> for graph tools: it is the only approach in the codebase-context landscape that tells you <strong>which of its answers are facts and which are guesses</strong>. Grep doesn't. Vector search certainly doesn't — every RAG result arrives with the same confident tone regardless of quality (M02 makes this failure visceral). A machine-readable confidence label is what lets an agent act boldly on EXTRACTED edges and double-check INFERRED ones — exactly the policy you'll implement in the lab's final step.</p>
+  <p>Where do dynamic languages fit? Python and JavaScript — where, as the corpus jokes, types are merely suggestions — force more INFERRED edges because names can't be resolved statically. M03 shows the resolution ladder (heuristics → language servers → honest AMBIGUOUS labels). The discipline stays the same: <strong>never emit a guess dressed as a fact</strong>.</p>
+</section>
+
+<section class="section" id="code">
+  <h2>Code walkthrough — the whole toolkit in 40 lines</h2>
+  <p>Let's build every primitive from this module over orderflow's real graph. The extractor (<code>labs/shared_tools/kg_extract.py</code>) has already produced <code>graph.json</code> — 36 nodes, 22 edges, each edge provenance-tagged. We'll write three functions: a reverse index, a direct-callers query, and a provenance-aware blast radius.</p>
+
+  <p><strong>Chunk 1 — the reverse index.</strong> Edges are stored source→target ("who do I call?"), but impact questions run the other way ("who calls me?"). Rather than scanning all edges per query, we index them once by target. This tiny dict IS the difference between search and traversal: after this line, "who calls X" is a hash lookup. <em>Gotcha:</em> filter to <code>calls</code> edges — in richer graphs, walking <code>imports</code> edges into a blast radius wildly overstates impact.</p>
+  <p><strong>Chunk 2 — direct callers.</strong> Resolve a human-friendly short name ("decode_jwt") to node ids, then read the reverse index. Note the deliberate handling of misses: an empty list, not an exception — in M09 the same behavior becomes the graceful "not in graph, try grep" MCP response that lets agents fall back safely.</p>
+  <p><strong>Chunk 3 — blast radius with a confidence gate.</strong> A textbook BFS with a queue and a visited-set (the visited-set matters: real graphs have cycles, and without it you loop forever). The one addition worth staring at: when <code>min_confidence="EXTRACTED"</code>, the walk skips unverified edges — computing the radius you can <em>prove</em> versus the radius you <em>suspect</em>. Two numbers, and the gap between them is your uncertainty, made visible.</p>
+
+  <div class="code-tabs" role="tablist" aria-label="Language selector">
+    <button class="code-tab active" role="tab" data-lang="python" aria-selected="true">Python</button>
+    <button class="code-tab" role="tab" data-lang="node" aria-selected="false">Node.js</button>
+  </div>
+  <div class="code-panel active" data-lang="python">
+  <div class="code-block"><div class="code-head"><span>graph_basics.py · the three functions (full runnable file in labs/M01)</span></div><pre>import json
+from collections import defaultdict, deque
+
+graph = json.load(open("graph.json", encoding="utf-8"))
+short = lambda node_id: node_id.rsplit(".", 1)[-1]
+
+# ---- Chunk 1: index edges by TARGET, once ----
+reverse = defaultdict(list)
+for edge in graph["edges"]:
+    if edge["type"] == "calls":
+        reverse[edge["target"]].append(edge)
+
+# ---- Chunk 2: direct callers, with graceful misses ----
+def callers(name):
+    targets = [n["id"] for n in graph["nodes"] if short(n["id"]) == name]
+    found = {short(e["source"]) for t in targets for e in reverse.get(t, [])}
+    return sorted(found)          # unknown name -> [] (never a crash)
+
+# ---- Chunk 3: BFS blast radius with a confidence gate ----
+def blast_radius(name, min_confidence=None):
+    seeds = [n["id"] for n in graph["nodes"] if short(n["id"]) == name]
+    queue, visited, impacted = deque(seeds), set(seeds), set()
+    while queue:
+        for edge in reverse.get(queue.popleft(), []):
+            if min_confidence == "EXTRACTED" and edge["provenance"] != "EXTRACTED":
+                continue          # skip guesses when proof is demanded
+            if edge["source"] not in visited:
+                visited.add(edge["source"])
+                impacted.add(short(edge["source"]))
+                queue.append(edge["source"])
+    return sorted(impacted)
+
+print(callers("decode_jwt"))                     # ['verify_token']
+print(blast_radius("decode_jwt"))                # [... 'post_invoice', 'verify_token']
+print(blast_radius("execute"))                   # everything touching the DB pool
+print(blast_radius("execute", "EXTRACTED"))      # ...the provable subset</pre></div>
+  </div>
+  <div class="code-panel" data-lang="node">
+  <div class="code-block"><div class="code-head"><span>graph_basics.mjs · the same three functions</span></div><pre>import { readFileSync } from "node:fs";
+
+const graph = JSON.parse(readFileSync("graph.json", "utf-8"));
+const short = (id) =&gt; id.split(".").at(-1);
+
+// ---- Chunk 1: index edges by TARGET, once ----
+const reverse = new Map();
+for (const edge of graph.edges) {
+  if (edge.type !== "calls") continue;
+  if (!reverse.has(edge.target)) reverse.set(edge.target, []);
+  reverse.get(edge.target).push(edge);
+}
+
+// ---- Chunk 2: direct callers, with graceful misses ----
+function callers(name) {
+  const targets = graph.nodes.filter((n) =&gt; short(n.id) === name).map((n) =&gt; n.id);
+  const found = new Set();
+  for (const t of targets) for (const e of reverse.get(t) ?? []) found.add(short(e.source));
+  return [...found].sort();            // unknown name -&gt; [] (never a crash)
+}
+
+// ---- Chunk 3: BFS blast radius with a confidence gate ----
+function blastRadius(name, minConfidence = null) {
+  const seeds = graph.nodes.filter((n) =&gt; short(n.id) === name).map((n) =&gt; n.id);
+  const queue = [...seeds], visited = new Set(seeds), impacted = new Set();
+  while (queue.length) {
+    for (const edge of reverse.get(queue.shift()) ?? []) {
+      if (minConfidence === "EXTRACTED" &amp;&amp; edge.provenance !== "EXTRACTED") continue;
+      if (!visited.has(edge.source)) {
+        visited.add(edge.source);
+        impacted.add(short(edge.source));
+        queue.push(edge.source);
+      }
+    }
+  }
+  return [...impacted].sort();
+}
+
+console.log(callers("decode_jwt"));                  // ['verify_token']
+console.log(blastRadius("decode_jwt"));              // [..., 'post_invoice', 'verify_token']
+console.log(blastRadius("execute", "EXTRACTED"));    // the provable subset</pre></div>
+  </div>
+
+  <div class="checkpoint">
+    <span class="box-label">🔎 What just happened?</span>
+    <p>You built a queryable code intelligence system in ~40 lines: one dict inversion turned stored edges into instant reverse lookups; one BFS turned those lookups into transitive impact analysis; one <code>if</code> statement turned provenance metadata into a trust policy. Graphify, CodeGraph, and okf-rs are these three moves plus better extraction, storage, and serving. The primitives never change.</p>
+  </div>
+</section>
+
+<section class="section" id="handson">
+  <h2>Hands-on lab — <code>labs/M01-graph-fundamentals</code></h2>
+  <p><strong>What you'll build</strong>: the file above, from a TODO skeleton, verified by automated checks. <strong>Time</strong>: 30–45 min. <strong>Files</strong>: <code>starter/graph_basics.py</code> (yours), <code>solution/</code> (if stuck), <code>expected_output/sample_output.txt</code>.</p>
+  <ol>
+    <li><strong>Step 1 — Load the graph.</strong> <code>cd labs/M01-graph-fundamentals/starter &amp;&amp; python graph_basics.py</code>. The loader runs the extractor for you. Expected: <code>36 nodes, 22 edges loaded</code>. ✅ If you see an import error, run from inside <code>starter/</code>.</li>
+    <li><strong>Step 2 — TODO 1: the reverse index.</strong> Loop over <code>graph["edges"]</code>, append each <code>calls</code> edge under its target.</li>
+    <li><strong>Step 3 — TODO 2: BFS blast radius.</strong> Seed a deque with matching node ids; walk the reverse index with a visited-set. <code>blast_radius("decode_jwt")</code> must include <code>post_invoice</code> — two hops away.</li>
+    <li><strong>Step 4 — TODO 3: the confidence gate.</strong> Skip non-EXTRACTED edges when demanded; compare both radii for <code>execute</code>.</li>
+    <li><strong>Verify.</strong> <code>python graph_basics.py --check</code> → <code>ALL CHECKS PASSED</code>. 🎉</li>
+  </ol>
+  <p><em>Troubleshooting</em>: empty blast radius almost always means you walked edges forward (caller→callee) instead of backward. <code>KeyError: 'edges'</code> means the loader was edited — diff against the solution.</p>
+  <p><strong>Stretch goal</strong>: compute each node's in-degree from the reverse index and print the top 3. The winner should be orderflow's god node. You've just implemented (degree) centrality — the cheap cousin of the O(V×E) betweenness measure from this module.</p>
+</section>
+
+<section class="section" id="quiz">
+  <h2>Knowledge check</h2>
+
+  <div class="quiz-question">
+    <div class="q-text">1. What makes an edge in a code knowledge graph more than a line between boxes?</div>
+    <div class="quiz-option" data-correct="false">Its visual layout position</div>
+    <div class="quiz-option" data-correct="true">It is directed and typed — a precise, machine-readable claim like "A calls B"</div>
+    <div class="quiz-option" data-correct="false">It stores the full source code of both endpoints</div>
+    <div class="quiz-feedback" data-good="Right. Direction distinguishes 'what do I depend on' from 'who depends on me'; the type (calls/imports/inherits) gives the claim precise meaning." data-bad="The power is in direction + type: 'verify_token calls decode_jwt' is a directed, typed, machine-checkable fact — a sentence in a database of sentences."></div>
+  </div>
+
+  <div class="quiz-question">
+    <div class="q-text">2. Why is graph traversal called deterministic while RAG retrieval is probabilistic?</div>
+    <div class="quiz-option" data-correct="false">Traversal uses more compute, which increases accuracy</div>
+    <div class="quiz-option" data-correct="true">Traversal follows explicit stored edges — same query, same answer, every time; similarity search ranks candidates and can return different, possibly stale ones</div>
+    <div class="quiz-option" data-correct="false">Traversal only works on small graphs</div>
+    <div class="quiz-feedback" data-good="Exactly. Edges are facts retrieved, not text interpreted — no thresholds, no ranking, no luck." data-bad="The distinction is repeatability: traversal reads stored facts along edges (same answer every run); similarity search ranks by closeness and may surface the wrong or stale chunk."></div>
+  </div>
+
+  <div class="quiz-question">
+    <div class="q-text">3. Community detection on your codebase assigns a "shared utils" module entirely to the billing cluster. What is the most useful reading?</div>
+    <div class="quiz-option" data-correct="false">The algorithm is broken and should be re-run</div>
+    <div class="quiz-option" data-correct="true">The module is "shared" in name only — in practice, essentially only billing uses it; the architecture-as-practiced differs from the architecture-as-drawn</div>
+    <div class="quiz-option" data-correct="false">Billing should be deleted</div>
+    <div class="quiz-feedback" data-good="Yes — the mismatch between detected communities and declared structure IS the architectural finding." data-bad="Communities reflect who actually talks to whom. A 'shared' module clustering into billing means its sharing is aspirational — a real finding, not an algorithm bug."></div>
+  </div>
+
+  <div class="quiz-question">
+    <div class="q-text">4. Why does the course keep warning about betweenness centrality at scale?</div>
+    <div class="quiz-option" data-correct="false">It requires a GPU</div>
+    <div class="quiz-option" data-correct="true">It costs O(V×E) and parallelizes poorly — ~310 billion operations on a 450K-node/690K-edge monorepo; one 96-core rebuild was killed after 114 minutes</div>
+    <div class="quiz-option" data-correct="false">It only works on directed graphs</div>
+    <div class="quiz-feedback" data-good="Correct — and it's why M11 treats 'just rebuild on every commit' as a plan that dies at scale, and why cheap degree counts often suffice." data-bad="The issue is algorithmic: O(nodes × edges), single-threaded in practice. The corpus case: ~310 billion ops; a 96-core Xeon was killed at 114 minutes without finishing."></div>
+  </div>
+
+  <div class="quiz-question">
+    <div class="q-text">5. An extractor sees <code>execute(...)</code> called, and three classes define an <code>execute</code> method. The honest output is:</div>
+    <div class="quiz-option" data-correct="false">Pick the most popular class and emit one EXTRACTED edge</div>
+    <div class="quiz-option" data-correct="false">Emit no edge — uncertain information is worthless</div>
+    <div class="quiz-option" data-correct="true">Emit all three candidate edges tagged AMBIGUOUS, so consumers know it's a question, not an answer</div>
+    <div class="quiz-feedback" data-good="Right. The discipline: never emit a guess dressed as a fact. AMBIGUOUS edges are still useful — they scope the verification work." data-bad="Serious tools emit all candidates tagged AMBIGUOUS. Dropping them loses information; promoting one to EXTRACTED poisons every downstream query with a disguised guess."></div>
+  </div>
+
+  <div class="quiz-question">
+    <div class="q-text">6. What is a node's blast radius?</div>
+    <div class="quiz-option" data-correct="false">The set of functions it calls, transitively</div>
+    <div class="quiz-option" data-correct="true">Everything reachable by walking INCOMING call edges transitively — all code whose behavior could change if the node changes</div>
+    <div class="quiz-option" data-correct="false">The number of lines in its file</div>
+    <div class="quiz-feedback" data-good="Yes — a BFS over the reversed graph. Callees are what it depends on; callers (transitively) are what depends on IT: the impact set." data-bad="Direction matters: blast radius walks incoming edges (who depends on me, transitively). Walking outgoing edges gives dependencies — the opposite question."></div>
+  </div>
+</section>
+
+<section class="section" id="summary">
+  <h2>Module summary</h2>
+  <div class="summary-grid">
+    <div class="summary-card"><h4>Nodes &amp; typed edges</h4>Code as a social network: entities plus directed, typed, machine-readable claims ("A calls B"). The graph is a shape, not a product.</div>
+    <div class="summary-card"><h4>Traversal</h4>Follow edges instead of reading files: O(edges followed) per query after one-time extraction. 6,000 tokens vs 15 for "who calls X".</div>
+    <div class="summary-card"><h4>Multi-hop</h4>Impact chains span files that never co-occur in a chunk — paths answer what flat retrieval structurally cannot.</div>
+    <div class="summary-card"><h4>Communities</h4>Leiden / CNM clustering finds subsystems from actual call density — architecture as practiced, noise included.</div>
+    <div class="summary-card"><h4>God nodes</h4>High-centrality risk concentrators (orderflow: <code>shared/db.py</code>). Betweenness costs O(V×E) — the scale wall M11 revisits.</div>
+    <div class="summary-card"><h4>Provenance</h4>EXTRACTED / INFERRED / AMBIGUOUS: the only context layer that labels facts vs guesses. Never emit a guess dressed as a fact.</div>
+  </div>
+  <p><strong>What we built on orderflow</strong>: a 36-node, 22-edge graph plus reverse index, callers query, and provenance-gated blast radius — the exact primitives every later module refines.</p>
+  <p><strong>Next — M02: The RAG Baseline and Where It Breaks.</strong> Before adopting graphs everywhere, you need the disease in your hands: you'll build a retrieval pipeline over orderflow's docs and watch it confidently return a stale metric definition — nothing crashing, everything wrong.</p>
+</section>
+
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul>
+    <li>Course extractor: <code>labs/shared_tools/kg_extract.py</code> · ground-truth edges: <code>labs/sample-project/README.md</code></li>
+    <li>Leiden algorithm (Traag, Waltman &amp; van Eck) — used by Graphify for community detection</li>
+    <li>Clauset–Newman–Moore modularity clustering — used by okf-rs <code>graph communities</code></li>
+    <li>okf-rs impact analysis (<code>impact</code>, <code>review --fail-on-risk</code>) — github.com/jyjeanne/okf-rs</li>
+    <li>Graphify god-node and community reporting — graphify.net · GRAPH_REPORT.md format (M04)</li>
+  </ul>
+</section>
+
+<nav class="module-nav" aria-label="Module navigation">
+  <a href="M00-context-problem.html"><span class="dir">◀ Previous</span>M00 · The Context Problem</a>
+  <a class="next" href="M02-rag-baseline-limits.html"><span class="dir">Next ▶</span>M02 · The RAG Baseline and Where It Breaks</a>
+</nav>
+<footer>Knowledge Graphs for AI Agents · Track 1 — Foundations · Module 2 of 14</footer>
+</main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll('.code-block').forEach(function (block) {
+    var head = block.querySelector('.code-head');
+    if (!head) return;
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'copy';
+    btn.setAttribute('aria-label', 'Copy code to clipboard');
+    btn.addEventListener('click', function () {
+      var code = block.querySelector('pre');
+      if (!code) return;
+      navigator.clipboard.writeText(code.textContent).then(function () {
+        btn.textContent = 'copied!';
+        setTimeout(function () { btn.textContent = 'copy'; }, 1500);
+      });
+    });
+    head.appendChild(btn);
+  });
+
+  /* code tabs */
+  document.querySelectorAll('.code-tabs').forEach(function (tabs) {
+    var group = [tabs];
+    var sib = tabs.nextElementSibling;
+    while (sib && sib.classList.contains('code-panel')) { group.push(sib); sib = sib.nextElementSibling; }
+    tabs.querySelectorAll('.code-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var lang = tab.getAttribute('data-lang');
+        tabs.querySelectorAll('.code-tab').forEach(function (t) {
+          t.classList.toggle('active', t === tab);
+          t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+        });
+        group.slice(1).forEach(function (p) {
+          p.classList.toggle('active', p.getAttribute('data-lang') === lang);
+        });
+      });
+    });
+  });
+
+  document.querySelectorAll('.quiz-question').forEach(function (q) {
+    var feedback = q.querySelector('.quiz-feedback');
+    q.querySelectorAll('.quiz-option').forEach(function (opt) {
+      opt.setAttribute('role', 'button');
+      opt.setAttribute('tabindex', '0');
+      function answer() {
+        if (q.classList.contains('answered')) return;
+        q.classList.add('answered');
+        var correct = opt.getAttribute('data-correct') === 'true';
+        opt.classList.add(correct ? 'correct' : 'incorrect');
+        q.querySelectorAll('.quiz-option').forEach(function (o) {
+          o.classList.add('disabled');
+          if (o.getAttribute('data-correct') === 'true') o.classList.add('correct');
+        });
+        feedback.textContent = correct ? feedback.getAttribute('data-good') : feedback.getAttribute('data-bad');
+        feedback.classList.add('show', correct ? 'good' : 'bad');
+      }
+      opt.addEventListener('click', answer);
+      opt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); answer(); } });
+    });
+  });
+
+  function Seq(container, build) {
+    var stage = container.querySelector('.anim-stage');
+    var caption = container.querySelector('.anim-caption');
+    var api = {
+      stage: stage,
+      caption: function (t) { if (caption) caption.textContent = t; },
+      steps: [], i: 0, timer: null, playing: false, interval: 1000
+    };
+    function runStep() {
+      if (api.i >= api.steps.length) { api.playing = false; return; }
+      api.steps[api.i++]();
+      if (api.playing) api.timer = setTimeout(runStep, api.interval);
+    }
+    api.play = function () {
+      if (api.playing) return;
+      if (api.i >= api.steps.length) api.restart(true);
+      api.playing = true; runStep();
+    };
+    api.pause = function () { api.playing = false; clearTimeout(api.timer); };
+    api.restart = function (silent) {
+      api.pause(); api.i = 0; stage.innerHTML = ''; api.caption('');
+      build(api);
+      if (!silent) api.play();
+    };
+    api.finish = function () {
+      api.pause(); api.i = 0; stage.innerHTML = ''; api.caption('');
+      build(api);
+      while (api.i < api.steps.length) api.steps[api.i++]();
+    };
+    build(api);
+    var controls = container.querySelector('.animation-controls');
+    if (controls) {
+      controls.addEventListener('click', function (e) {
+        var act = e.target.getAttribute('data-act');
+        if (act === 'play') api.play();
+        if (act === 'pause') api.pause();
+        if (act === 'restart') api.restart();
+      });
+    }
+    if (reduced) api.finish();
+    return api;
+  }
+
+  function el(parent, css, text) {
+    var d = document.createElement('div');
+    if (css) for (var k in css) d.style[k] = css[k];
+    if (text !== undefined) d.textContent = text;
+    parent.appendChild(d);
+    return d;
+  }
+  function svgEl(parent, name, attrs) {
+    var n = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    parent.appendChild(n);
+    return n;
+  }
+
+  /* Shared node layout for the three anims: orderflow mini-graph */
+  var NODES = [
+    { id: 'post_invoice', x: 12, y: 18, c: 'billing' },
+    { id: 'create_invoice', x: 30, y: 8, c: 'billing' },
+    { id: 'handle_webhook', x: 12, y: 55, c: 'billing' },
+    { id: 'mark_paid', x: 30, y: 40, c: 'billing' },
+    { id: 'verify_token', x: 47, y: 25, c: 'shared' },
+    { id: 'decode_jwt', x: 64, y: 12, c: 'shared' },
+    { id: 'publish', x: 48, y: 62, c: 'shared' },
+    { id: 'DatabasePool', x: 62, y: 40, c: 'shared', god: true },
+    { id: 'advance_order', x: 82, y: 22, c: 'orders' },
+    { id: 'weekly_active_users', x: 88, y: 48, c: 'orders' },
+    { id: 'send_receipt', x: 70, y: 75, c: 'notif' },
+    { id: 'start', x: 88, y: 78, c: 'notif' }
+  ];
+  var EDGES = [
+    ['post_invoice', 'verify_token', 'calls'],
+    ['post_invoice', 'create_invoice', 'calls'],
+    ['verify_token', 'decode_jwt', 'calls'],
+    ['handle_webhook', 'mark_paid', 'calls'],
+    ['handle_webhook', 'publish', 'calls'],
+    ['create_invoice', 'DatabasePool', 'calls'],
+    ['mark_paid', 'DatabasePool', 'calls'],
+    ['advance_order', 'DatabasePool', 'calls'],
+    ['advance_order', 'publish', 'calls'],
+    ['weekly_active_users', 'DatabasePool', 'calls'],
+    ['start', 'send_receipt', 'subscribes'],
+    ['publish', 'send_receipt', 'delivers']
+  ];
+  var COLORS = { billing: '#8B5CF6', shared: '#D4A843', orders: '#06B6D4', notif: '#22C55E' };
+
+  function drawGraph(stage, opts) {
+    opts = opts || {};
+    var w = stage.clientWidth || 700, h = stage.clientHeight || 300;
+    var svg = svgEl(stage, 'svg', { width: '100%', height: '100%', viewBox: '0 0 ' + w + ' ' + h, role: 'img' });
+    var pos = {};
+    NODES.forEach(function (n) { pos[n.id] = { x: n.x / 100 * w, y: n.y / 100 * (h - 30) + 15 }; });
+    var edgeEls = {}, nodeEls = {}, labelEls = {};
+    EDGES.forEach(function (e) {
+      var a = pos[e[0]], b = pos[e[1]];
+      var line = svgEl(svg, 'line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: '#21262D', 'stroke-width': 1.5 });
+      edgeEls[e[0] + '>' + e[1]] = line;
+    });
+    NODES.forEach(function (n) {
+      var p = pos[n.id];
+      var circ = svgEl(svg, 'circle', { cx: p.x, cy: p.y, r: n.god ? 11 : 7, fill: opts.gray ? '#1A2740' : COLORS[n.c], stroke: '#0A1628', 'stroke-width': 1.5 });
+      var lbl = svgEl(svg, 'text', { x: p.x, y: p.y - (n.god ? 16 : 12), 'text-anchor': 'middle', fill: '#94A3B8', 'font-size': '10', 'font-family': 'JetBrains Mono, monospace' });
+      lbl.textContent = n.id;
+      nodeEls[n.id] = circ; labelEls[n.id] = lbl;
+    });
+    return { svg: svg, pos: pos, edges: edgeEls, nodes: nodeEls, labels: labelEls };
+  }
+
+  /* GRAPH_BUILD */
+  var gbC = document.querySelector('[data-anim="graphBuild"]');
+  if (gbC) Seq(gbC, function (api) {
+    var g = drawGraph(api.stage, { gray: true });
+    Object.keys(g.edges).forEach(function (k) { g.edges[k].setAttribute('stroke-opacity', '0'); });
+    NODES.forEach(function (n) { g.nodes[n.id].setAttribute('fill-opacity', '0.15'); g.labels[n.id].setAttribute('fill-opacity', '0.25'); });
+    api.steps.push(function () {
+      api.caption('Start with the entities: every function, class and module becomes a node.');
+      NODES.forEach(function (n) { g.nodes[n.id].setAttribute('fill', COLORS[n.c]); g.nodes[n.id].setAttribute('fill-opacity', '1'); g.labels[n.id].setAttribute('fill-opacity', '1'); });
+    });
+    var batches = [
+      [['verify_token', 'decode_jwt'], 'EXTRACTED: verify_token calls decode_jwt — parsed directly from shared/auth.py.'],
+      [['post_invoice', 'verify_token'], 'The billing route calls the shared auth entry point…'],
+      [['post_invoice', 'create_invoice'], '…and its own invoice factory.'],
+      [['handle_webhook', 'mark_paid'], 'Webhook handling settles the invoice…'],
+      [['handle_webhook', 'publish'], '…then publishes payment.settled to the event bus.'],
+      [['create_invoice', 'DatabasePool'], 'Persistence edges: billing writes through the pool…'],
+      [['mark_paid', 'DatabasePool'], ''],
+      [['advance_order', 'DatabasePool'], '…and so do orders.'],
+      [['advance_order', 'publish'], 'Completed orders publish an event too.'],
+      [['weekly_active_users', 'DatabasePool'], 'The WAU metric reads orders_fact via the pool.'],
+      [['start', 'send_receipt'], 'notifications registers its consumer…'],
+      [['publish', 'send_receipt'], '…which the bus delivers payment.settled to. The folder tree never said billing and notifications talk. The edges do.']
+    ];
+    batches.forEach(function (b) {
+      api.steps.push(function () {
+        var k = b[0][0] + '>' + b[0][1];
+        var line = g.edges[k];
+        if (line) { line.setAttribute('stroke', '#E8ECF1'); line.setAttribute('stroke-opacity', '0.8'); line.setAttribute('stroke-width', '2'); }
+        if (b[1]) api.caption(b[1]);
+      });
+    });
+  });
+
+  /* TRAVERSAL */
+  var trC = document.querySelector('[data-anim="traversal"]');
+  if (trC) Seq(trC, function (api) {
+    var wrap = el(api.stage, { position: 'relative', height: '100%' });
+    var g = drawGraph(wrap);
+    var counter = el(api.stage, { position: 'absolute', top: '0', right: '0', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'var(--bg-card)', border: '1px solid var(--code-border)', borderRadius: '8px', padding: '0.4rem 0.7rem' }, 'tokens: 0 · files read: 0');
+    function highlight(id, color) {
+      g.nodes[id].setAttribute('stroke', color); g.nodes[id].setAttribute('stroke-width', '3');
+    }
+    function edgeGlow(a, b, color) {
+      var line = g.edges[a + '>' + b];
+      if (line) { line.setAttribute('stroke', color); line.setAttribute('stroke-opacity', '1'); line.setAttribute('stroke-width', '2.5'); }
+    }
+    api.steps.push(function () {
+      api.caption('Query: who calls decode_jwt — directly or transitively? Start at the target node.');
+      highlight('decode_jwt', '#F43F5E');
+      counter.textContent = 'tokens: 15 · files read: 0';
+    });
+    api.steps.push(function () {
+      api.caption('Hop 1 (reverse edge): verify_token calls it. One lookup, no file opened.');
+      edgeGlow('verify_token', 'decode_jwt', '#6366F1');
+      highlight('verify_token', '#6366F1');
+      counter.textContent = 'tokens: 25 · files read: 0';
+    });
+    api.steps.push(function () {
+      api.caption('Hop 2: post_invoice calls verify_token. A billing route reached from an auth helper in two hops.');
+      edgeGlow('post_invoice', 'verify_token', '#6366F1');
+      highlight('post_invoice', '#6366F1');
+      counter.textContent = 'tokens: 35 · files read: 0';
+    });
+    api.steps.push(function () {
+      api.caption('Done: blast radius = {verify_token, post_invoice}. The token meter barely moved — compare ~6,000 tokens to find one caller by reading the file.');
+      counter.style.borderColor = 'var(--success)';
+      counter.style.color = 'var(--success)';
+    });
+  });
+
+  /* COMMUNITY_DETECT */
+  var cdC = document.querySelector('[data-anim="communities"]');
+  if (cdC) Seq(cdC, function (api) {
+    var g = drawGraph(api.stage);
+    var hulls = {};
+    api.steps.push(function () {
+      api.caption('Raw graph: 12 nodes, 12 edges. Where are the subsystems? Nothing in the file tree says.');
+    });
+    var groups = [
+      ['billing', '#8B5CF6', 'Dense internal calls: post_invoice, create_invoice, handle_webhook, mark_paid cluster together — the billing community.'],
+      ['orders', '#06B6D4', 'advance_order and weekly_active_users form the orders community.'],
+      ['notif', '#22C55E', 'start and send_receipt: the notifications community — connected to billing only through the event bus.']
+    ];
+    groups.forEach(function (grp) {
+      api.steps.push(function () {
+        api.caption(grp[2]);
+        var members = NODES.filter(function (n) { return n.c === grp[0]; });
+        var xs = members.map(function (n) { return g.pos[n.id].x; });
+        var ys = members.map(function (n) { return g.pos[n.id].y; });
+        var minX = Math.min.apply(null, xs) - 22, maxX = Math.max.apply(null, xs) + 22;
+        var minY = Math.min.apply(null, ys) - 22, maxY = Math.max.apply(null, ys) + 22;
+        var rect = svgEl(g.svg, 'rect', { x: minX, y: minY, width: maxX - minX, height: maxY - minY, rx: 18, fill: grp[1], 'fill-opacity': '0.10', stroke: grp[1], 'stroke-opacity': '0.5', 'stroke-dasharray': '4 4' });
+        g.svg.insertBefore(rect, g.svg.firstChild);
+        hulls[grp[0]] = rect;
+      });
+    });
+    api.steps.push(function () {
+      api.caption('And one node belongs to no community — it belongs to ALL of them. DatabasePool: highest centrality, largest blast radius. The god node.');
+      var god = g.nodes['DatabasePool'];
+      god.setAttribute('stroke', '#D4A843');
+      god.setAttribute('stroke-width', '4');
+      var glow = 0, dir = 1;
+      (function pulse() {
+        glow += dir * 0.6; if (glow > 6 || glow < 0) dir *= -1;
+        god.setAttribute('r', 11 + glow * 0.5);
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) requestAnimationFrame(pulse);
+      })();
+    });
+    api.steps.push(function () {
+      api.caption('Three communities + one god node — discovered from edge density alone. On healthy code, clusters match services; when they don’t, the mismatch is the finding.');
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+36 nodes, 22 edges loaded
+  [PASS] callers(decode_jwt)
+  [PASS] blast_radius(decode_jwt) contains post_invoice
+  [PASS] EXTRACTED-only radius is smaller or equal
+ALL CHECKS PASSED

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Graphs for AI Agents — Course Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0A1628; --bg-secondary: #111D33; --bg-card: #162033; --bg-surface: #1A2740;
+  --text-primary: #E8ECF1; --text-secondary: #94A3B8; --text-muted: #64748B;
+  --accent-primary: #D4A843; --accent-hover: #E5BC5A; --accent-muted: rgba(212,168,67,0.15);
+  --success: #10B981; --info: #3B82F6;
+  --track-overview: #D4A843; --track-foundations: #6366F1; --track-structural: #8B5CF6;
+  --track-narrative: #06B6D4; --track-serving: #F97316; --track-production: #22C55E; --track-capstone: #D4A843;
+  --transition-fast: 150ms; --transition-normal: 300ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Source Sans 3', sans-serif; font-size: 1.05rem; line-height: 1.7; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+header.hero { text-align: center; padding: 4rem 1rem 3rem; }
+.hero .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent-primary); }
+.hero h1 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: clamp(2rem, 5vw, 3.2rem); margin: 0.75rem 0; line-height: 1.15; }
+.hero h1 .grad { background: linear-gradient(90deg, #6366F1, #06B6D4, #22C55E, #D4A843); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p.sub { color: var(--text-secondary); max-width: 720px; margin: 0 auto 2rem; }
+.hero .cta { display: inline-block; background: var(--accent-primary); color: #0A1628; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; padding: 0.9rem 2rem; border-radius: 10px; text-decoration: none; transition: background var(--transition-fast), transform var(--transition-fast); }
+.hero .cta:hover { background: var(--accent-hover); transform: translateY(-2px); }
+.stats { display: flex; gap: 2.5rem; justify-content: center; flex-wrap: wrap; margin-top: 2.5rem; }
+.stat { text-align: center; }
+.stat .n { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.9rem; color: var(--accent-primary); }
+.stat .l { font-size: 0.85rem; color: var(--text-muted); }
+.layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin: 3rem 0; }
+.layer { background: var(--bg-card); border: 1px solid #21262D; border-radius: 12px; padding: 1.5rem; border-top: 3px solid var(--lc, var(--accent-primary)); }
+.layer h3 { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.1rem; margin-bottom: 0.4rem; color: var(--lc, var(--text-primary)); }
+.layer p { font-size: 0.92rem; color: var(--text-secondary); }
+section.track { margin: 3rem 0; }
+.track-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+.track-head .dot { width: 14px; height: 14px; border-radius: 4px; background: var(--tc); flex: none; }
+.track-head h2 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.4rem; }
+.track-head .count { font-size: 0.8rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1rem; }
+a.card { display: block; background: var(--bg-card); border: 1px solid #21262D; border-left: 4px solid var(--tc); border-radius: 10px; padding: 1.25rem 1.4rem; text-decoration: none; color: var(--text-primary); transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast); }
+a.card:hover { transform: translateY(-3px); border-color: var(--tc); background: var(--bg-surface); }
+a.card:focus-visible { outline: 2px solid var(--tc); outline-offset: 2px; }
+.card .mod { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--tc); }
+.card h3 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: 1.08rem; margin: 0.3rem 0 0.45rem; }
+.card p { font-size: 0.9rem; color: var(--text-secondary); }
+.card .meta { margin-top: 0.7rem; font-size: 0.78rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.path { background: var(--bg-secondary); border: 1px solid #21262D; border-radius: 12px; padding: 1.75rem; margin: 3rem 0; }
+.path h2 { font-family: 'Bricolage Grotesque', sans-serif; margin-bottom: 0.75rem; }
+.path ol { margin-left: 1.4rem; color: var(--text-secondary); }
+.path li { margin: 0.3rem 0; }
+footer { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 3rem 1rem; }
+footer a { color: var(--accent-primary); }
+@media (max-width: 768px) { .wrap { padding: 1rem; } .stats { gap: 1.25rem; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">A 14-part technical course</div>
+  <h1>Knowledge Graphs for AI Agents<br><span class="grad">From RAG Limits to Self-Updating Codebase Brains</span></h1>
+  <p class="sub">Your coding agent reads 147 files to fix a 3-line bug because it has no map. This course teaches the three context layers that fix it — structural graphs (tree-sitter, Graphify, CodeGraph), narrative knowledge (Google's Open Knowledge Format), and vector RAG where it still belongs — plus the pipelines that keep them honest in production.</p>
+  <a class="cta" href="M00-context-problem.html">Start with Module 0 →</a>
+  <div class="stats" role="list" aria-label="Course statistics">
+    <div class="stat" role="listitem"><div class="n">13+1</div><div class="l">modules + capstone</div></div>
+    <div class="stat" role="listitem"><div class="n">6</div><div class="l">tracks</div></div>
+    <div class="stat" role="listitem"><div class="n">10</div><div class="l">hands-on labs</div></div>
+    <div class="stat" role="listitem"><div class="n">1</div><div class="l">mock monorepo you graph end-to-end</div></div>
+  </div>
+</header>
+
+<div class="layers" aria-label="The three context layers">
+  <div class="layer" style="--lc:#8B5CF6"><h3>Structural</h3><p>What the code <em>is</em> — deterministic AST call graphs. tree-sitter, Graphify, CodeGraph, okf-rs. Zero LLM cost, zero hallucination.</p></div>
+  <div class="layer" style="--lc:#06B6D4"><h3>Narrative</h3><p>What engineers <em>know</em> — curated Markdown + YAML concepts in Google's Open Knowledge Format. Git-native, agent-readable, one required field.</p></div>
+  <div class="layer" style="--lc:#3B82F6"><h3>Semantic</h3><p>The messy long tail — vector RAG over tickets, threads, and old docs. Still the right tool, once it stops being the only tool.</p></div>
+</div>
+
+<section class="track" style="--tc: var(--track-overview)">
+  <div class="track-head"><span class="dot"></span><h2>Track 0 — Overview</h2><span class="count">1 module</span></div>
+  <div class="cards">
+    <a class="card" href="M00-context-problem.html"><span class="mod">M00 · Module 1 of 14</span><h3>The Context Problem &amp; the Knowledge Lifecycle</h3><p>The 147-file bug fix, exploration vs reasoning tokens, Karpathy's LLM Wiki, the 90-day ecosystem, and the extract → curate → serve → maintain lifecycle. Code-free gateway.</p><div class="meta">~30 min · code-free</div></a>
+  </div>
+</section>
+
+<section class="track" style="--tc: var(--track-foundations)">
+  <div class="track-head"><span class="dot"></span><h2>Track 1 — Foundations</h2><span class="count">2 modules</span></div>
+  <div class="cards">
+    <a class="card" href="M01-knowledge-graph-fundamentals.html"><span class="mod">M01 · Module 2 of 14</span><h3>Knowledge Graph Fundamentals</h3><p>Nodes, typed edges, traversal vs search, communities, god nodes, blast radius — and the EXTRACTED / INFERRED / AMBIGUOUS honesty tags. Build a graph in pure Python.</p><div class="meta">~45 min · lab M01</div></a>
+    <a class="card" href="M02-rag-baseline-limits.html"><span class="mod">M02 · Module 3 of 14</span><h3>The RAG Baseline and Where It Breaks</h3><p>Shredded context, probabilistic retrieval vs canonical truth, the ACL leak, and where vector RAG still wins. Watch your own pipeline retrieve a stale definition.</p><div class="meta">~45 min · lab M02</div></a>
+  </div>
+</section>
+
+<section class="track" style="--tc: var(--track-structural)">
+  <div class="track-head"><span class="dot"></span><h2>Track 2 — Structural Graphs</h2><span class="count">3 modules</span></div>
+  <div class="cards">
+    <a class="card" href="M03-tree-sitter-parsing.html"><span class="mod">M03 · Module 4 of 14</span><h3>Parsing Code into Graphs with tree-sitter</h3><p>Fault-tolerant ASTs, extraction queries, deterministic zero-LLM parsing, and the name-resolution ladder from heuristics to LSP.</p><div class="meta">~60 min · lab M03</div></a>
+    <a class="card" href="M04-graphify-in-practice.html"><span class="mod">M04 · Module 5 of 14</span><h3>Graphify in Practice</h3><p>/graphify end-to-end: three artifacts, Leiden communities, god nodes, path queries — and the honest read of the 71.5x benchmark (replications: 6.8x–49x).</p><div class="meta">~60 min · lab M04</div></a>
+    <a class="card" href="M05-tool-landscape.html"><span class="mod">M05 · Module 6 of 14</span><h3>The Tool Landscape: CodeGraph, okf-rs, and Friends</h3><p>SQLite vs Markdown substrates, three-layer auto-sync, framework route recognition, per-language benchmark spread, and the comparison axes for any tool.</p><div class="meta">~45 min</div></a>
+  </div>
+</section>
+
+<section class="track" style="--tc: var(--track-narrative)">
+  <div class="track-head"><span class="dot"></span><h2>Track 3 — Narrative Knowledge</h2><span class="count">3 modules</span></div>
+  <div class="cards">
+    <a class="card" href="M06-okf-specification.html"><span class="mod">M06 · Module 7 of 14</span><h3>The Open Knowledge Format Specification</h3><p>Bundles, concepts, one required field, index.md and log.md, progressive disclosure, and leniency by design — the one-page spec hiding a systems problem.</p><div class="meta">~60 min · lab M06</div></a>
+    <a class="card" href="M07-okf-for-codebases.html"><span class="mod">M07 · Module 8 of 14</span><h3>OKF for Codebases</h3><p>From BigQuery tables to services: Responsibilities/Dependencies concepts, cross-links as a curated dependency graph, and the okf CLI's 13-rule lint.</p><div class="meta">~45 min · lab M07</div></a>
+    <a class="card" href="M08-enrichment-pipeline.html"><span class="mod">M08 · Module 9 of 14</span><h3>The Enrichment Pipeline: Self-Updating Graphs</h3><p>The two-pass agent (draft, then cite), diff-scoped scans as the entire cost model, lint gates, and the git hook that keeps the bundle honest.</p><div class="meta">~60 min · lab M08</div></a>
+  </div>
+</section>
+
+<section class="track" style="--tc: var(--track-serving)">
+  <div class="track-head"><span class="dot"></span><h2>Track 4 — Serving &amp; Architecture</h2><span class="count">2 modules</span></div>
+  <div class="cards">
+    <a class="card" href="M09-serving-graphs-mcp.html"><span class="mod">M09 · Module 10 of 14</span><h3>Serving Graphs to Agents over MCP</h3><p>graph_callers in one tool call, the composite explore, 6,000-vs-15-token arithmetic, and the startup-cache trap.</p><div class="meta">~60 min · lab M09</div></a>
+    <a class="card" href="M10-hybrid-context-stack.html"><span class="mod">M10 · Module 11 of 14</span><h3>The Hybrid Context Stack</h3><p>Three layers, not three competitors: failure-mode-driven adoption, the staged query pipeline, the router pattern, and the ERPNext 70.8% → 82.0% case study.</p><div class="meta">~45 min</div></a>
+  </div>
+</section>
+
+<section class="track" style="--tc: var(--track-production)">
+  <div class="track-head"><span class="dot"></span><h2>Track 5 — Production</h2><span class="count">2 modules</span></div>
+  <div class="cards">
+    <a class="card" href="M11-drift-staleness-observability.html"><span class="mod">M11 · Module 12 of 14</span><h3>Drift, Staleness &amp; Observability</h3><p>Graphs don't self-heal: four documented silent hook failures, artifact desync, the O(V×E) scale wall, and the freshness gate that catches a lying map within 24 hours.</p><div class="meta">~60 min · lab M11</div></a>
+    <a class="card" href="M12-structuring-projects-whats-next.html"><span class="mod">M12 · Module 13 of 14</span><h3>Structuring Projects So Agents Don't Get Lost + What's Next</h3><p>Six project-structure patterns (layered CLAUDE.md, skills, subagents, deny rules, sparse worktrees, LSP) — progressive disclosure by hand — plus the road to OKF v0.2.</p><div class="meta">~45 min</div></a>
+  </div>
+</section>
+
+<section class="track" style="--tc: var(--track-capstone)">
+  <div class="track-head"><span class="dot"></span><h2>Capstones</h2><span class="count">1 required · 1 bonus</span></div>
+  <div class="cards">
+    <a class="card" href="CAPSTONE-knowledge-pipeline.html"><span class="mod">CAPSTONE 1 · Module 14 of 14 · ★★★★☆</span><h3>Build a Self-Updating Knowledge Graph Pipeline</h3><p>Wire everything together over the orderflow monorepo: structural graph + OKF bundle + enrichment hook + MCP server + CI freshness gate — then measure your real improvement multiple and explain it honestly.</p><div class="meta">7 phases · 18 steps · labs/CAPSTONE-knowledge-pipeline</div></a>
+    <a class="card" href="CAPSTONE-2-java-token-benchmark.html"><span class="mod">CAPSTONE 2 · Bonus · ★★★☆☆</span><h3>Large Java Codebase — Measure the Token Reduction</h3><p>Graph commons-lang (624 files) and spring-framework (9,195 files) with tree-sitter-java, serve them over MCP, and produce your own benchmark table: 33.7x per-question on spring, 567 files of exploration replaced by one tool call — with the honest per-question vs session-level framing.</p><div class="meta">6 phases · real measured numbers · labs/CAPSTONE-2-java-token-benchmark</div></a>
+  </div>
+</section>
+
+<div class="path">
+  <h2>Suggested path</h2>
+  <ol>
+    <li>Everyone starts at <strong>M00</strong> — the whole picture before the pieces.</li>
+    <li>Tracks 1–3 in order: each module adds exactly one layer onto the <code>orderflow</code> running example.</li>
+    <li>Already run agents in production? You may jump from M04 to M08 → M09 → M11, then return for M05/M10.</li>
+    <li>Finish with the capstone — it reuses every lab solution you built along the way.</li>
+  </ol>
+</div>
+
+<footer>
+  Sibling course: <a href="../../claude-agent-course-final-adv/output/index.html">Building AI Agents with Claude</a> · Labs live in <code>labs/</code> · Start anytime: <a href="M00-context-problem.html">M00 →</a>
+</footer>
+
+</div>
+</body>
+</html>

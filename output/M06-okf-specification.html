@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M06 · The Open Knowledge Format Specification — Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Primary */
+  --bg-primary: #0A1628;
+  --bg-secondary: #111D33;
+  --bg-card: #162033;
+  --bg-surface: #1A2740;
+  /* Text */
+  --text-primary: #E8ECF1;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  /* Accent */
+  --accent-primary: #D4A843;
+  --accent-hover: #E5BC5A;
+  --accent-muted: rgba(212, 168, 67, 0.15);
+  /* Semantic */
+  --success: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --error: #F43F5E;
+  --error-bg: rgba(244, 63, 94, 0.1);
+  --info: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.1);
+  /* Track Signature Colors */
+  --track-overview: #D4A843;
+  --track-foundations: #6366F1;
+  --track-structural: #8B5CF6;
+  --track-narrative: #06B6D4;
+  --track-serving: #F97316;
+  --track-production: #22C55E;
+  --track-capstone: #D4A843;
+  --track-color: #06B6D4;
+  /* Code Editor */
+  --code-bg: #0D1117;
+  --code-border: #21262D;
+  --code-text: #C9D1D9;
+  --code-comment: #8B949E;
+  --code-keyword: #FF7B72;
+  --code-string: #A5D6FF;
+  --code-function: #D2A8FF;
+  --code-number: #79C0FF;
+  /* Animation */
+  --transition-fast: 150ms;
+  --transition-normal: 300ms;
+  --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 3rem;
+}
+.sidebar-nav {
+  position: sticky;
+  top: 2rem;
+  height: calc(100vh - 4rem);
+  overflow-y: auto;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.85rem;
+}
+.sidebar-nav h4 { color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.7rem; margin-bottom: 0.75rem; }
+.sidebar-nav a {
+  display: block; color: var(--text-secondary); text-decoration: none;
+  padding: 0.4rem 0.6rem; border-left: 2px solid var(--code-border);
+  transition: all var(--transition-fast);
+}
+.sidebar-nav a:hover, .sidebar-nav a.active { color: var(--track-color); border-left-color: var(--track-color); background: rgba(6,182,212,0.06); }
+.content { max-width: 800px; min-width: 0; }
+.section { margin-bottom: 4rem; }
+.subsection { margin-bottom: 2.5rem; }
+h1, h2, h3 { font-family: 'Bricolage Grotesque', sans-serif; }
+h1 { font-weight: 700; font-size: 2rem; margin: 0.5rem 0 1rem; }
+h2 { font-weight: 700; font-size: 1.5rem; margin: 2.5rem 0 1rem; scroll-margin-top: 1rem; }
+h3 { font-weight: 600; font-size: 1.25rem; margin: 2rem 0 0.75rem; scroll-margin-top: 1rem; }
+p { margin-bottom: 1rem; }
+ul, ol { margin: 0 0 1rem 1.5rem; }
+li { margin-bottom: 0.4rem; }
+strong { font-weight: 600; }
+a { color: var(--track-color); }
+.course-kicker { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--accent-primary); letter-spacing: 0.04em; }
+.track-chip {
+  display: inline-block; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: 0.75rem;
+  color: var(--track-color); border: 1px solid var(--track-color); border-radius: 999px;
+  padding: 0.15rem 0.7rem; margin: 0.6rem 0; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.meta-row { display: flex; flex-wrap: wrap; gap: 1.25rem; color: var(--text-secondary); font-size: 0.9rem; margin: 0.75rem 0 0.5rem; }
+.meta-row span strong { color: var(--text-primary); }
+.progress-bar { height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; margin: 1rem 0; }
+.progress-fill { height: 100%; width: 50%; background: linear-gradient(90deg, var(--track-color), var(--accent-primary)); border-radius: 2px; transition: width var(--transition-slow); }
+.progress-label { font-size: 0.8rem; color: var(--text-muted); font-family: 'Bricolage Grotesque', sans-serif; }
+.objective-list { list-style: none; margin-left: 0; }
+.objective-list li { padding-left: 1.75rem; position: relative; margin-bottom: 0.6rem; }
+.objective-list li::before { content: '◈'; position: absolute; left: 0.25rem; color: var(--track-color); }
+.level-chip { display: inline-block; background: var(--info-bg); color: var(--info); border-radius: 6px; font-size: 0.8rem; padding: 0.1rem 0.6rem; font-family: 'Bricolage Grotesque', sans-serif; }
+.analogy-box, .tech-def-box, .callout {
+  border-radius: 0 8px 8px 0; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid;
+}
+.analogy-box { background: var(--accent-muted); border-left-color: var(--accent-primary); }
+.analogy-box::before { content: '💡 Everyday Analogy'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--accent-primary); display: block; margin-bottom: 0.5rem; }
+.tech-def-box { background: var(--info-bg); border-left-color: var(--info); }
+.tech-def-box::before { content: '📐 Technical Definition'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--info); display: block; margin-bottom: 0.5rem; }
+.box-label { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: 0.5rem; }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-cost { background: var(--warning-bg); border-left-color: var(--accent-primary); }
+.callout-cost .box-label { color: var(--accent-primary); }
+.callout-security { background: var(--error-bg); border-left-color: var(--error); }
+.callout-security .box-label { color: var(--error); }
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-info { background: var(--info-bg); border-left-color: var(--info); }
+.callout-info .box-label { color: var(--info); }
+.callout p:last-child, .analogy-box p:last-child, .tech-def-box p:last-child { margin-bottom: 0; }
+.term-tooltip { position: relative; color: var(--accent-primary); cursor: help; border-bottom: 1px dashed var(--accent-primary); }
+.term-tooltip .tooltip-content {
+  position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  background: var(--bg-card); border: 1px solid var(--accent-primary); border-radius: 8px;
+  padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--text-primary); width: 280px;
+  opacity: 0; pointer-events: none; transition: opacity var(--transition-fast); z-index: 10;
+}
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+.code-block { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 10px; margin: 1.25rem 0; overflow: hidden; }
+.code-head { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 1rem; border-bottom: 1px solid var(--code-border); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); }
+.copy-btn { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; border-radius: 6px; padding: 0.2rem 0.6rem; cursor: pointer; transition: all var(--transition-fast); }
+.copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+pre { padding: 1rem; overflow-x: auto; }
+code { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; color: var(--code-text); }
+p code, li code, td code { background: var(--bg-surface); border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.85rem; }
+.tok-c { color: var(--code-comment); font-style: italic; }
+.tok-k { color: var(--code-keyword); }
+.tok-s { color: var(--code-string); }
+.tok-f { color: var(--code-function); }
+.tok-n { color: var(--code-number); }
+.code-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--code-border); margin-top: 1.25rem; }
+.code-tab { padding: 0.5rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px; color: var(--text-muted); transition: all var(--transition-fast); }
+.code-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+.code-panel { display: none; }
+.code-panel.active { display: block; }
+.code-panel .code-block { margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
+table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.95rem; }
+th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--code-border); vertical-align: top; }
+th { font-family: 'Bricolage Grotesque', sans-serif; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+.table-wrap { overflow-x: auto; }
+.animation-container { background: var(--bg-secondary); border: 1px solid var(--code-border); border-radius: 12px; padding: 2rem 2rem 4rem; margin: 2rem 0; position: relative; min-height: 300px; }
+.anim-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--track-color); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
+.animation-controls { display: flex; gap: 0.5rem; position: absolute; bottom: 1rem; right: 1rem; }
+.animation-controls button { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-primary); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all var(--transition-fast); }
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.anim-caption { position: absolute; bottom: 1.2rem; left: 2rem; right: 10rem; font-size: 0.85rem; color: var(--text-secondary); font-style: italic; min-height: 1.4em; }
+.anim-fallback { display: none; color: var(--text-secondary); font-size: 0.9rem; }
+.quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.quiz-question h3 { margin-top: 0; font-size: 1.05rem; }
+.quiz-option { padding: 0.75rem 1rem; margin: 0.5rem 0; border: 1px solid var(--code-border); border-radius: 8px; cursor: pointer; transition: all var(--transition-fast); }
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-option[aria-disabled="true"] { cursor: default; }
+.quiz-feedback { margin-top: 0.75rem; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; display: none; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); color: var(--text-primary); }
+.quiz-feedback.bad { background: var(--error-bg); color: var(--text-primary); }
+.cheat-sheet { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.cheat-card { background: var(--bg-card); border: 1px solid var(--code-border); border-left: 3px solid var(--track-color); border-radius: 10px; padding: 1rem; font-size: 0.9rem; }
+.cheat-card strong { font-family: 'Bricolage Grotesque', sans-serif; display: block; margin-bottom: 0.3rem; color: var(--track-color); }
+.nav-links { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; }
+.nav-links a { flex: 1; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 10px; padding: 1rem 1.25rem; text-decoration: none; color: var(--text-primary); font-family: 'Bricolage Grotesque', sans-serif; transition: all var(--transition-fast); }
+.nav-links a:hover { border-color: var(--track-color); }
+.nav-links .dir { display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.nav-links .next { text-align: right; }
+/* --- animation stage primitives --- */
+.stage { position: relative; min-height: 240px; }
+.tree-row { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; padding: 0.18rem 0.5rem; opacity: 0; transform: translateX(-12px); transition: all 500ms ease; border-radius: 6px; white-space: pre; }
+.tree-row.shown { opacity: 1; transform: none; }
+.tree-row.hl { background: rgba(6,182,212,0.14); color: var(--track-color); }
+.tree-row.pulse { animation: pulseGlow 1.6s ease-in-out infinite; }
+@keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(6,182,212,0); } 50% { box-shadow: 0 0 14px 2px rgba(6,182,212,0.45); } }
+.fm-card { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 10px; padding: 1rem; max-width: 430px; white-space: pre-wrap; position: relative; }
+.fm-yaml { display: block; border: 1px dashed transparent; border-radius: 8px; padding: 0.3rem; transition: all 600ms ease; }
+.fm-yaml.lifted { border-color: var(--track-color); background: rgba(6,182,212,0.08); transform: translateY(-6px); }
+.fm-type { transition: all 400ms; border-radius: 4px; padding: 0 0.15rem; }
+.fm-type.hl { background: var(--accent-muted); color: var(--accent-primary); font-weight: 600; }
+.fm-body { display: block; border: 1px dashed transparent; border-radius: 8px; padding: 0.3rem; transition: all 600ms ease; }
+.fm-body.lifted { border-color: var(--success); background: var(--success-bg); }
+.fm-link { transition: all 400ms; border-radius: 4px; padding: 0 0.15rem; }
+.fm-link.glow { background: rgba(6,182,212,0.2); color: var(--track-color); font-weight: 600; }
+.anno { position: absolute; font-size: 0.75rem; font-family: 'Bricolage Grotesque', sans-serif; color: var(--track-color); opacity: 0; transition: opacity 500ms; background: var(--bg-card); border: 1px solid var(--track-color); border-radius: 6px; padding: 0.2rem 0.55rem; }
+.anno.shown { opacity: 1; }
+.meter { height: 14px; background: var(--bg-surface); border-radius: 7px; overflow: hidden; border: 1px solid var(--code-border); }
+.meter-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--success), var(--warning), var(--error)); transition: width 900ms ease; }
+.agent-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--accent-primary); box-shadow: 0 0 10px rgba(212,168,67,0.7); position: absolute; transition: all 800ms ease; }
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; }
+  .sidebar-nav { position: static; height: auto; margin-bottom: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+  .anim-live { display: none; }
+  .anim-fallback { display: block; }
+  .animation-controls { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+<nav class="sidebar-nav" aria-label="Module sections">
+  <h4>Module 6 · Contents</h4>
+  <a href="#objectives">Learning Objectives</a>
+  <a href="#bridge">From Structure to Narrative</a>
+  <a href="#what-is-okf">What OKF Is</a>
+  <a href="#lineage">Lineage &amp; Release</a>
+  <a href="#bundle-anatomy">Bundle Anatomy</a>
+  <a href="#frontmatter">Frontmatter</a>
+  <a href="#reserved-files">index.md &amp; log.md</a>
+  <a href="#leniency">Conformance Leniency</a>
+  <a href="#crosslinks">Cross-Links as a Graph</a>
+  <a href="#reading-okf">Code: Reading a Bundle</a>
+  <a href="#hands-on">Hands-On Exercise</a>
+  <a href="#quiz">Knowledge Check</a>
+  <a href="#summary">Summary</a>
+  <a href="#references">References</a>
+</nav>
+<main class="content">
+
+<header class="section">
+  <div class="course-kicker">KNOWLEDGE GRAPHS FOR AI AGENTS</div>
+  <div class="track-chip">Track 3 · Narrative Knowledge</div>
+  <h1>M06 — The Open Knowledge Format Specification</h1>
+  <div class="meta-row">
+    <span>⏱ <strong>~60 min</strong></span>
+    <span>📋 Prerequisites: <strong>M00–M05</strong></span>
+    <span class="level-chip">Intermediate</span>
+  </div>
+  <div class="progress-bar" role="progressbar" aria-valuenow="7" aria-valuemin="1" aria-valuemax="14" aria-label="Course progress: module 7 of 14"><div class="progress-fill"></div></div>
+  <div class="progress-label">Module 7 of 14</div>
+</header>
+
+<section class="section" id="objectives">
+  <h2>Learning Objectives</h2>
+  <ul class="objective-list">
+    <li>Explain what the Open Knowledge Format (OKF) standardizes — and, just as importantly, everything it deliberately does <em>not</em> include.</li>
+    <li>Author a valid OKF concept file from scratch: YAML frontmatter with the one required field, a Markdown body, and cross-links.</li>
+    <li>Describe the role of the two reserved filenames, <code>index.md</code> and <code>log.md</code>, and how progressive disclosure works as a token-budget control.</li>
+    <li>State the conformance leniency rules and argue both sides of the trade-off they create.</li>
+    <li>Read a bundle programmatically in about three lines of Python or Node.js.</li>
+  </ul>
+</section>
+
+<section class="section" id="bridge">
+  <h2>Bridge: From Structure to Narrative</h2>
+  <p>In Track 2 you built and queried <em>structural</em> graphs: tree-sitter parsed the orderflow code, Graphify clustered it into communities, and you could answer "who calls <code>decode_jwt</code>?" deterministically. That graph knows everything about what the code <strong>is</strong>. It knows nothing about what your team <strong>knows</strong>.</p>
+  <p>Consider a question the structural graph cannot answer: <em>"What is the canonical definition of Weekly Active Users?"</em> The AST can find the function <code>weekly_active_users()</code>, but it cannot tell you that this function is the attested source of truth, that the exclusion of internal testers was a deliberate policy decision from a 2026 data-governance review, or that the old definition in a stale doc is wrong. That knowledge lives in people's heads, in wikis, in Slack threads — scattered, unversioned, and invisible to agents.</p>
+  <p>This module introduces the format designed to fix exactly that: a way to write down curated, canonical knowledge so that both humans and agents can read it deterministically. Track 3 is about the <strong>narrative layer</strong>.</p>
+</section>
+
+<section class="section" id="what-is-okf">
+  <h2>What OKF Is (and Isn't)</h2>
+
+  <div class="analogy-box">
+    <p><strong>BEFORE:</strong> Before USB-C, every device had its own connector. Your iPhone needed Lightning, your Android needed Micro-USB, your laptop needed a barrel jack, your camera needed Mini-USB. Every vendor invented a plug, and every plug needed its own cable, charger, and adapter.</p>
+    <p><strong>PAIN:</strong> The pain wasn't any single cable — it was the <em>multiplication</em>. Every new device meant another cable to buy, carry, and lose. Knowledge inside companies works the same way today: one team keeps definitions in Confluence, another in a metadata catalog, another in code comments, another in a senior engineer's memory. Every new AI agent needs a custom adapter for each source, rebuilt from scratch, every time.</p>
+    <p><strong>MAPPING:</strong> OKF is the USB-C of organizational knowledge — one analyst called it exactly that: <em>"the USB-C cable of AI knowledge — a universal connector that anyone can produce and anyone can consume, without proprietary SDKs, APIs, or lock-in."</em> It doesn't replace what's in the sources; it standardizes the <em>shape</em> knowledge takes so any agent can plug in and read it, natively, with no translation layer.</p>
+  </div>
+
+  <div class="tech-def-box">
+    <p>The <strong>Open Knowledge Format (OKF)</strong> is a vendor-neutral <span class="term-tooltip" tabindex="0">specification<span class="tooltip-content">A written standard describing exactly what a valid artifact looks like, so independent tools can produce and consume it interchangeably. A spec is a contract, not software.</span></span> for representing curated knowledge as a directory of plain <span class="term-tooltip" tabindex="0">Markdown<span class="tooltip-content">The lightweight plain-text formatting language used in READMEs everywhere: # for headings, [text](url) for links, | pipes | for tables. Renders natively on GitHub.</span></span> files, each carrying a small <span class="term-tooltip" tabindex="0">YAML frontmatter<span class="tooltip-content">A block of key: value metadata at the very top of a Markdown file, fenced by two lines containing only ---. YAML is the human-friendly config syntax used by tools like GitHub Actions.</span></span> block. It is <strong>not</strong> a database, <strong>not</strong> a model, <strong>not</strong> a cloud service, and <strong>not</strong> an SDK. It is a <em>wire format</em>: rules about file shape, nothing more.</p>
+  </div>
+
+  <p>Three consequences follow from "format, not platform," and each one matters in practice. First, there is <strong>nothing to install</strong>. The spec's own FAQ puts it memorably: <em>"If you can <code>cat</code> a file, you can read OKF; if you can <code>git clone</code> a repo, you can ship it."</em> Second, the knowledge is <strong>Git-native</strong>: version-controlled, auditable through pull requests, diffable line by line. When your company's definition of "Revenue" changes, the change has an author, a timestamp, a review trail. Third, it is <strong>human-and-agent readableat the same time</strong>: the same file renders beautifully on GitHub for a person and parses in three lines for an agent. Compare that to a vector index, which is meaningful to exactly one embedding model and opaque to everyone else.</p>
+  <p>It's worth pausing on what OKF deliberately leaves out, because the omissions are the design. There is <strong>no built-in search engine</strong> — no indexing, no ranking, no query language. There is <strong>no schema registry</strong> — nobody validates that your <code>type</code> values are drawn from an approved list. There is <strong>no sync mechanism</strong> — the spec has no opinion on how bundles get created or stay current (that's Module 8's entire subject). Prior enterprise metadata standards demanded schema registries, validation servers, and vendor SDKs before you could write a single entry; OKF's bet is that minimalism is what makes a standard adoptable at all.</p>
+
+  <div class="callout callout-why">
+    <span class="box-label">✅ Why It Matters</span>
+    <p>Recall M02's churn-rate disaster: a RAG pipeline blended a 2023 slide deck, an outdated wiki, and a Slack argument into a confidently wrong SQL query that shipped for three weeks. The root cause wasn't retrieval quality — it was that <em>the truth was never written down in one canonical, versioned place</em>. A folder of well-formed Markdown fixes that in a way no similarity search ever can: for canonical facts, 90% semantic similarity is a failure; 100% exactness is non-negotiable.</p>
+  </div>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"OKF is Google's new database product."</strong> — No. It's an open specification published on GitHub. There is no service to sign up for, no billing account, no runtime. Google's own Knowledge Catalog can <em>serve</em> OKF bundles, but the format works identically in a bare Git repo.</p>
+    <p><strong>"OKF replaces RAG."</strong> — No. OKF has no search of its own; past the size a person or agent can browse by following index files, something still has to index it — often the same retrieval machinery RAG already provides. The honest framing: "RAG, pointed at something worth retrieving from." Curated Markdown with explicit links is far better material to index than a PDF chopped into arbitrary chunks. Module 10 builds the full hybrid picture.</p>
+    <p><strong>"It's just documentation — we already have a wiki."</strong> — The difference is contract and consumer. A wiki has no format guarantees, so agents can't parse it reliably; and human wikis rot because upkeep is boring. OKF gives agents a guaranteed shape AND assumes agents do the boring upkeep (M08).</p>
+  </div>
+</section>
+
+<section class="section" id="lineage">
+  <h2>Lineage &amp; Release: How a One-Page Spec Happened</h2>
+  <p>On <strong>June 12–13, 2026</strong>, Google Cloud's <strong>Sam McVeety and Amir Hormati</strong> published OKF <strong>v0.1</strong> through the <code>GoogleCloudPlatform/knowledge-catalog</code> repository. Their announcement framed it plainly: <em>"a vendor-neutral, agent- and human-friendly standard for representing the metadata, context, and curated knowledge that modern AI systems need."</em> The problem it targets is what the Google Cloud blog calls the <strong>context-assembly problem</strong>: table schemas, metric definitions, JOIN paths, and incident guides live scattered across catalogs, wikis, code comments, and experienced employees' memories — so every new agent rebuilds the same context from scratch.</p>
+  <p>Google is explicit about the intellectual lineage. In April 2026, Andrej Karpathy published the <span class="term-tooltip" tabindex="0">LLM Wiki<span class="tooltip-content">Karpathy's April 2026 thought experiment: instead of a model re-searching raw documents on every query, let it build and maintain a living, cross-linked Markdown wiki as durable external memory.</span></span> idea: an LLM should maintain a compiled, cross-linked Markdown wiki as durable external memory — the way source code is compiled once and reused rather than re-parsed on every read. His framing for why this works stuck with a lot of engineers, and Google's materials quote the spirit of it directly: <em>"LLMs don't get bored, don't forget to update a cross-reference, and can touch 15 files in one pass. The bookkeeping that causes humans to abandon personal wikis is exactly what LLMs are good at."</em></p>
+  <p>OKF didn't invent a substrate, either. The <code>AGENTS.md</code> convention had already spread across tens of thousands of open-source projects; developers were already wiring Obsidian-style vaults straight into coding agents. As one analysis put it: <strong>OKF standardizes the substrate that already won — Markdown, frontmatter, and Git.</strong> The full v0.1 conformance spec fits on a single page: three conformance rules, total. That minimalism is not a gap to be filled later. It is the entire design philosophy — <em>"the spec defines the interoperability surface, not the content model."</em></p>
+  <p>And it shipped with proof it scales past a toy: Google published reference sample bundles (a GA4 e-commerce bundle, Stack Overflow, Bitcoin) plus a BigQuery metadata-extraction agent. The GA4 demo bundle is <strong>17 Markdown files</strong> — indexes, references, datasets, tables — demonstrating that this restraint holds up on something real.</p>
+</section>
+
+<section class="section" id="bundle-anatomy">
+  <h2>Bundle Anatomy: Directories, Concepts, and Paths as Identity</h2>
+
+  <div class="tech-def-box">
+    <p>A <strong>bundle</strong> is a directory of Markdown files. A <strong>concept</strong> is one file representing exactly one unit of knowledge — a table, a metric, a service, a runbook, an API endpoint. The file's <strong>path is its identity</strong>: <code>analytics/metrics/weekly_active_users.md</code> <em>is</em> the concept's ID. There is no separate ID system to keep in sync with file locations — the filesystem itself is the index.</p>
+  </div>
+
+  <p>Path-as-identity sounds like a small decision, but it kills an entire class of maintenance bugs. Every system that assigns synthetic IDs (UUIDs in a catalog, page IDs in a wiki) eventually faces drift between the ID registry and reality: the page moved, the record was cloned, the pointer dangles. When the path <em>is</em> the ID, moving a file is renaming a concept — visible in Git, reviewable in a PR, greppable everywhere it's referenced. One thing to update, one place to see it.</p>
+  <p>Here is what a real bundle looks like — an internal "company brain" with knowledge compiled into hyper-focused, singular concepts:</p>
+
+  <div class="animation-container" id="anim-bundle">
+    <div class="anim-title">BUNDLE_TREE — a knowledge bundle assembles</div>
+    <div class="anim-live stage" aria-hidden="true">
+      <div class="tree-row" data-step="0">company_brain/</div>
+      <div class="tree-row" data-step="1">├── index.md              &#8592; root entry point (progressive disclosure)</div>
+      <div class="tree-row" data-step="2">├── engineering/</div>
+      <div class="tree-row" data-step="3">│   ├── index.md</div>
+      <div class="tree-row" data-step="4">│   └── service_mesh.md    &#8592; one architecture concept</div>
+      <div class="tree-row" data-step="5">└── analytics/</div>
+      <div class="tree-row" data-step="6">    ├── index.md</div>
+      <div class="tree-row" data-step="7">    ├── tables/</div>
+      <div class="tree-row" data-step="8">    │   ├── customers.md   &#8592; one table concept</div>
+      <div class="tree-row" data-step="9">    │   └── billing.md</div>
+      <div class="tree-row" data-step="10">    └── metrics/</div>
+      <div class="tree-row" data-step="11">        └── active_users.md &#8592; one precise business definition</div>
+    </div>
+    <div class="anim-fallback">Static view: a bundle directory tree. The root <code>index.md</code> is the entry point; each subdirectory holds one <code>index.md</code> plus singular concept files (<code>service_mesh.md</code>, <code>customers.md</code>, <code>active_users.md</code>). Directory paths define each concept's identity.</div>
+    <div class="anim-caption" aria-live="polite"></div>
+    <div class="animation-controls">
+      <button type="button" data-anim="anim-bundle" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-anim="anim-bundle" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-anim="anim-bundle" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <p>Notice the granularity. There is no <code>misc_notes.md</code> dumping ground. Information is compiled into <strong>hyper-focused, singular concepts</strong>: one file per API contract, one per financial metric, one per database table. That granularity is what makes progressive disclosure (next section) work — an agent can load exactly the concept a task needs, and nothing else.</p>
+</section>
+
+<section class="section" id="frontmatter">
+  <h2>Frontmatter: One Required Field</h2>
+  <p>Every concept file follows a strict but minimal design: a YAML frontmatter block on top, a free-form Markdown body underneath. Of the recommended frontmatter fields, <strong>exactly one is required: <code>type</code></strong>. Everything else — <code>title</code>, <code>description</code>, <code>resource</code>, <code>tags</code>, <code>timestamp</code> — is optional. As the spec's authors put it: <em>"OKF requires exactly one thing of every concept: a type field."</em></p>
+  <p>Watch a canonical concept file come apart into its pieces:</p>
+
+  <div class="animation-container" id="anim-fm">
+    <div class="anim-title">FRONTMATTER_ANATOMY — dissecting a concept file</div>
+    <div class="anim-live stage" aria-hidden="true" style="min-height:340px">
+      <div class="fm-card"><span class="fm-yaml" id="fm-yaml">---
+<span class="fm-type" id="fm-type">type: BigQuery Table</span>
+title: Orders
+description: One row per completed customer order.
+resource: https://console.cloud.google.com/bigquery?p=acme&amp;d=sales&amp;t=orders
+tags: [sales, revenue]
+timestamp: 2026-05-28T14:30:00Z
+---</span><span class="fm-body" id="fm-body"># Schema
+| Column        | Type   | Description                  |
+| `order_id`    | STRING | Globally unique identifier.  |
+| `customer_id` | STRING | FK to <span class="fm-link" id="fm-link1">[customers](/tables/customers.md)</span> |
+
+# Joins
+Joined with <span class="fm-link" id="fm-link2">[customers](/tables/customers.md)</span> on `customer_id`.</span></div>
+      <div class="anno" id="fm-anno1" style="top:0.5rem; right:0.5rem;">metadata the agent reads FIRST</div>
+      <div class="anno" id="fm-anno2" style="top:2.4rem; right:0.5rem;">the ONLY required field</div>
+      <div class="anno" id="fm-anno3" style="bottom:6.2rem; right:0.5rem;">free-form Markdown body</div>
+      <div class="anno" id="fm-anno4" style="bottom:3.6rem; right:0.5rem;">links = graph edges</div>
+    </div>
+    <div class="anim-fallback">Static view: a concept file has two parts. Top: YAML frontmatter between --- fences (type — the only required field — plus optional title, description, resource, tags, timestamp). Bottom: a free-form Markdown body (here: a schema table and a Joins section) whose relative links to other concept files act as graph edges.</div>
+    <div class="anim-caption" aria-live="polite"></div>
+    <div class="animation-controls">
+      <button type="button" data-anim="anim-fm" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-anim="anim-fm" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-anim="anim-fm" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <p>Why does the frontmatter matter operationally? Because it gives the LLM <strong>structured, high-level context before it reads the body</strong>. An agent scanning a directory can filter on <code>type: metric</code> or <code>tags: [billing]</code> using explicit metadata rather than fuzzy semantics — a cheap, deterministic pre-filter that costs a few dozen tokens per file instead of the whole file.</p>
+  <p>Here's a second canonical example — the one this course keeps returning to. This is a real business-metric concept, the kind whose absence caused M02's churn disaster:</p>
+
+  <div class="code-block"><div class="code-head"><span>analytics/metrics/weekly_active_users.md</span><button class="copy-btn" type="button">Copy</button></div><pre><code>---
+type: metric
+id: analytics/metrics/active_users
+title: Weekly Active Users (WAU)
+owner: data-eng@company.com
+updated_at: 2026-06-15
+citations:
+  - source: "https://github.com/internal-org/dbt/models/wau.sql"
+---
+
+# Weekly Active Users (WAU)
+
+The total unique count of user IDs who have triggered at least one core
+backend API transaction within a rolling 7-day window.
+
+## Computation Rules
+We explicitly exclude internal QA and test accounts:
+`WHERE user_id NOT IN (SELECT user_id FROM staging.internal_testers)`
+
+## Related Components
+- See [[analytics/tables/customers]] for primary user dimension mappings.
+- See [[analytics/tables/billing]] to correlate usage with subscription cycles.</code></pre></div>
+
+  <p>Three details deserve attention. First, the frontmatter includes fields beyond the recommended set (<code>owner</code>, <code>citations</code>) — perfectly legal, because consumers must tolerate unknown keys (next section). Second, the body carries the <em>actual, audited SQL exclusion rule</em> — not a description of where to find it. When an agent needs to compute WAU, it extracts the absolute logic and follows the explicit link to the <code>customers</code> table concept for current join keys. It generates a correct query on the first attempt, citing the exact file, its update time, and its owner. Third — and this is a spec subtlety worth teaching precisely — the <code>id</code> field here is <em>redundant with the path by design</em>: the path is the identity; the field is a convenience mirror some producers include.</p>
+
+  <div class="callout callout-info">
+    <span class="box-label">🔎 What Just Happened?</span>
+    <p>You've now seen both canonical concept shapes: a <em>data asset</em> (the Orders table: schema + joins) and a <em>business definition</em> (WAU: rules + exclusions + links). Same skeleton — <code>type</code> plus optional metadata, then a structured body with relative links. In M07 you'll see the third shape: a <em>service</em> concept describing code, which is where this course lives.</p>
+  </div>
+</section>
+
+<section class="section" id="reserved-files">
+  <h2>The Reserved Filenames: index.md and log.md</h2>
+  <p>Two filenames have reserved meanings in every bundle, and they give the format its structure without adding a single required field.</p>
+
+  <h3 id="index-md">index.md — the progressive disclosure lever</h3>
+  <div class="tech-def-box">
+    <p><code>index.md</code> is a directory listing at any level of the bundle — the entry point an agent reads <em>before touching anything else</em>. <span class="term-tooltip" tabindex="0">Progressive disclosure<span class="tooltip-content">A consumption pattern: start at the root index, follow links only as deep as the task requires, and load only the concept files actually needed — instead of loading the entire bundle into context.</span></span> means the agent walks the hierarchy one level at a time, loading only what the task needs.</p>
+  </div>
+  <p>This is a genuine <strong>token-budget control, not a convenience file</strong>. An orchestrating agent reads <code>index.md</code>, decides which concept files a given subtask actually needs, and loads those — nobody pulls a thousand-file bundle into context for a change that touches one service. Watch the difference:</p>
+
+  <div class="animation-container" id="anim-pd">
+    <div class="anim-title">PROGRESSIVE_DISCLOSURE — index-first vs bundle-dump</div>
+    <div class="anim-live stage" aria-hidden="true" style="min-height:270px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+        <div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:0.8rem;color:var(--success);margin-bottom:0.5rem;">Index-first agent</div>
+          <div class="tree-row" data-pd="0">📄 index.md          (~200 tokens)</div>
+          <div class="tree-row" data-pd="1">📄 analytics/index.md (~250 tokens)</div>
+          <div class="tree-row" data-pd="2">📄 metrics/active_users.md (~850 tokens)</div>
+          <div style="margin-top:0.8rem;font-size:0.8rem;color:var(--text-secondary);">context used:</div>
+          <div class="meter" style="max-width:260px;"><div class="meter-fill" id="pd-meter1"></div></div>
+          <div style="font-size:0.78rem;color:var(--text-muted);" id="pd-count1">0 tokens</div>
+        </div>
+        <div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:0.8rem;color:var(--error);margin-bottom:0.5rem;">Bundle-dump agent</div>
+          <div class="tree-row" data-pd="3">📚 load ENTIRE bundle (all concepts)</div>
+          <div style="margin-top:0.8rem;font-size:0.8rem;color:var(--text-secondary);">context used:</div>
+          <div class="meter" style="max-width:260px;"><div class="meter-fill" id="pd-meter2"></div></div>
+          <div style="font-size:0.78rem;color:var(--text-muted);" id="pd-count2">0 tokens</div>
+        </div>
+      </div>
+    </div>
+    <div class="anim-fallback">Static comparison: an index-first agent reads the root index (~200 tokens), one branch index (~250), then exactly one concept (~850) — about 1,300 tokens total. A bundle-dump agent loads every concept file and fills its entire context budget before reasoning starts. Progressive disclosure only pays off if the orchestrator is actually built to read the index first.</div>
+    <div class="anim-caption" aria-live="polite"></div>
+    <div class="animation-controls">
+      <button type="button" data-anim="anim-pd" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-anim="anim-pd" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-anim="anim-pd" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <p>One production tip carries more weight than any other here: <strong>keep index entries to a title and a one-line description pulled straight from each concept's frontmatter.</strong> An index bloated with detail defeats the point of having one — it becomes just another big file the agent must wade through.</p>
+
+  <h3 id="log-md">log.md — what the bundle knows, over time</h3>
+  <p><code>log.md</code> is a chronological, date-grouped record of changes to <em>what the bundle knows</em> — deliberately distinct from <code>git log</code>, which records what changed in the files. These are different questions. A service's code can change without its documented responsibilities changing (a refactor), and its documented responsibilities can change without a single code line moving (a policy decision). <em>"What changed in this file"</em> and <em>"what changed in our understanding of this system"</em> need separate answers, and <code>log.md</code> lets an agent — or a person — answer the second one directly instead of inferring it from commit archaeology.</p>
+</section>
+
+<section class="section" id="leniency">
+  <h2>Conformance Leniency: The Trade-Off at the Heart of the Spec</h2>
+  <p>The v0.1 conformance rules are deliberately, radically lenient. A conformant <strong>consumer must not reject</strong> a bundle for:</p>
+  <ul>
+    <li>missing optional fields,</li>
+    <li>unrecognized <code>type</code> values (there is no type registry — <code>type</code> is producer-defined),</li>
+    <li>unknown frontmatter keys,</li>
+    <li>or even <strong>broken links</strong>.</li>
+  </ul>
+  <p>Why design it this way? Because strictness kills adoption. Every failed validation is a reason for a team to give up on the format; every required registry is infrastructure someone must stand up before writing entry one. Leniency means a team can start with a single file, today, and be conformant. That is why OKF spread in weeks while stricter predecessors — the schema-registry, validation-server kind — spent years stalled.</p>
+  <p>But the same leniency creates the risk this course spends Module 11 on: <strong>silent degradation</strong>. A bundle full of dangling links, drifted type names ("API Endpoint" here, "Endpoint" there, "Route" somewhere else), and stale timestamps is still <em>technically conformant</em>. Nothing errors. Nothing warns. The spec will never save you from a rotting bundle — only your own <span class="term-tooltip" tabindex="0">lint<span class="tooltip-content">An automated checker that enforces rules stricter than the format requires — e.g., "every concept must have a description" or "no dangling links." The okf CLI ships 13 built-in lint rules (M07).</span></span> rules and review discipline can. Remember the asymmetry: <em>the spec is lenient so that adoption is easy; your pipeline must be strict so that trust is possible.</em></p>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"If it passes the spec, it's a good bundle."</strong> — Spec-conformant and trustworthy are different properties. A bundle can pass conformance and still be an unlinked, out-of-date mess. Lint is "the only thing standing between technically conformant and actually useful."</p>
+    <p><strong>"Broken links will show up as errors somewhere."</strong> — By spec, consumers must <em>tolerate</em> broken links. No error will ever fire unless you write the check yourself.</p>
+  </div>
+</section>
+
+<section class="section" id="crosslinks">
+  <h2>Cross-Links: A Folder Becomes a Knowledge Graph</h2>
+  <p>The links you saw in the WAU concept — <code>[[analytics/tables/customers]]</code>, or standard relative Markdown links like <code>[customers](/tables/customers.md)</code> — are where the "graph" in this course's title comes back. Each link turns two files into two <em>nodes</em> with an <em>edge</em> between them. The result: a plain folder of Markdown becomes a deterministic knowledge graph an agent can step through logically, with no cosine-similarity guessing about what relates to what.</p>
+  <p>Contrast the retrieval story from M02 one more time, because this is the payoff of the whole design. Old way: the agent embeds your question, searches thousands of chunks, and gets back three fragments of conflicting vintage. OKF way: the agent reads the root <code>index.md</code>, traverses to <code>analytics/metrics/churn_rate.md</code>, extracts the audited logic, and follows the explicit link to the current schema definition. <strong>Deterministic navigation across a living graph, instead of probabilistic search over shredded files.</strong></p>
+  <p>Be equally clear about the ceiling. OKF links are <strong>untyped</strong>: a link is just a link, with the relationship's meaning carried by surrounding prose ("Calls…", "Joined with…", "See also…"). Consumers must tolerate broken ones. That caps how much <em>formal</em> graph reasoning — automated dependency traversal, impact analysis with guarantees — an agent can safely do compared to a real <span class="term-tooltip" tabindex="0">RDF/OWL<span class="tooltip-content">The W3C semantic-web standards for formal knowledge graphs: typed relationships, machine-checkable ontologies, logical inference. Far more rigorous than Markdown links — and far heavier to author and maintain.</span></span> knowledge graph. The structural layer you built in Track 2 (typed, provenance-tagged AST edges) and the narrative layer you're building now are complements, not substitutes: Graphify's edges are <em>verified</em>; OKF's links are <em>curated</em>.</p>
+</section>
+
+<section class="section" id="reading-okf">
+  <h2>Code Walkthrough: Reading a Bundle Programmatically</h2>
+  <p>The entire consumption story fits in a few lines — that's the point of standardizing on boring substrates. Let's read the WAU concept, then write the validation check every pipeline needs. <strong>Chunk 1 — load and inspect.</strong> WHAT: parse one concept into metadata + body. WHY: this is the exact operation an agent's tool layer performs before deciding whether the concept is relevant. GOTCHA: a file with <em>no</em> frontmatter loads fine with empty metadata — reading never throws just because metadata is missing, which is why validation must be explicit.</p>
+
+  <div class="code-tabs" role="tablist" aria-label="Language choice">
+    <button class="code-tab active" role="tab" data-group="read" data-lang="py">Python</button>
+    <button class="code-tab" role="tab" data-group="read" data-lang="js">Node.js</button>
+  </div>
+  <div class="code-panel active" data-group="read" data-lang="py">
+  <div class="code-block"><div class="code-head"><span>read_concept.py · pip install python-frontmatter</span><button class="copy-btn" type="button">Copy</button></div><pre><code><span class="tok-k">import</span> frontmatter  <span class="tok-c"># pip install python-frontmatter</span>
+
+concept = frontmatter.load(<span class="tok-s">"analytics/metrics/weekly_active_users.md"</span>)
+<span class="tok-f">print</span>(concept[<span class="tok-s">"type"</span>])        <span class="tok-c"># "metric"</span>
+<span class="tok-f">print</span>(concept[<span class="tok-s">"title"</span>])       <span class="tok-c"># "Weekly Active Users (WAU)"</span>
+<span class="tok-f">print</span>(concept.content[:<span class="tok-n">200</span>])  <span class="tok-c"># the markdown body: rules, links, everything</span></code></pre></div>
+  </div>
+  <div class="code-panel" data-group="read" data-lang="js">
+  <div class="code-block"><div class="code-head"><span>read_concept.mjs · npm install gray-matter</span><button class="copy-btn" type="button">Copy</button></div><pre><code><span class="tok-k">import</span> fs <span class="tok-k">from</span> <span class="tok-s">"node:fs"</span>;
+<span class="tok-k">import</span> matter <span class="tok-k">from</span> <span class="tok-s">"gray-matter"</span>;  <span class="tok-c">// npm install gray-matter</span>
+
+<span class="tok-k">const</span> raw = fs.<span class="tok-f">readFileSync</span>(<span class="tok-s">"analytics/metrics/weekly_active_users.md"</span>, <span class="tok-s">"utf8"</span>);
+<span class="tok-k">const</span> concept = <span class="tok-f">matter</span>(raw);
+console.<span class="tok-f">log</span>(concept.data.type);        <span class="tok-c">// "metric"</span>
+console.<span class="tok-f">log</span>(concept.data.title);       <span class="tok-c">// "Weekly Active Users (WAU)"</span>
+console.<span class="tok-f">log</span>(concept.content.slice(<span class="tok-n">0</span>, <span class="tok-n">200</span>)); <span class="tok-c">// the markdown body</span></code></pre></div>
+  </div>
+
+  <p><strong>Chunk 2 — validate.</strong> WHAT: enforce the one hard rule (<code>type</code> present) across a bundle, in CI. WHY: leniency means nothing else will ever catch a malformed concept; this tiny gate is the seed of the lint discipline M07 and M11 grow into. GOTCHA: catch parse errors too — a mangled YAML fence is worse than a missing field, because it can silently swallow the whole header.</p>
+
+  <div class="code-tabs" role="tablist" aria-label="Language choice">
+    <button class="code-tab active" role="tab" data-group="val" data-lang="py">Python</button>
+    <button class="code-tab" role="tab" data-group="val" data-lang="js">Node.js</button>
+  </div>
+  <div class="code-panel active" data-group="val" data-lang="py">
+  <div class="code-block"><div class="code-head"><span>validate_bundle.py</span><button class="copy-btn" type="button">Copy</button></div><pre><code><span class="tok-k">import</span> sys
+<span class="tok-k">from</span> pathlib <span class="tok-k">import</span> Path
+<span class="tok-k">import</span> frontmatter
+
+<span class="tok-k">def</span> <span class="tok-f">validate_bundle</span>(root: Path) -&gt; <span class="tok-f">int</span>:
+    errors = <span class="tok-n">0</span>
+    <span class="tok-k">for</span> path <span class="tok-k">in</span> <span class="tok-f">sorted</span>(root.rglob(<span class="tok-s">"*.md"</span>)):
+        <span class="tok-k">if</span> path.name <span class="tok-k">in</span> {<span class="tok-s">"index.md"</span>, <span class="tok-s">"log.md"</span>}:   <span class="tok-c"># reserved files: no type needed</span>
+            <span class="tok-k">continue</span>
+        <span class="tok-k">try</span>:
+            post = frontmatter.load(path)
+        <span class="tok-k">except</span> Exception <span class="tok-k">as</span> exc:       <span class="tok-c"># mangled YAML is an error, not a shrug</span>
+            <span class="tok-f">print</span>(<span class="tok-s">f"ERROR {path}: unparseable frontmatter ({exc})"</span>)
+            errors += <span class="tok-n">1</span>
+            <span class="tok-k">continue</span>
+        <span class="tok-k">if</span> <span class="tok-k">not</span> post.metadata.get(<span class="tok-s">"type"</span>):
+            <span class="tok-f">print</span>(<span class="tok-s">f"ERROR {path}: missing required field 'type'"</span>)
+            errors += <span class="tok-n">1</span>
+    <span class="tok-f">print</span>(<span class="tok-s">f"{errors} error(s)"</span>)
+    <span class="tok-k">return</span> <span class="tok-n">1</span> <span class="tok-k">if</span> errors <span class="tok-k">else</span> <span class="tok-n">0</span>
+
+<span class="tok-k">if</span> __name__ == <span class="tok-s">"__main__"</span>:
+    <span class="tok-k">raise</span> SystemExit(validate_bundle(Path(sys.argv[<span class="tok-n">1</span>])))</code></pre></div>
+  </div>
+  <div class="code-panel" data-group="val" data-lang="js">
+  <div class="code-block"><div class="code-head"><span>validate_bundle.mjs</span><button class="copy-btn" type="button">Copy</button></div><pre><code><span class="tok-k">import</span> fs <span class="tok-k">from</span> <span class="tok-s">"node:fs"</span>;
+<span class="tok-k">import</span> path <span class="tok-k">from</span> <span class="tok-s">"node:path"</span>;
+<span class="tok-k">import</span> matter <span class="tok-k">from</span> <span class="tok-s">"gray-matter"</span>;
+
+<span class="tok-k">function</span> <span class="tok-f">walk</span>(dir) {
+  <span class="tok-k">return</span> fs.readdirSync(dir, { withFileTypes: <span class="tok-k">true</span> }).flatMap((e) =&gt;
+    e.isDirectory() ? <span class="tok-f">walk</span>(path.join(dir, e.name))
+      : e.name.endsWith(<span class="tok-s">".md"</span>) ? [path.join(dir, e.name)] : []);
+}
+
+<span class="tok-k">let</span> errors = <span class="tok-n">0</span>;
+<span class="tok-k">for</span> (<span class="tok-k">const</span> file <span class="tok-k">of</span> <span class="tok-f">walk</span>(process.argv[<span class="tok-n">2</span>])) {
+  <span class="tok-k">const</span> base = path.basename(file);
+  <span class="tok-k">if</span> (base === <span class="tok-s">"index.md"</span> || base === <span class="tok-s">"log.md"</span>) <span class="tok-k">continue</span>;
+  <span class="tok-k">try</span> {
+    <span class="tok-k">const</span> { data } = <span class="tok-f">matter</span>(fs.readFileSync(file, <span class="tok-s">"utf8"</span>));
+    <span class="tok-k">if</span> (!data.type) { console.error(<span class="tok-s">`ERROR ${file}: missing required field 'type'`</span>); errors++; }
+  } <span class="tok-k">catch</span> (exc) {
+    console.error(<span class="tok-s">`ERROR ${file}: unparseable frontmatter (${exc.message})`</span>); errors++;
+  }
+}
+console.log(<span class="tok-s">`${errors} error(s)`</span>);
+process.exit(errors ? <span class="tok-n">1</span> : <span class="tok-n">0</span>);</code></pre></div>
+  </div>
+
+  <div class="callout callout-why">
+    <span class="box-label">✅ What Just Happened?</span>
+    <p>You read a concept in three effective lines and wrote the seed of a lint gate in thirty. No SDK, no schema registry, no service. That's the whole consumption stack — and it's also why "format, not platform" is a feature: your validation code will still run unchanged if you switch clouds, agents, or LLM vendors tomorrow.</p>
+  </div>
+</section>
+
+<section class="section" id="hands-on">
+  <h2>Hands-On Exercise: Author Your First Concepts</h2>
+  <p><strong>What you'll build:</strong> two valid OKF concepts for orderflow — the WAU metric and the <code>orders_fact</code> table — plus the frontmatter validator, in <code>labs/M06-okf-authoring/</code>. <strong>Time:</strong> 25–35 min. <strong>Files:</strong> two <code>.md</code> concepts and <code>validate.py</code>.</p>
+  <ol>
+    <li><strong>Step 1 — Study the shape.</strong> Open <code>starter/knowledge/analytics/metrics/weekly_active_users.md</code>. The frontmatter is stubbed; only <code>type</code> is <em>required</em>, but your lint will warn on missing recommended fields.
+      <div class="callout callout-why"><span class="box-label">✅ Checkpoint</span><p>You can name all five recommended optional fields without looking. (title, description, resource, tags, timestamp.)</p></div></li>
+    <li><strong>Step 2 — Complete the two concepts.</strong> WAU: 7-day rolling window over <em>completed orders</em>, explicit tester exclusions, <code>resource:</code> pointing at <code>services/orders/metrics.py</code>, cross-link to <code>[orders_fact](../tables/orders_fact.md)</code>. orders_fact: schema table, Joins section, link back to the metric.</li>
+    <li><strong>Step 3 — Write the validator.</strong> Complete <code>starter/validate.py</code> per the walkthrough above: hard-fail on missing <code>type</code>, warn on missing recommended fields.</li>
+    <li><strong>Step 4 — Verify.</strong> Run:
+      <div class="code-block"><div class="code-head"><span>terminal</span><button class="copy-btn" type="button">Copy</button></div><pre><code>cd labs/M06-okf-authoring/starter
+python validate.py knowledge</code></pre></div>
+      Expected output: <code>2 concepts valid, 0 errors</code>.
+      <div class="callout callout-why"><span class="box-label">✅ Checkpoint</span><p>Now break it on purpose: delete <code>type:</code> from one file and re-run. You must get a non-zero exit and the offending path. If the validator still passes, you're reproducing the spec's leniency instead of guarding against it.</p></div></li>
+  </ol>
+  <p><strong>Troubleshooting:</strong> a YAML <code>ScannerError</code> usually means your <code>---</code> fences aren't alone on their lines; a validator that passes empty files means you forgot that <code>frontmatter.load</code> returns empty metadata rather than raising. <strong>Stretch goal:</strong> add a dangling-link check — every relative <code>.md</code> link must resolve inside the bundle.</p>
+</section>
+
+<section class="section" id="quiz">
+  <h2>Knowledge Check</h2>
+
+  <div class="quiz-question">
+    <h3 id="q1h">1. Which frontmatter field is REQUIRED by the OKF v0.1 spec?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q1" data-correct="false">title</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q1" data-correct="true">type</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q1" data-correct="false">type and timestamp</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q1" data-correct="false">id, type, and title</div>
+    <div class="quiz-feedback" data-q="q1" data-good="Correct — exactly one field, type, is mandatory. Everything else (title, description, resource, tags, timestamp) is recommended but optional. That radical minimalism is the design, not an oversight." data-bad="Not quite. The spec requires exactly ONE field: type. Every other field — title, description, resource, tags, timestamp — is recommended but optional."></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3 id="q2h">2. In OKF, what serves as a concept's unique identity?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q2" data-correct="false">A UUID assigned by the Knowledge Catalog</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q2" data-correct="true">The file's path within the bundle</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q2" data-correct="false">The required id frontmatter field</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q2" data-correct="false">A hash of the file's contents</div>
+    <div class="quiz-feedback" data-q="q2" data-good="Correct — the path IS the identity. There's no separate ID registry to drift out of sync; moving a file is renaming a concept, visible in Git." data-bad="The path is the identity. There is no separate ID system — that's deliberate, because ID registries always eventually drift from file reality. (An id field may appear, but it's a convenience mirror, not the identity.)"></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3 id="q3h">3. What distinguishes log.md from git log?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q3" data-correct="false">log.md is machine-readable; git log is for humans</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q3" data-correct="true">log.md records changes to what the bundle KNOWS; git log records changes to the files</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q3" data-correct="false">Nothing — log.md is a cached copy of git log</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q3" data-correct="false">log.md is required; git log is optional</div>
+    <div class="quiz-feedback" data-q="q3" data-good="Correct — 'what changed in this file' and 'what changed in our understanding of the system' are different questions. Code can change without documented responsibilities changing, and vice versa." data-bad="They answer different questions: git log tracks file changes; log.md tracks knowledge changes. A service's responsibilities can change without a code line moving — only log.md captures that."></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3 id="q4h">4. A conformant OKF consumer encounters a bundle with broken links and unrecognized type values. What must it do?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q4" data-correct="false">Reject the bundle with a validation error</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q4" data-correct="false">Auto-repair the links and normalize the types</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q4" data-correct="true">Accept the bundle — leniency is required by the spec</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q4" data-correct="false">Accept unknown types but reject broken links</div>
+    <div class="quiz-feedback" data-q="q4" data-good="Correct — consumers must NOT reject bundles for missing optional fields, unknown types, unknown keys, or broken links. That leniency drives adoption AND enables silent degradation — which is why your own lint gate is non-negotiable (M11)." data-bad="The spec mandates tolerance: consumers must not reject for missing optional fields, unknown types, unknown keys, or even broken links. The flip side: nothing will ever warn you about a rotting bundle unless you build the lint yourself."></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3 id="q5h">5. Which capability does OKF explicitly NOT provide?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q5" data-correct="false">Human readability on GitHub</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q5" data-correct="false">Git-based version control of knowledge</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q5" data-correct="true">A built-in search/retrieval engine</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q5" data-correct="false">Cross-links between concept files</div>
+    <div class="quiz-feedback" data-q="q5" data-good="Correct — OKF is a format, not a platform. No indexing, no ranking, no query language. Past browsable size, something must sit on top and make it searchable — often the same retrieval machinery RAG provides. 'RAG, pointed at something worth retrieving from.'" data-bad="OKF ships no search engine at all — it's explicit about that. It IS readable on GitHub, versioned via Git, and cross-linked. What it lacks is retrieval — at scale, a search layer must sit on top."></div>
+  </div>
+
+  <div class="quiz-question">
+    <h3 id="q6h">6. Why is an OKF bundle better raw material for retrieval than a folder of PDFs?</h3>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q6" data-correct="false">Markdown compresses better, so more fits in context</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q6" data-correct="true">Concepts are singular and pre-organized with explicit links — the retriever fetches organized truth instead of making sense of chaos</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q6" data-correct="false">The spec requires embedding vectors in frontmatter</div>
+    <div class="quiz-option" role="button" tabindex="0" data-q="q6" data-correct="false">PDFs cannot be chunked at all</div>
+    <div class="quiz-feedback" data-q="q6" data-good="Correct — one concept per file, structured metadata up front, explicit relationship links: the organizing happened BEFORE indexing. You're no longer asking the retriever to reconstruct meaning from arbitrary 512-token shreds." data-bad="The right answer is about pre-organization: hyper-focused single-concept files with frontmatter and explicit links mean retrieval fetches settled, structured knowledge — instead of trying to reassemble meaning from arbitrarily chunked documents."></div>
+  </div>
+</section>
+
+<section class="section" id="summary">
+  <h2>Module Summary</h2>
+  <div class="cheat-sheet">
+    <div class="cheat-card"><strong>The spec</strong>v0.1, published Jun 12–13 2026 by Google Cloud (McVeety &amp; Hormati) via GoogleCloudPlatform/knowledge-catalog. One page, three conformance rules. Formalizes Karpathy's LLM Wiki + AGENTS.md + Obsidian patterns.</div>
+    <div class="cheat-card"><strong>The unit</strong>Bundle = directory. Concept = one file = one piece of knowledge. Path IS the identity. YAML frontmatter: one required field (type), five recommended (title, description, resource, tags, timestamp).</div>
+    <div class="cheat-card"><strong>Reserved files</strong>index.md = progressive disclosure = a token-budget control. log.md = history of what the bundle knows (≠ git log).</div>
+    <div class="cheat-card"><strong>The trade-off</strong>Consumers must tolerate missing fields, unknown types, broken links. Adoptable AND silently degradable — your lint, not the spec, guards trust.</div>
+    <div class="cheat-card"><strong>Links = edges</strong>Relative Markdown links turn folders into a deterministic knowledge graph. Untyped, so curated — Track 2's AST edges stay the verified layer.</div>
+    <div class="cheat-card"><strong>Format, not platform</strong>cat to read, git clone to ship. Three lines of Python (python-frontmatter) or Node (gray-matter) to parse.</div>
+  </div>
+  <p><strong>What we built:</strong> orderflow's first two concepts — the WAU metric with its attested exclusion rule, and the <code>orders_fact</code> table — plus the validator that will grow into M07's lint gate.</p>
+  <p><strong>Next module preview:</strong> Google's reference use case is BigQuery tables. M07 makes the pivot that matters for this course: the same concept shape, aimed at <em>code</em> — services, dependencies, responsibilities — and the okf CLI with its 13 lint rules.</p>
+</section>
+
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul>
+    <li>Google Cloud: <em>Introducing the Open Knowledge Format</em> — cloud.google.com/blog/products/data-analytics (June 2026)</li>
+    <li>OKF Specification v0.1 — github.com/GoogleCloudPlatform/knowledge-catalog (okf/SPEC.md)</li>
+    <li>OKF FAQ — okf.md/faq</li>
+    <li>Karpathy, A. — <em>LLM Wiki / knowledge-compiler pattern</em> (April 2026)</li>
+    <li>Course corpus: "Beyond RAG: How Google's OKF is Replacing the Vector Database"; "Did Google Just Kill RAG?"; "Standardizing Agent Memory"; "Your Vector DB is Shredding Context"</li>
+  </ul>
+</section>
+
+<nav class="nav-links" aria-label="Module navigation">
+  <a href="M05-tool-landscape.html"><span class="dir">← Previous</span>M05 · The Tool Landscape</a>
+  <a href="M07-okf-for-codebases.html" class="next"><span class="dir">Next →</span>M07 · OKF for Codebases</a>
+</nav>
+
+</main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  /* ---------- copy buttons ---------- */
+  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.closest(".code-block").querySelector("pre");
+      navigator.clipboard.writeText(pre.textContent).then(function () {
+        var old = btn.textContent; btn.textContent = "Copied!";
+        setTimeout(function () { btn.textContent = old; }, 1200);
+      });
+    });
+  });
+  /* ---------- code tabs ---------- */
+  document.querySelectorAll(".code-tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      var group = tab.dataset.group, lang = tab.dataset.lang;
+      document.querySelectorAll('.code-tab[data-group="' + group + '"]').forEach(function (t) {
+        t.classList.toggle("active", t === tab);
+      });
+      document.querySelectorAll('.code-panel[data-group="' + group + '"]').forEach(function (p) {
+        p.classList.toggle("active", p.dataset.lang === lang);
+      });
+    });
+  });
+  /* ---------- quiz ---------- */
+  document.querySelectorAll(".quiz-option").forEach(function (opt) {
+    function answer() {
+      if (opt.getAttribute("aria-disabled") === "true") return;
+      var q = opt.dataset.q;
+      var opts = document.querySelectorAll('.quiz-option[data-q="' + q + '"]');
+      opts.forEach(function (o) { o.setAttribute("aria-disabled", "true"); });
+      var correct = opt.dataset.correct === "true";
+      opt.classList.add(correct ? "correct" : "incorrect");
+      opts.forEach(function (o) { if (o.dataset.correct === "true") o.classList.add("correct"); });
+      var fb = document.querySelector('.quiz-feedback[data-q="' + q + '"]');
+      fb.textContent = correct ? fb.dataset.good : fb.dataset.bad;
+      fb.classList.add("show", correct ? "good" : "bad");
+    }
+    opt.addEventListener("click", answer);
+    opt.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); answer(); } });
+  });
+  /* ---------- scrollspy ---------- */
+  var sections = document.querySelectorAll("main section[id], main header[id]");
+  var navLinks = document.querySelectorAll(".sidebar-nav a");
+  if ("IntersectionObserver" in window) {
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          navLinks.forEach(function (l) { l.classList.toggle("active", l.getAttribute("href") === "#" + en.target.id); });
+        }
+      });
+    }, { rootMargin: "-30% 0px -60% 0px" });
+    sections.forEach(function (s) { spy.observe(s); });
+  }
+  /* ---------- animation engine ---------- */
+  var anims = {};
+  function register(id, cfg) { anims[id] = { cfg: cfg, i: -1, timer: null }; }
+  function play(id) {
+    var a = anims[id]; if (!a || a.timer) return;
+    a.timer = setInterval(function () { step(id); }, a.cfg.interval || 1500);
+    step(id);
+  }
+  function pause(id) { var a = anims[id]; if (a && a.timer) { clearInterval(a.timer); a.timer = null; } }
+  function restart(id) {
+    var a = anims[id]; if (!a) return;
+    pause(id); a.i = -1; a.cfg.reset();
+    var cap = document.querySelector("#" + id + " .anim-caption"); if (cap) cap.textContent = "";
+    play(id);
+  }
+  function step(id) {
+    var a = anims[id]; a.i++;
+    if (a.i >= a.cfg.steps.length) { pause(id); return; }
+    var s = a.cfg.steps[a.i];
+    if (s.on) s.on();
+    var cap = document.querySelector("#" + id + " .anim-caption");
+    if (cap && s.cap) cap.textContent = s.cap;
+  }
+  document.querySelectorAll(".animation-controls button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var id = b.dataset.anim;
+      if (b.dataset.act === "play") play(id);
+      else if (b.dataset.act === "pause") pause(id);
+      else restart(id);
+    });
+  });
+
+  /* BUNDLE_TREE */
+  (function () {
+    var rows = document.querySelectorAll('#anim-bundle .tree-row');
+    var caps = [
+      "A bundle is just a directory…",
+      "index.md — the root entry point every agent reads first.",
+      "Subdirectories give concepts their identity via path…",
+      "…each level gets its own index.md.",
+      "One file = one architecture concept.",
+      "The analytics domain…",
+      "…with its own index.",
+      "Tables live as singular concepts…",
+      "customers.md — one table, one file.",
+      "billing.md — another.",
+      "Metrics too…",
+      "active_users.md — one precise business definition. The path IS the ID."
+    ];
+    register("anim-bundle", {
+      interval: 1100,
+      steps: Array.prototype.map.call(rows, function (row, idx) {
+        return { cap: caps[idx], on: function () {
+          row.classList.add("shown");
+          if (idx === 1) row.classList.add("hl", "pulse");
+          if (idx === 4 || idx === 8 || idx === 11) row.classList.add("hl");
+        } };
+      }),
+      reset: function () { rows.forEach(function (r) { r.classList.remove("shown", "hl", "pulse"); }); }
+    });
+  })();
+
+  /* FRONTMATTER_ANATOMY */
+  (function () {
+    var y = document.getElementById("fm-yaml"), t = document.getElementById("fm-type"),
+        b = document.getElementById("fm-body"), l1 = document.getElementById("fm-link1"),
+        l2 = document.getElementById("fm-link2");
+    var a1 = document.getElementById("fm-anno1"), a2 = document.getElementById("fm-anno2"),
+        a3 = document.getElementById("fm-anno3"), a4 = document.getElementById("fm-anno4");
+    register("anim-fm", {
+      interval: 1900,
+      steps: [
+        { cap: "A concept file: two parts, one contract.", on: function () {} },
+        { cap: "The YAML frontmatter lifts away — structured metadata the agent reads before the body.", on: function () { y.classList.add("lifted"); a1.classList.add("shown"); } },
+        { cap: "type — the ONLY field the spec requires. Everything else is optional.", on: function () { t.classList.add("hl"); a2.classList.add("shown"); } },
+        { cap: "Below the fence: a free-form Markdown body — schema, rules, prose.", on: function () { y.classList.remove("lifted"); b.classList.add("lifted"); a3.classList.add("shown"); } },
+        { cap: "And the links? Each one is an edge — this folder is quietly a knowledge graph.", on: function () { l1.classList.add("glow"); l2.classList.add("glow"); a4.classList.add("shown"); } }
+      ],
+      reset: function () {
+        y.classList.remove("lifted"); t.classList.remove("hl"); b.classList.remove("lifted");
+        l1.classList.remove("glow"); l2.classList.remove("glow");
+        [a1, a2, a3, a4].forEach(function (a) { a.classList.remove("shown"); });
+      }
+    });
+  })();
+
+  /* PROGRESSIVE_DISCLOSURE */
+  (function () {
+    var rows = document.querySelectorAll('#anim-pd .tree-row');
+    var m1 = document.getElementById("pd-meter1"), m2 = document.getElementById("pd-meter2");
+    var c1 = document.getElementById("pd-count1"), c2 = document.getElementById("pd-count2");
+    register("anim-pd", {
+      interval: 1700,
+      steps: [
+        { cap: "Same question, two agents: “What excludes testers from WAU?”", on: function () {} },
+        { cap: "Index-first: read the root index — 200 tokens.", on: function () { rows[0].classList.add("shown", "hl"); m1.style.width = "2%"; c1.textContent = "200 tokens"; } },
+        { cap: "Follow one branch: analytics/index.md — 450 total.", on: function () { rows[1].classList.add("shown", "hl"); m1.style.width = "4%"; c1.textContent = "450 tokens"; } },
+        { cap: "Load exactly ONE concept: 1,300 tokens total. Done — answer found, context clean.", on: function () { rows[2].classList.add("shown", "hl"); m1.style.width = "9%"; c1.textContent = "1,300 tokens ✓"; } },
+        { cap: "Bundle-dump: load everything, then think.", on: function () { rows[3].classList.add("shown", "hl"); m2.style.width = "45%"; c2.textContent = "38,000 tokens…"; } },
+        { cap: "Context saturated before reasoning starts. Same answer — 30x the spend. The index only pays off if the orchestrator actually reads it first.", on: function () { m2.style.width = "100%"; c2.textContent = "context saturated ✗"; } }
+      ],
+      reset: function () {
+        rows.forEach(function (r) { r.classList.remove("shown", "hl"); });
+        m1.style.width = "0%"; m2.style.width = "0%"; c1.textContent = "0 tokens"; c2.textContent = "0 tokens";
+      }
+    });
+  })();
+})();
+</script>
+</body>
+</html>

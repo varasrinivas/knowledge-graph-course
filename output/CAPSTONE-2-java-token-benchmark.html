@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capstone 2 · Large Java Codebase — Measure the Token Reduction · Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0A1628; --bg-secondary: #111D33; --bg-card: #162033; --bg-surface: #1A2740;
+  --text-primary: #E8ECF1; --text-secondary: #94A3B8; --text-muted: #64748B;
+  --accent-primary: #D4A843; --accent-hover: #E5BC5A; --accent-muted: rgba(212,168,67,0.15);
+  --success: #10B981; --success-bg: rgba(16,185,129,0.1);
+  --warning: #F59E0B; --warning-bg: rgba(245,158,11,0.1);
+  --error: #F43F5E; --error-bg: rgba(244,63,94,0.1);
+  --info: #3B82F6; --info-bg: rgba(59,130,246,0.1);
+  --track-color: #D4A843;
+  --code-bg: #0D1117; --code-border: #21262D; --code-text: #C9D1D9; --code-comment: #8B949E;
+  --code-keyword: #FF7B72; --code-string: #A5D6FF; --code-function: #D2A8FF; --code-number: #79C0FF;
+  --transition-fast: 150ms; --transition-normal: 300ms; --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Source Sans 3', sans-serif; font-size: 1.05rem; line-height: 1.7; }
+.page-container { max-width: 1200px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: 240px 1fr; gap: 3rem; }
+.sidebar-nav { position: sticky; top: 2rem; height: calc(100vh - 4rem); overflow-y: auto; font-family: 'Bricolage Grotesque', sans-serif; }
+.sidebar-nav .nav-title { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.9rem; }
+.sidebar-nav a { display: block; color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 600; padding: 0.35rem 0.6rem; border-left: 2px solid transparent; border-radius: 0 6px 6px 0; transition: all var(--transition-fast); }
+.sidebar-nav a:hover { color: var(--track-color); border-left-color: var(--track-color); background: var(--accent-muted); }
+.content { max-width: 800px; min-width: 0; }
+.section { margin-bottom: 4rem; }
+.subsection { margin-bottom: 2.5rem; }
+h1 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 2rem; line-height: 1.25; margin: 0.6rem 0 1rem; }
+h2 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.5rem; margin: 0 0 1rem; scroll-margin-top: 1rem; }
+h3 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: 1.25rem; margin: 1.8rem 0 0.8rem; scroll-margin-top: 1rem; }
+p { margin-bottom: 1rem; }
+ul, ol { margin: 0 0 1rem 1.4rem; }
+li { margin-bottom: 0.4rem; }
+strong { font-weight: 600; }
+em { font-style: italic; }
+a { color: var(--accent-primary); }
+.course-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent-primary); font-weight: 600; }
+.badge-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.9rem 0; align-items: center; }
+.badge { font-family: 'Bricolage Grotesque', sans-serif; font-size: 0.78rem; font-weight: 700; padding: 0.3rem 0.9rem; border-radius: 999px; border: 1px solid var(--track-color); color: var(--track-color); letter-spacing: 0.06em; }
+.badge.dim { border-color: var(--code-border); color: var(--text-secondary); }
+.meta-row { display: flex; gap: 1.4rem; flex-wrap: wrap; color: var(--text-secondary); font-size: 0.92rem; margin: 0.7rem 0 1rem; }
+.progress-bar { height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; margin: 1rem 0 0.4rem; }
+.progress-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--track-color), var(--accent-primary)); border-radius: 2px; }
+.progress-label { font-size: 0.8rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 1rem; }
+.analogy-box, .tech-def-box, .callout { border-radius: 0 8px 8px 0; padding: 1.5rem; margin: 1.5rem 0; }
+.analogy-box { background: var(--accent-muted); border-left: 4px solid var(--accent-primary); }
+.analogy-box::before { content: '💡 Everyday Analogy'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--accent-primary); display: block; margin-bottom: 0.5rem; }
+.tech-def-box { background: var(--info-bg); border-left: 4px solid var(--info); }
+.tech-def-box::before { content: '📐 Technical Definition'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--info); display: block; margin-bottom: 0.5rem; }
+.callout { border-left: 4px solid var(--info); background: var(--info-bg); }
+.callout .box-label { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: 0.5rem; }
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-check { background: var(--success-bg); border-left-color: var(--success); }
+.callout-check .box-label { color: var(--success); }
+.callout-trouble { background: var(--error-bg); border-left-color: var(--error); }
+.callout-trouble .box-label { color: var(--error); }
+.term-tooltip { position: relative; color: var(--accent-primary); cursor: help; border-bottom: 1px dashed var(--accent-primary); }
+.term-tooltip .tooltip-content { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--accent-primary); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--text-primary); width: 280px; opacity: 0; pointer-events: none; transition: opacity var(--transition-fast); z-index: 10; }
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+.code-block { position: relative; margin: 1.2rem 0; border: 1px solid var(--code-border); border-radius: 10px; overflow: hidden; }
+.code-block .code-head { display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 0.4rem 0.9rem; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-muted); border-bottom: 1px solid var(--code-border); }
+.code-block pre { background: var(--code-bg); color: var(--code-text); padding: 1rem 1.1rem; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; }
+.code-block .copy-btn { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; padding: 0.2rem 0.7rem; border-radius: 6px; cursor: pointer; transition: all var(--transition-fast); }
+.code-block .copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+code { font-family: 'JetBrains Mono', monospace; font-size: 0.88em; background: var(--bg-surface); padding: 0.1em 0.4em; border-radius: 5px; color: var(--code-string); }
+pre code { background: none; padding: 0; color: inherit; }
+.kw { color: var(--code-keyword); } .st { color: var(--code-string); } .fn { color: var(--code-function); } .nu { color: var(--code-number); } .cm { color: var(--code-comment); font-style: italic; }
+table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.93rem; }
+th, td { border: 1px solid var(--code-border); padding: 0.55rem 0.8rem; text-align: left; }
+th { background: var(--bg-surface); font-family: 'Bricolage Grotesque', sans-serif; font-size: 0.85rem; }
+tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+.table-wrap { overflow-x: auto; }
+.hl-row td { background: var(--accent-muted) !important; font-weight: 600; }
+.animation-container { background: var(--bg-secondary); border: 1px solid var(--code-border); border-radius: 12px; padding: 2rem; margin: 2rem 0; position: relative; min-height: 300px; }
+.animation-container .anim-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--track-color); margin-bottom: 1rem; letter-spacing: 0.08em; }
+.animation-controls { display: flex; gap: 0.5rem; position: absolute; bottom: 1rem; right: 1rem; }
+.animation-controls button { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-primary); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all var(--transition-fast); }
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.anim-note { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.8rem; }
+.quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.quiz-question .q-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; margin-bottom: 0.9rem; }
+.quiz-option { padding: 0.75rem 1rem; margin: 0.5rem 0; border: 1px solid var(--code-border); border-radius: 8px; cursor: pointer; transition: all var(--transition-fast); }
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-feedback { margin-top: 0.75rem; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; display: none; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); border: 1px solid var(--success); }
+.quiz-feedback.bad { background: var(--error-bg); border: 1px solid var(--error); }
+.step-card { background: var(--bg-card); border: 1px solid var(--code-border); border-left: 4px solid var(--track-color); border-radius: 10px; padding: 1.4rem 1.6rem; margin: 1.4rem 0; }
+.step-card .step-label { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--track-color); letter-spacing: 0.1em; }
+.step-card h4 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1.05rem; margin: 0.3rem 0 0.7rem; }
+.phase-head { display: flex; align-items: center; gap: 0.8rem; margin: 2.6rem 0 0.6rem; }
+.phase-head .phase-num { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-muted); border: 1px solid var(--track-color); color: var(--track-color); display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; flex: none; }
+.nav-links { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; }
+.nav-links a { flex: 1; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 10px; padding: 1rem 1.2rem; text-decoration: none; color: var(--text-primary); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; transition: all var(--transition-fast); }
+.nav-links a:hover { border-color: var(--track-color); }
+.nav-links .dir { display: block; font-size: 0.72rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 0.25rem; }
+.nav-links a.next { text-align: right; }
+.cheat { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.9rem; margin: 1.4rem 0; }
+.cheat .chip { background: var(--bg-card); border: 1px solid var(--code-border); border-top: 3px solid var(--track-color); border-radius: 10px; padding: 1rem 1.1rem; font-size: 0.9rem; }
+.cheat .chip b { font-family: 'Bricolage Grotesque', sans-serif; display: block; margin-bottom: 0.3rem; }
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; padding: 1rem; gap: 1rem; }
+  .sidebar-nav { position: static; height: auto; display: flex; flex-wrap: wrap; gap: 0.2rem; }
+  .sidebar-nav .nav-title { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; animation: none !important; }
+  .animation-controls { display: none; }
+  .anim-note::after { content: ' (Reduced motion: static view shown.)'; }
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+
+<nav class="sidebar-nav" aria-label="Module contents">
+  <div class="nav-title">Capstone 2 · Contents</div>
+  <a href="#objectives">Learning Objectives</a>
+  <a href="#brief">The Brief: Flip the Floor</a>
+  <a href="#concept-arms">The Two Arms</a>
+  <a href="#concept-ambig">The AMBIG_CAP Design</a>
+  <a href="#concept-honest">Reading Benchmarks Honestly</a>
+  <a href="#build">The Build</a>
+  <a href="#phase1">Phase 1 — Extract</a>
+  <a href="#phase2">Phase 2 — Verify</a>
+  <a href="#phase3">Phase 3 — Serve</a>
+  <a href="#phase4">Phase 4 — Measure</a>
+  <a href="#phase5">Phase 5 — Honest Writeup</a>
+  <a href="#phase6">Phase 6 — Live (Optional)</a>
+  <a href="#results">Measured Reference Results</a>
+  <a href="#testcases">Test Cases</a>
+  <a href="#further">Going Further</a>
+  <a href="#quiz">Knowledge Check</a>
+  <a href="#summary">Summary</a>
+  <a href="#references">References</a>
+</nav>
+
+<main class="content">
+
+<!-- ============ HEADER ============ -->
+<header class="section" id="top">
+  <div class="course-eyebrow">Knowledge Graphs for AI Agents</div>
+  <div class="badge-row">
+    <span class="badge">CAPSTONE 2 · BONUS</span>
+    <span class="badge dim">★★★☆☆</span>
+    <span class="badge dim">80% lab · 20% concept</span>
+  </div>
+  <h1>Large Java Codebase — Measure the Token Reduction</h1>
+  <div class="meta-row">
+    <span>⏱ ~90–120 min</span>
+    <span>📋 Prerequisites: <strong>Capstone 1</strong> (plus M03, M09, M11)</span>
+  </div>
+  <div class="progress-bar" role="img" aria-label="Bonus module, taken after completing the 14-part course"><div class="progress-fill"></div></div>
+  <div class="progress-label">Bonus · after Capstone 1 — outside the 14-part numbering</div>
+</header>
+
+<!-- ============ OBJECTIVES ============ -->
+<section class="section" id="objectives">
+  <h2>Learning Objectives</h2>
+  <p>By the end of this capstone you will be able to:</p>
+  <ul>
+    <li>Extract a structural graph from a <strong>real Java codebase</strong> (624 to 9,000+ files) with tree-sitter-java — and read its provenance report critically.</li>
+    <li><strong>Verify a graph against ground truth</strong> before trusting any number it produces — the step no benchmark reader ever does.</li>
+    <li>Serve a large graph to any MCP-aware agent with the parametrized M09 server (<code>--graph</code>).</li>
+    <li>Run a two-arm token benchmark and produce <strong>your own measured table</strong> — per-question multiples, reduction percentages, exploration burden.</li>
+    <li>Explain your numbers the way this course taught you: per-question vs session-level, ceiling case vs median, and why a smaller repo can show a <em>bigger</em> multiple.</li>
+  </ul>
+  <p><span class="badge dim">Skill level: Intermediate → Advanced</span></p>
+</section>
+
+<!-- ============ BRIEF ============ -->
+<section class="section" id="brief">
+  <h2>The Brief: Flip the Floor</h2>
+  <p>In Capstone 1 you built the full three-layer stack — structural graph, OKF bundle, enrichment hook, MCP server, freshness gate — over <code>orderflow</code>, a 15-file repo. Your measured improvement was a single-digit multiple, and the course told you that was the <em>correct, expected result</em>: orderflow sits far below the ~500-file threshold where graph tooling pays for itself.</p>
+  <p>That lesson only lands completely when you see the other side. This capstone flips the setup: you will graph <strong>Apache commons-lang</strong> (624 Java files) and <strong>Spring Framework</strong> (9,247 Java files — over 13 million tokens of source), then run a deterministic benchmark harness that measures, for real structural questions, what an exploring agent would pay versus what one graph query costs.</p>
+  <p>By the end you will hold a benchmark table with your name on it — the same <em>shape</em> of table that M04 and M05 taught you to read with suspicion. Producing one yourself, and then explaining its numbers honestly, is the graduation exercise of this course.</p>
+
+  <div class="analogy-box">
+    <p><strong>BEFORE:</strong> In a village of 15 houses, you don't need a map. You can knock on every door in ten minutes, so a cartographer's services feel like overhead — you pay for the map and save almost nothing.</p>
+    <p><strong>PAIN:</strong> Now you're a courier in a city of 9,000 buildings. "Deliver to everyone named Chen" means walking every street and reading every mailbox — not once, but for <em>every single delivery order</em>. The cost of not having a map isn't linear; the bigger the city, the more brutal every lookup becomes.</p>
+    <p><strong>MAPPING:</strong> orderflow was the village; Spring Framework is the city. The extraction cost (building the map) is paid once — ~2.5 minutes. Every structural question afterwards ("who calls <code>registerBeanDefinition</code>?") is a map lookup instead of a door-to-door walk past hundreds of files. This capstone measures exactly how much the walk costs.</p>
+  </div>
+
+  <h3 id="brief-arch">What you'll wire together</h3>
+  <div class="code-block"><div class="code-head"><span>architecture</span><button class="copy-btn" aria-label="Copy code">copy</button></div><pre><code>kg_extract_java.py  ──►  graph.json  ──►  MCP server (M09, --graph flag)
+        │                                        │
+   [Java repo]                          measure_tokens.py
+   commons-lang     (624 files)                  │
+   spring-framework (9,247 files)         your benchmark table
+   synthetic        (offline fallback)    (per-question + aggregate)</code></pre></div>
+  <p>Everything reuses course machinery: the graph schema from M01, the extraction approach from M03 (same tree-sitter family, new grammar), the M09 server with its new <code>--graph</code> flag, and — in the writeup — M11's staleness discipline.</p>
+</section>
+
+<!-- ============ CONCEPT: TWO ARMS ============ -->
+<section class="section" id="concept-arms">
+  <h2>Concept: The Two Arms of an Honest Measurement</h2>
+  <p>Every benchmark comparing "agent with graph" to "agent without graph" is secretly a claim about what the <em>without</em> arm costs. Get that arm wrong and the multiple is fiction. So before you run anything, understand precisely what our harness charges each side.</p>
+
+  <div class="tech-def-box">
+    <p><strong>BASELINE arm (simulated exploration).</strong> The harness greps the repo for the <em>call-site pattern</em> <code>\bsymbol(</code> — a word boundary, the name, an opening parenthesis. That's what a competent agent actually greps: not the bare name, which over-matches comments and longer identifiers. Then it charges the <strong>full size of every matched file</strong>, at roughly 4 bytes per <span class="term-tooltip" tabindex="0">token<span class="tooltip-content">The unit LLMs read and bill by; ~4 characters of English/code on average. A 24KB file ≈ 6,000 tokens of context.</span></span> — because to <em>confirm</em> which hits are real call sites and who contains them, files enter the agent's context whole. Ops = files opened.</p>
+    <p><strong>GRAPH arm (one tool call).</strong> The harness charges the byte size of the JSON answer returned by <code>graph_callers()</code>, plus a one-time ~700-token architectural orientation read (the <code>GRAPH_SUMMARY.md</code> pattern from M11) amortized across the question count. Ops = 1 tool call.</p>
+  </div>
+
+  <p>Notice what the baseline is <em>not</em>: it is not what a lazy agent spends. A lazy agent reads three of the 46 matching files, answers from those, and is <em>wrong</em> about the other 43 call sites. The baseline is the mechanical floor of a <strong>correct</strong> answer — the honest denominator. That asymmetry (the graph is complete by construction; exploration is complete only if you pay for every file) is the entire economic argument of this course, made concrete.</p>
+
+  <div class="animation-container" id="anim-two-arms" role="img" aria-label="Animation comparing exploration arm opening many files against graph arm returning one answer, with token counters">
+    <div class="anim-title">TWO_ARMS — the same question, both ways</div>
+    <svg viewBox="0 0 720 240" width="100%" height="240" aria-hidden="true">
+      <text x="20" y="24" fill="#94A3B8" font-size="13" font-family="monospace">BASELINE: who calls registerBeanDefinition?</text>
+      <g id="ta-files"></g>
+      <text x="20" y="130" fill="#F43F5E" font-size="15" font-weight="bold" font-family="monospace" id="ta-count-base">0 tokens · 0 files</text>
+      <line x1="20" y1="145" x2="700" y2="145" stroke="#21262D"/>
+      <text x="20" y="170" fill="#94A3B8" font-size="13" font-family="monospace">GRAPH: one MCP tool call</text>
+      <rect id="ta-call" x="20" y="182" width="0" height="26" rx="6" fill="rgba(16,185,129,0.25)" stroke="#10B981"/>
+      <text x="30" y="200" fill="#10B981" font-size="12" font-family="monospace" id="ta-call-label"></text>
+      <text x="20" y="232" fill="#10B981" font-size="15" font-weight="bold" font-family="monospace" id="ta-count-graph">0 tokens · 0 calls</text>
+    </svg>
+    <div class="anim-note">Real numbers from the Spring run: 174 files matched <code>registerBeanDefinition(</code> — ~764K tokens to confirm them all — versus a ~46K-token graph answer. 16.4x for this one question.</div>
+    <div class="animation-controls">
+      <button data-anim="two-arms" data-act="play" aria-label="Play animation">▶</button>
+      <button data-anim="two-arms" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="two-arms" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <div class="callout callout-why">
+    <span class="box-label">🎯 Why It Matters</span>
+    <p>On the Spring run, answering just <strong>8 structural questions</strong> by exploration means opening <strong>4,535 files ≈ 15.2 million tokens</strong>. That is not a marketing projection — you will reproduce it on your machine in Phase 4, in about 15 seconds of harness time. The graph answers the same 8 questions for ≈451K tokens.</p>
+  </div>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Common Misconceptions (about benchmarks like the one you're about to produce)</span>
+    <p><strong>"116x means my monthly bill drops 116x."</strong> — No. These are <em>per-question</em> multiples for pure structural lookups — the same class of number as okf-rs's published ~400x per query. Sessions also spend tokens on reasoning, editing, and non-structural reads that no graph can remove; replicated <em>session-level</em> savings run 6.8x–49x.</p>
+    <p><strong>"The tool picked easy questions."</strong> — The harness auto-selects symbols by <em>caller count</em> (structural relevance: the most-called methods are what developers actually ask about) — never by grep expense. Selecting the most grep-expensive names would manufacture a ceiling case, which is exactly the benchmark sin M04 taught you to spot.</p>
+    <p><strong>"Bigger repo always means bigger multiple."</strong> — Bigger repo means bigger <em>exploration burden</em> (files opened per question). The <em>multiple</em> also depends on how big the graph's answers are — you'll see commons-lang beat Spring on the multiple for exactly this reason, and explaining it is part of Phase 5.</p>
+  </div>
+</section>
+
+<!-- ============ CONCEPT: AMBIG CAP ============ -->
+<section class="section" id="concept-ambig">
+  <h2>Concept: When the Graph Should Refuse to Guess</h2>
+  <p>Java breaks the bare-name resolution you used on Python in a specific way: <strong>overloading and interface convention</strong> mean the same method name is defined in many places. In orderflow, <code>decode_jwt</code> had one definition; in Spring, <code>getName</code> has hundreds.</p>
+  <p>The extractor keeps the three provenance tags you know from M01 — with one addition:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Tag</th><th>Meaning</th><th>Example (commons-lang run)</th></tr>
+    <tr><td><code>EXTRACTED</code></td><td>Callee defined in the same file — unambiguous local resolution</td><td>2,055 edges</td></tr>
+    <tr><td><code>INFERRED</code></td><td>Exactly one definition of that bare name in the whole corpus</td><td>5,921 edges</td></tr>
+    <tr><td><code>AMBIGUOUS</code></td><td>2–8 candidate definitions; <em>every</em> candidate emitted, honestly labeled</td><td>32,333 edges</td></tr>
+    <tr><td><em>unresolved</em></td><td>More than 8 definitions (<code>AMBIG_CAP = 8</code>): <strong>no edges emitted at all</strong></td><td>10,258 calls to 36 names dropped — <code>append</code>, <code>toString</code>, <code>get</code>…</td></tr>
+  </table></div>
+  <p>Why drop rather than emit? A call to a name defined 150 times carries <em>no structural signal</em> — emitting 150 candidate edges per call site is quadratic noise wearing an honesty costume. The first version of this extractor did exactly that and produced 183,568 edges for a synthetic repo whose true structure had under 6,000; the cap brought it back to 5,960 without losing a single seeded ground-truth edge. Refusing to guess <em>is</em> the honest answer here. Real tools do better not by guessing harder but by escalating to type resolution — M03's <span class="term-tooltip" tabindex="0">LSP ladder<span class="tooltip-content">M03's resolution ladder: heuristic bare-name matching → LSP-backed disambiguation (ask the language server via textDocument/definition) → accept AMBIGUOUS. Each rung costs more and resolves more.</span></span>, where a language server like Eclipse JDT resolves the receiver's static type.</p>
+  <div class="callout">
+    <span class="box-label">🔎 What Just Happened?</span>
+    <p>You now know how to read the extractor's closing line — <code>unresolved: 10,258 calls to 36 over-ambiguous names dropped</code> — as a <em>feature report</em>, not an error. It tells you which questions this graph can answer deterministically and which ones need a smarter tool. Ask it about <code>toString</code> and it will decline; ask it about <code>registerBeanDefinition</code> and it answers in one call.</p>
+  </div>
+</section>
+
+<!-- ============ CONCEPT: HONEST READING ============ -->
+<section class="section" id="concept-honest">
+  <h2>Concept: Reading Benchmarks Honestly — Now With Your Own</h2>
+  <p>M04 gave you the skeptic's checklist for other people's benchmarks: vendor-reported vs replicated, ceiling vs median, corpus topology. Now apply it to the table <em>you</em> are about to produce. Three questions matter:</p>
+  <ol>
+    <li><strong>What level is the number?</strong> Per-question structural lookups (this harness, okf-rs's ~400x/query) vs whole sessions (CodeGraph's task benchmarks: OkHttp 645 files → 13%, Django ~3,000 → 36%, VS Code ~10,000 → 78%; independent Graphify replications 6.8x–49x). Both are true; they measure different things.</li>
+    <li><strong>What does the baseline assume?</strong> Ours: complete confirmation of every call-site grep hit. Weaker baselines (agent samples a few files) produce smaller multiples and wrong answers; stronger claims usually hide a lazier baseline.</li>
+    <li><strong>What was selected, and by whom?</strong> Symbols here are chosen by caller count, deterministically, before any cost is known. If you let the selector see grep expense first, you can make the aggregate say almost anything — try it in Going Further and watch the number inflate.</li>
+  </ol>
+
+  <div class="animation-container" id="anim-token-scale" role="img" aria-label="Animation of a balance scale comparing 15.2 million exploration tokens against 451 thousand graph tokens for the Spring benchmark">
+    <div class="anim-title">TOKEN_SCALE — the Spring run, 8 questions</div>
+    <svg viewBox="0 0 720 250" width="100%" height="250" aria-hidden="true">
+      <line x1="360" y1="40" x2="360" y2="120" stroke="#64748B" stroke-width="4"/>
+      <g id="ts-beam-group">
+        <line id="ts-beam" x1="120" y1="80" x2="600" y2="80" stroke="#94A3B8" stroke-width="5" transform="rotate(0 360 80)"/>
+      </g>
+      <g id="ts-left"><rect x="70" y="90" width="180" height="0" fill="rgba(244,63,94,0.35)" stroke="#F43F5E" rx="8" id="ts-left-box"/>
+        <text x="160" y="230" fill="#F43F5E" text-anchor="middle" font-size="15" font-weight="bold" font-family="monospace" id="ts-left-label">exploration</text></g>
+      <g id="ts-right"><rect x="470" y="90" width="180" height="0" fill="rgba(16,185,129,0.35)" stroke="#10B981" rx="8" id="ts-right-box"/>
+        <text x="560" y="230" fill="#10B981" text-anchor="middle" font-size="15" font-weight="bold" font-family="monospace" id="ts-right-label">graph</text></g>
+      <polygon points="345,120 375,120 360,140" fill="#64748B"/>
+      <rect x="300" y="140" width="120" height="12" rx="4" fill="#1A2740" stroke="#21262D"/>
+    </svg>
+    <div class="anim-note">4,535 files opened ≈ <strong>15,194,788 tokens</strong> vs one orientation read + 8 answers ≈ <strong>451,436 tokens</strong> → 97.0% reduction, 33.7x aggregate.</div>
+    <div class="animation-controls">
+      <button data-anim="token-scale" data-act="play" aria-label="Play animation">▶</button>
+      <button data-anim="token-scale" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="token-scale" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+
+  <p>Bridge to the build: you now know what each arm charges, why some names get dropped, and how to classify the number that comes out. Time to produce it.</p>
+</section>
+
+<!-- ============ THE BUILD ============ -->
+<section class="section" id="build">
+  <h2>The Build</h2>
+  <p>All paths below are relative to <code>labs/CAPSTONE-2-java-token-benchmark/</code>. The full packet, with the same steps, lives in that folder's <code>README.md</code>. Pick <strong>at least two repo sizes</strong> — the comparison across sizes <em>is</em> the lesson.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Target</th><th>Files</th><th>How</th></tr>
+    <tr><td>synthetic-mini</td><td>~91</td><td><code>python gen_java_repo.py &lt;dir&gt; --files 100</code> (offline, known ground truth)</td></tr>
+    <tr><td>commons-lang</td><td>624</td><td><code>git clone --depth 1 https://github.com/apache/commons-lang.git</code></td></tr>
+    <tr><td>synthetic</td><td>~1,491</td><td><code>python gen_java_repo.py &lt;dir&gt;</code> (offline, known ground truth)</td></tr>
+    <tr><td>spring-framework</td><td>9,247</td><td><code>git -c core.longpaths=true clone --depth 1 https://github.com/spring-projects/spring-framework.git</code></td></tr>
+  </table></div>
+
+  <!-- PHASE 1 -->
+  <div class="phase-head" id="phase1"><div class="phase-num">1</div><h2 style="margin:0">Extract</h2></div>
+
+  <div class="step-card">
+    <span class="step-label">STEP 1</span>
+    <h4>Install the Java grammar</h4>
+    <p><strong>What &amp; why:</strong> tree-sitter needs a per-language grammar; you used <code>tree-sitter-python</code> in M03, this adds Java. Already listed in <code>labs/requirements.txt</code>.</p>
+    <div class="code-block"><div class="code-head"><span>terminal</span><button class="copy-btn" aria-label="Copy code">copy</button></div><pre><code>pip install tree-sitter tree-sitter-java</code></pre></div>
+    <div class="callout callout-check"><span class="box-label">✅ Checkpoint</span><p><code>python -c "import tree_sitter_java"</code> exits silently. If it doesn't, you're outside the labs venv.</p></div>
+  </div>
+
+  <div class="step-card">
+    <span class="step-label">STEP 2</span>
+    <h4>Extract each target</h4>
+    <p><strong>What &amp; why:</strong> one command per repo; the extractor is deterministic (sorted output, no timestamps), so re-runs on the same snapshot are byte-identical — you can diff graphs across commits.</p>
+    <div class="code-block"><div class="code-head"><span>terminal</span><button class="copy-btn" aria-label="Copy code">copy</button></div><pre><code>python ../shared_tools/kg_extract_java.py &lt;repo&gt; --out &lt;repo&gt;-graph.json --quiet</code></pre></div>
+    <p>Expected shape (real runs):</p>
+    <div class="code-block"><div class="code-head"><span>output — commons-lang (~12s)</span><button class="copy-btn" aria-label="Copy code">copy</button></div><pre><code>Rebuilt: 10648 nodes, 40309 edges -> commons-lang-graph.json
+  nodes: {'class': 939, 'interface': 104, 'method': 8981, 'module': 624}
+  edges: {'AMBIGUOUS': 32333, 'EXTRACTED': 2055, 'INFERRED': 5921}
+  unresolved: 10258 calls to 36 over-ambiguous names (> 8 candidates) dropped,
+              e.g. ['append', 'toString', 'get', 'of', 'contains']</code></pre></div>
+    <div class="code-block"><div class="code-head"><span>output — spring-framework (~2m27s)</span><button class="copy-btn" aria-label="Copy code">copy</button></div><pre><code>Rebuilt: 110885 nodes, 432741 edges -> spring-graph.json
+  nodes: {'class': 15806, 'interface': 1819, 'method': 84065, 'module': 9195}
+  edges: {'AMBIGUOUS': 379024, 'EXTRACTED': 16022, 'INFERRED': 37695}
+  unresolved: 228955 calls to 911 over-ambiguous names dropped, e.g. ['assertThat', 'get', 'getName']</code></pre></div>
+    <div class="callout callout-trouble"><span class="box-label">🔧 Troubleshooting</span>
+      <p><strong>Windows: <code>Filename too long</code> during the Spring clone</strong> → Spring's docs tree overflows the 260-char path limit. Clone with <code>git -c core.longpaths=true</code> AND into a <em>short</em> path like <code>D:\tmp</code> — a long parent directory re-breaks it even with longpaths on.</p>
+      <p><strong>Extraction seems slow</strong> → check you passed <code>--quiet</code>; progress prints every 500 files otherwise. Spring's ~2.5 min is parsing 9,195 files — that is the one-time map-building cost.</p>
+    </div>
+  </div>
+
+  <div class="step-card">
+    <span class="step-label">STEP 3</span>
+    <h4>Read the provenance report</h4>
+    <p><strong>What &amp; why:</strong> the closing lines are the graph's honesty label. Note commons-lang's ratio — 32K AMBIGUOUS to 8K resolved — and recall the concept section: Java overloading makes AMBIGUOUS the dominant class, and the <code>unresolved</code> line lists exactly which questions this graph will decline.</p>
+    <div class="callout callout-check"><span class="box-label">✅ Checkpoint</span><p>You can answer: which provenance tag would <code>graph_callers("toString")</code> rely on? (None — it's dropped as unresolved; the server will return a graceful miss.)</p></div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase-head" id="phase2"><div class="phase-num">2</div><h2 style="margin:0">Verify Against Ground Truth</h2></div>
+  <p>This is the step no benchmark reader ever does — and the reason your numbers will deserve more trust than the ones on Medium.</p>
+
+  <div class="step-card">
+    <span class="step-label">STEP 4</span>
+    <h4>Exact check on the synthetic repo</h4>
+    <p><strong>What &amp; why:</strong> <code>gen_java_repo.py</code> is seeded: it writes <code>known_truth.json</code> alongside the code, recording that the deliberate god node <code>Registry.lookup</code> has <strong>exactly 1,192 callers</strong> on the full synthetic. Count the graph's edges into <code>lookup</code> and compare.</p>
+    <div class="code-block"><div class="code-head"><span>python</span><button class="copy-btn" aria-label="Copy code">copy</button></div><pre><code><span class="kw">import</span> json
+g = json.load(<span class="fn">open</span>(<span class="st">"synth-graph.json"</span>)); truth = json.load(<span class="fn">open</span>(<span class="st">"synth-java/known_truth.json"</span>))
+callers = [e <span class="kw">for</span> e <span class="kw">in</span> g[<span class="st">"edges"</span>] <span class="kw">if</span> e[<span class="st">"target"</span>].endswith(<span class="st">".lookup"</span>)]
+<span class="fn">print</span>(<span class="fn">len</span>(callers), <span class="st">"found, expected"</span>, truth[<span class="st">"lookup_callers"</span>])  <span class="cm"># 1192 found, expected 1192</span></code></pre></div>
+    <div class="callout callout-check"><span class="box-label">✅ Checkpoint</span><p><strong>1192 / 1192.</strong> The instrument measures what it claims to measure.</p></div>
+  </div>
+
+  <div class="step-card">
+    <span class="step-label">STEP 5</span>
+    <h4>Spot check on the real repo</h4>
+    <p><strong>What &amp; why:</strong> ground truth for commons-lang is the source itself. Pick one caller from <code>graph_callers("capitalize")</code>, open the named file at the named line, and confirm the call site with your own eyes. Two spot checks are enough — the point is the habit, not the coverage.</p>
+    <div class="callout callout-check"><span class="box-label">✅ Checkpoint</span><p>You verified real edges by hand. Every number in Phase 4 now rests on an instrument you tested, twice, two different ways.</p></div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="phase-head" id="phase3"><div class="phase-num">3</div><h2 style="margin:0">Serve</h2></div>
+
+  <div class="step-card">
+    <span class="step-label">STEP 6</span>
+    <h4>Point the M09 server at the Java graph</h4>
+    <p><strong>What &amp; why:</strong> the M09 server gained a <code>--graph</code> flag: skip extraction, load any pre-built graph.json. Same three tools (<code>graph_callers</code>, <code>graph_callees</code>, <code>explore</code>), new corpus — this is the payoff of keeping one schema across both extractors.</p>
+    <div class="code-block"><div class="code-head"><span>terminal</span><button class="copy-btn" aria-label="Copy code">copy</button></div><pre><code><span class="cm"># standalone</span>
+python ../M09-mcp-graph-server/solution/server.py --graph &lt;path&gt;
+
+<span class="cm"># register with your assistant (absolute paths!)</span>
+claude mcp add java-graph -- python /abs/path/server.py --graph /abs/path/graph.json</code></pre></div>
+  </div>
+
+  <div class="step-card">
+    <span class="step-label">STEP 7</span>
+    <h4>Ask through the agent — and test the miss</h4>
+    <p><strong>What &amp; why:</strong> ask "who calls <code>registerBeanDefinition</code>?" and watch it answer with <strong>one tool call, zero file reads</strong>. Then ask about a symbol that isn't there: the server must return <code>error: ... try grep</code>, never a stack trace — the graceful miss is what lets an agent fall back instead of falling over.</p>
+    <div class="callout callout-warning"><span class="box-label">⚠️ Remember M11</span><p>The server loads graph.json <em>at startup</em>. Re-extract Spring and the running server still serves the old graph until you restart it. Fresh on disk ≠ fresh in memory.</p></div>
+    <div class="callout callout-check"><span class="box-label">✅ Checkpoint</span><p>One-call answer on a real symbol; graceful miss on a fake one.</p></div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="phase-head" id="phase4"><div class="phase-num">4</div><h2 style="margin:0">Measure</h2></div>
+
+  <div class="step-card">
+    <span class="step-label">STEP 8</span>
+    <h4>Run the harness on every target</h4>
+    <div class="code-block"><div class="code-head"><span>terminal</span><button class="copy-btn" aria-label="Copy code">copy</button></div><pre><code>python solution/measure_tokens.py &lt;repo&gt; &lt;graph.json&gt; --questions 8 --json bench.json</code></pre></div>
+    <p>Real Spring output (deterministic per repo snapshot — yours will match closely):</p>
+    <div class="code-block"><div class="code-head"><span>output — spring-framework, ~15s</span><button class="copy-btn" aria-label="Copy code">copy</button></div><pre><code>who calls ...?           files baseline tok graph tok reduction multiple
+--------------------------------------------------------------------------
+getClass                  1340    4,075,945    84,885     97.9%    48.0x
+registerBeanDefinition     174      764,534    46,540     93.9%    16.4x
+isTrue                    1070    3,377,634   122,220     96.4%    27.6x
+...
+--------------------------------------------------------------------------
+AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code></pre></div>
+    <div class="callout callout-check"><span class="box-label">✅ Checkpoint</span><p>Your aggregate line exists, with the honesty notes printed under it. Save each <code>--json</code> file — Phase 5 compares them.</p></div>
+  </div>
+
+  <div class="step-card">
+    <span class="step-label">STEP 9</span>
+    <h4>Probe the refusal path</h4>
+    <p><strong>What &amp; why:</strong> force a question the graph declines: <code>--symbols toString</code>. The row must come back marked <em>unresolvable — the graph declines to guess</em>. A benchmark that can't show its instrument failing isn't a benchmark; it's an ad.</p>
+  </div>
+
+  <!-- PHASE 5 -->
+  <div class="phase-head" id="phase5"><div class="phase-num">5</div><h2 style="margin:0">The Honest Writeup</h2></div>
+
+  <div class="step-card">
+    <span class="step-label">STEPS 10–12</span>
+    <h4>Explain your own numbers in NOTES.md</h4>
+    <p>Answer three questions, in writing, with your data:</p>
+    <ol>
+      <li><strong>What level are these multiples?</strong> Per-question structural lookups. Cite the session-level range (6.8x–49x) and say why they differ: sessions spend most tokens on reasoning and edits the graph can't touch.</li>
+      <li><strong>Why does commons-lang (116.5x) beat Spring (33.7x) on the multiple despite being 15x smaller?</strong> Spring's answers are <em>bigger</em> — more callers and more AMBIGUOUS candidates per answer raise the graph arm's cost. Answer quality and ambiguity trade against raw reduction. Meanwhile the <em>exploration burden</em> (files/question) does scale with the haystack: 22 → 46 → 303 → 567.</li>
+      <li><strong>Why did CodeGraph's published OkHttp number land at 13%?</strong> 645 files, session-level measurement, small haystack — your own commons-lang session experience will feel closer to that than to your 116x lookup table, and now you can explain why both are true.</li>
+    </ol>
+    <div class="callout callout-check"><span class="box-label">✅ Checkpoint</span><p>Someone who has never seen this course could read your NOTES.md and NOT be misled by your own benchmark. That is the bar.</p></div>
+  </div>
+
+  <div class="step-card">
+    <span class="step-label">STEP 13</span>
+    <h4>Ask the M11 question, again</h4>
+    <p>Your Spring graph took ~2.5 minutes to build — nobody will rebuild it on every commit by hand. So: <strong>how would you detect this graph going stale within 24 hours?</strong> Answer mechanically. (Your Capstone-1 freshness gate works here unchanged — same artifact, same <code>git log -1</code> comparison.)</p>
+  </div>
+
+  <!-- PHASE 6 -->
+  <div class="phase-head" id="phase6"><div class="phase-num">6</div><h2 style="margin:0">Live Measurement (Optional)</h2></div>
+  <div class="step-card">
+    <span class="step-label">STEP 14–15 · OPTIONAL, COSTS API TOKENS</span>
+    <h4>Compare against a real agent</h4>
+    <p>With an API key: ask <code>claude -p</code> the same two questions with and without the MCP server registered, and compare reported token usage. Expect the live gap to be <strong>smaller</strong> than the harness's mechanical floor — a live agent reads files partially, samples instead of confirming, and reasons either way. Record both numbers. Understanding <em>why they differ</em> — completeness vs sampling, mechanical floor vs behavioral reality — is the graduation exercise of this course.</p>
+  </div>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<section class="section" id="results">
+  <h2>Measured Reference Results</h2>
+  <p>All from real runs of the course tooling (2026-08-24 snapshots; extraction: commons-lang ~12s, Spring ~2m27s):</p>
+  <div class="table-wrap"><table>
+    <tr><th>Repo</th><th>Files</th><th>Nodes / Edges</th><th>Files opened per question</th><th>Aggregate per-question</th></tr>
+    <tr><td>synthetic-mini</td><td>91</td><td>—</td><td>22</td><td>8.0x (87.5%)</td></tr>
+    <tr><td>commons-lang</td><td>624</td><td>10,648 / 40,309</td><td>46</td><td>116.5x (99.1%)</td></tr>
+    <tr><td>synthetic</td><td>1,491</td><td>7,008 / 5,960</td><td>303</td><td>13.5x (92.6%)</td></tr>
+    <tr class="hl-row"><td>spring-framework</td><td>9,195</td><td>110,885 / 432,741</td><td>567</td><td>33.7x (97.0%)</td></tr>
+  </table></div>
+
+  <div class="animation-container" id="anim-bench-scale" role="img" aria-label="Animated bar chart of files opened per question growing with repository size across the four measured repositories">
+    <div class="anim-title">BENCH_SCALE — exploration burden vs repo size (your four data points)</div>
+    <svg viewBox="0 0 720 250" width="100%" height="250" aria-hidden="true">
+      <line x1="60" y1="200" x2="700" y2="200" stroke="#21262D"/>
+      <line x1="60" y1="200" x2="60" y2="20" stroke="#21262D"/>
+      <text x="30" y="35" fill="#64748B" font-size="11" font-family="monospace">files/</text>
+      <text x="30" y="48" fill="#64748B" font-size="11" font-family="monospace">question</text>
+      <g id="bs-bars"></g>
+    </svg>
+    <div class="anim-note">The bars are the burden an exploring agent pays per structural question: 22 → 46 → 303 → 567 files as the haystack grows from 91 to 9,195 files. The <em>multiple</em> column doesn't rise monotonically (answer size interferes) — the burden does.</div>
+    <div class="animation-controls">
+      <button data-anim="bench-scale" data-act="play" aria-label="Play animation">▶</button>
+      <button data-anim="bench-scale" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button data-anim="bench-scale" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TEST CASES ============ -->
+<section class="section" id="testcases">
+  <h2>Test Cases</h2>
+  <div class="table-wrap"><table>
+    <tr><th>#</th><th>Type</th><th>Input</th><th>Expected</th></tr>
+    <tr><td>1</td><td>happy</td><td><code>graph_callers("registerBeanDefinition")</code> on the Spring graph</td><td>Non-empty caller list, exactly one tool call</td></tr>
+    <tr><td>2</td><td>happy</td><td>Synthetic <code>graph_callers("lookup")</code></td><td>Exactly the seeded count from known_truth.json (1,192 on the full synthetic)</td></tr>
+    <tr><td>3</td><td>happy</td><td>Harness on any target</td><td>Table + aggregate + honesty notes render; <code>--json</code> file written</td></tr>
+    <tr><td>4</td><td>edge</td><td><code>graph_callers("notASymbol")</code></td><td>Graceful <code>error: ... try grep</code> — never a crash</td></tr>
+    <tr><td>5</td><td>edge</td><td><code>--symbols toString</code></td><td>Row marked unresolvable — the graph declines to guess</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ GOING FURTHER ============ -->
+<section class="section" id="further">
+  <h2>Going Further <span class="badge dim">OPTIONAL</span></h2>
+  <ul>
+    <li><strong>Wire the freshness gate:</strong> point your Capstone-1 <code>freshness_gate.py</code> at the Spring graph in CI; commit without re-extracting and watch it block.</li>
+    <li><strong>Benchmark the benchmark:</strong> modify the selector to rank by grep expense instead of caller count, re-run, and watch your aggregate inflate — you have now manufactured a ceiling case on purpose, which inoculates you against ever being fooled by one.</li>
+    <li><strong>Compare instruments:</strong> run Graphify or CodeGraph over commons-lang and diff their edge sets against <code>kg_extract_java</code>'s — expect them to win on resolution (they do type analysis; you cap at 8 candidates).</li>
+    <li><strong>Extend the server:</strong> add <code>extends</code>/<code>implements</code> queries (<code>graph_api</code>-style) — the edges are already in graph.json.</li>
+    <li><strong>Stress the baseline:</strong> add a <code>--noise</code> flag to <code>gen_java_repo.py</code> (dead code, comments naming symbols) and measure how the exploration arm degrades while the graph arm doesn't.</li>
+  </ul>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section class="section" id="quiz">
+  <h2>Knowledge Check</h2>
+
+  <div class="quiz-question" data-q="1">
+    <div class="q-title">1. Your commons-lang run shows a 116.5x aggregate. A colleague concludes the team's Claude bill will drop ~100x after installing a graph tool. What's the correct correction?</div>
+    <div class="quiz-option" data-ok="0">They're right — the harness is deterministic, so the number transfers directly.</div>
+    <div class="quiz-option" data-ok="1">That's a per-question multiple for structural lookups; session-level savings (which bills follow) replicate at 6.8x–49x because sessions mostly spend tokens on reasoning and edits a graph can't remove.</div>
+    <div class="quiz-option" data-ok="0">The number is fake because the baseline is simulated.</div>
+    <div class="quiz-option" data-ok="0">Bills depend only on repo size, so commons-lang is too small to say.</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="2">
+    <div class="q-title">2. Why does the extractor emit NO edges for a call to a name with more than 8 definitions (AMBIG_CAP)?</div>
+    <div class="quiz-option" data-ok="0">To keep graph.json under a file-size limit.</div>
+    <div class="quiz-option" data-ok="0">Because such calls are always to JDK methods, which are out of scope.</div>
+    <div class="quiz-option" data-ok="1">A call to a name defined 150 times carries no structural signal — emitting every candidate is quadratic noise, not honesty; real tools escalate to type resolution (the M03 LSP ladder) instead of guessing harder.</div>
+    <div class="quiz-option" data-ok="0">Java forbids more than 8 overloads per name, so it indicates a parse error.</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="3">
+    <div class="q-title">3. Commons-lang (624 files) shows a HIGHER per-question multiple than Spring (9,195 files). Why isn't this a contradiction of "savings scale with the haystack"?</div>
+    <div class="quiz-option" data-ok="0">It is a contradiction — the harness has a bug on large repos.</div>
+    <div class="quiz-option" data-ok="1">The exploration burden (files/question: 46 vs 567) DOES scale with the haystack; the multiple also divides by answer size, and Spring's answers are bigger — more callers and AMBIGUOUS candidates raise the graph arm's cost.</div>
+    <div class="quiz-option" data-ok="0">Spring's files are smaller, so exploring them is cheap.</div>
+    <div class="quiz-option" data-ok="0">Commons-lang was measured with more questions.</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="4">
+    <div class="q-title">4. The harness selects symbols by caller count, never by grep expense. What benchmark sin does this prevent?</div>
+    <div class="quiz-option" data-ok="0">Cherry-picking small files to make the baseline arm cheap.</div>
+    <div class="quiz-option" data-ok="1">Manufacturing a ceiling case — choosing the questions where exploration happens to be most expensive, then reporting that best case as typical (the same pattern behind the 71.5x headline M04 dissected).</div>
+    <div class="quiz-option" data-ok="0">Measuring symbols that don't exist in the graph.</div>
+    <div class="quiz-option" data-ok="0">Running the same question twice and double-counting it.</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="5">
+    <div class="q-title">5. What did Phase 2's check of Registry.lookup (1,192 / 1,192 seeded callers found) actually establish?</div>
+    <div class="quiz-option" data-ok="0">That the graph will be equally complete on Spring.</div>
+    <div class="quiz-option" data-ok="1">That the measuring instrument was verified against known ground truth before its numbers were trusted — the step benchmark readers (and most benchmark authors) skip.</div>
+    <div class="quiz-option" data-ok="0">That the synthetic repo compiles.</div>
+    <div class="quiz-option" data-ok="0">That AMBIG_CAP is set correctly.</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="6">
+    <div class="q-title">6. You re-extract the Spring graph after a big refactor, but agent answers don't change. Most likely cause?</div>
+    <div class="quiz-option" data-ok="0">tree-sitter cached the old AST.</div>
+    <div class="quiz-option" data-ok="1">The MCP server loads graph.json at startup and never re-reads it — fresh on disk, stale in memory. Restart the server (M11's startup-cache trap).</div>
+    <div class="quiz-option" data-ok="0">The refactor didn't change any call edges.</div>
+    <div class="quiz-option" data-ok="0">claude mcp add must be re-run after every extraction.</div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<!-- ============ SUMMARY ============ -->
+<section class="section" id="summary">
+  <h2>Summary</h2>
+  <div class="cheat">
+    <div class="chip"><b>One schema, two languages</b>kg_extract_java mirrors the Python extractor — so the M01 queries, M09 server, and M11 gate all work unchanged on Java.</div>
+    <div class="chip"><b>Verify before you trust</b>1,192/1,192 seeded callers on the synthetic; hand-checked edges on the real repo. Instrument first, numbers second.</div>
+    <div class="chip"><b>The measured claim</b>Spring: 8 questions = 4,535 files ≈ 15.2M tokens by exploration vs ≈451K via graph — 97.0%, 33.7x, reproduced on your machine in ~15s.</div>
+    <div class="chip"><b>Per-question ≠ per-session</b>Your table is okf-rs-class (~400x/query territory); bills follow session-level numbers (6.8x–49x). Say which one you're quoting.</div>
+    <div class="chip"><b>Refusal is a feature</b>AMBIG_CAP drops no-signal names; the server misses gracefully; the harness prints its own caveats. Honest tools name their limits.</div>
+    <div class="chip"><b>The burden curve</b>22 → 46 → 303 → 567 files per question as repos grow 91 → 9,195 files. The haystack is the story.</div>
+  </div>
+  <p><strong>What you built:</strong> a verified Java structural graph pipeline, an MCP serving path for any pre-built graph, and — the real artifact — a benchmark table you can defend line by line. That closes the course: you can now build the map, keep it honest, and measure exactly what it saves.</p>
+</section>
+
+<!-- ============ REFERENCES ============ -->
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul>
+    <li>Lab packet: <code>labs/CAPSTONE-2-java-token-benchmark/README.md</code> (targets, phases, expected outputs)</li>
+    <li>Tools: <code>labs/shared_tools/kg_extract_java.py</code> · <code>gen_java_repo.py</code> · <code>solution/measure_tokens.py</code> · M09 server <code>--graph</code> flag</li>
+    <li>tree-sitter Java grammar — github.com/tree-sitter/tree-sitter-java</li>
+    <li>Apache commons-lang — github.com/apache/commons-lang · Spring Framework — github.com/spring-projects/spring-framework</li>
+    <li>Course modules this builds on: M03 (parsing &amp; the LSP ladder), M04/M05 (benchmark literacy), M09 (MCP serving), M11 (staleness)</li>
+  </ul>
+</section>
+
+<nav class="nav-links" aria-label="Module navigation">
+  <a href="CAPSTONE-knowledge-pipeline.html"><span class="dir">← Previous</span>Capstone 1 — Self-Updating Pipeline</a>
+  <a class="next" href="index.html"><span class="dir">Finish →</span>Course Home</a>
+</nav>
+
+</main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- copy buttons ---------- */
+  document.querySelectorAll(".code-block").forEach(function (block) {
+    var btn = block.querySelector(".copy-btn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var text = block.querySelector("pre").innerText;
+      function done() { btn.textContent = "copied!"; setTimeout(function () { btn.textContent = "copy"; }, 1500); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else { done(); }
+    });
+  });
+
+  /* ---------- quiz ---------- */
+  document.querySelectorAll(".quiz-question").forEach(function (q) {
+    var fb = q.querySelector(".quiz-feedback");
+    q.querySelectorAll(".quiz-option").forEach(function (opt) {
+      opt.setAttribute("role", "button");
+      opt.setAttribute("tabindex", "0");
+      function answer() {
+        if (q.dataset.done) return;
+        q.dataset.done = "1";
+        var ok = opt.dataset.ok === "1";
+        opt.classList.add(ok ? "correct" : "incorrect");
+        q.querySelectorAll(".quiz-option").forEach(function (o) {
+          if (o.dataset.ok === "1") o.classList.add("correct");
+        });
+        fb.classList.add("show", ok ? "good" : "bad");
+        var explains = {
+          "1": "Both numbers are true at different levels: per-question lookup multiples vs whole-session savings. Quoting one as the other is the benchmark sin this course exists to prevent.",
+          "2": "Refusing to guess IS the honest answer once a name has no discriminating signal. The first extractor version emitted every candidate and produced 183K edges of noise; the cap restored 5,960 signal edges without losing one ground-truth edge.",
+          "3": "Multiple = baseline ÷ (answer + orientation). Spring's exploration burden is 12x commons-lang's, but its answers are bigger too — both numerator and denominator grew.",
+          "4": "Selection must be blind to cost. Ranked by caller count, the questions are the ones developers actually ask — whatever the measurement then says, it says fairly.",
+          "5": "A benchmark is only as good as its instrument. Seeded ground truth lets you test the extractor exactly — 1,192 expected, 1,192 found — before believing anything downstream.",
+          "6": "M11's startup-cache trap, live: the fix is restarting (or hot-reloading) the MCP server after every regeneration — and a freshness gate to catch it when you forget."
+        };
+        fb.textContent = (ok ? "✅ Correct. " : "❌ Not quite. ") + (explains[q.dataset.q] || "");
+      }
+      opt.addEventListener("click", answer);
+      opt.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); answer(); } });
+    });
+  });
+
+  /* ---------- animation engine ---------- */
+  function makeAnim(name, durationMs, renderFrame) {
+    var start = null, raf = null, paused = true, elapsed = 0;
+    function frame(ts) {
+      if (start === null) start = ts - elapsed;
+      elapsed = ts - start;
+      var t = Math.min(1, elapsed / durationMs);
+      renderFrame(t);
+      if (t < 1 && !paused) raf = requestAnimationFrame(frame);
+    }
+    var api = {
+      play: function () { if (!paused && raf) return; paused = false; start = null; raf = requestAnimationFrame(frame); },
+      pause: function () { paused = true; if (raf) cancelAnimationFrame(raf); raf = null; },
+      restart: function () { api.pause(); elapsed = 0; start = null; paused = false; raf = requestAnimationFrame(frame); }
+    };
+    document.querySelectorAll('[data-anim="' + name + '"]').forEach(function (btn) {
+      btn.addEventListener("click", function () { api[btn.dataset.act](); });
+    });
+    if (reduced) { renderFrame(1); } else { renderFrame(0); }
+    return api;
+  }
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+  function fmt(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+  /* TWO_ARMS */
+  (function () {
+    var filesG = document.getElementById("ta-files");
+    if (!filesG) return;
+    var COLS = 22, ROWS = 3, TOTAL = COLS * ROWS;
+    var rects = [];
+    for (var i = 0; i < TOTAL; i++) {
+      var r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("x", 20 + (i % COLS) * 31);
+      r.setAttribute("y", 34 + Math.floor(i / COLS) * 26);
+      r.setAttribute("width", 26); r.setAttribute("height", 20); r.setAttribute("rx", 3);
+      r.setAttribute("fill", "rgba(244,63,94,0.0)"); r.setAttribute("stroke", "#21262D");
+      filesG.appendChild(r); rects.push(r);
+    }
+    var baseLabel = document.getElementById("ta-count-base");
+    var callRect = document.getElementById("ta-call");
+    var callLabel = document.getElementById("ta-call-label");
+    var graphLabel = document.getElementById("ta-count-graph");
+    makeAnim("two-arms", 6000, function (t) {
+      var e = ease(t);
+      var opened = Math.floor(e * TOTAL);
+      rects.forEach(function (r, i) {
+        r.setAttribute("fill", i < opened ? "rgba(244,63,94,0.35)" : "rgba(244,63,94,0.0)");
+        r.setAttribute("stroke", i < opened ? "#F43F5E" : "#21262D");
+      });
+      baseLabel.textContent = fmt(e * 764534) + " tokens · " + Math.floor(e * 174) + " files (of 174 matched)";
+      var callT = Math.max(0, Math.min(1, (t - 0.05) / 0.25));
+      callRect.setAttribute("width", 300 * ease(callT));
+      callLabel.textContent = callT > 0.6 ? 'graph_callers("registerBeanDefinition") → 1 answer' : "";
+      graphLabel.textContent = fmt(ease(callT) * 46540) + " tokens · " + (callT > 0 ? 1 : 0) + " call — done at " + (callT >= 1 ? "0:01" : "…");
+    });
+  })();
+
+  /* TOKEN_SCALE */
+  (function () {
+    var beam = document.getElementById("ts-beam");
+    if (!beam) return;
+    var lb = document.getElementById("ts-left-box"), rb = document.getElementById("ts-right-box");
+    var ll = document.getElementById("ts-left-label"), rl = document.getElementById("ts-right-label");
+    makeAnim("token-scale", 5000, function (t) {
+      var e = ease(t);
+      var lh = 15 + e * 115, rh = 15 + e * 3.4;
+      lb.setAttribute("height", lh); lb.setAttribute("y", 200 - lh - 0);
+      rb.setAttribute("height", rh); rb.setAttribute("y", 200 - rh - 0);
+      beam.setAttribute("transform", "rotate(" + (e * 9) + " 360 80)");
+      ll.textContent = "exploration " + fmt(e * 15194788) + " tok";
+      rl.textContent = "graph " + fmt(e * 451436) + " tok";
+    });
+  })();
+
+  /* BENCH_SCALE */
+  (function () {
+    var g = document.getElementById("bs-bars");
+    if (!g) return;
+    var data = [
+      { label: "synth-mini", files: 91, burden: 22 },
+      { label: "commons-lang", files: 624, burden: 46 },
+      { label: "synthetic", files: 1491, burden: 303 },
+      { label: "spring", files: 9195, burden: 567 }
+    ];
+    var ns = "http://www.w3.org/2000/svg";
+    var bars = data.map(function (d, i) {
+      var x = 110 + i * 150;
+      var bar = document.createElementNS(ns, "rect");
+      bar.setAttribute("x", x); bar.setAttribute("width", 70); bar.setAttribute("rx", 5);
+      bar.setAttribute("fill", i === 3 ? "rgba(212,168,67,0.45)" : "rgba(139,92,246,0.35)");
+      bar.setAttribute("stroke", i === 3 ? "#D4A843" : "#8B5CF6");
+      g.appendChild(bar);
+      var t1 = document.createElementNS(ns, "text");
+      t1.setAttribute("x", x + 35); t1.setAttribute("y", 218); t1.setAttribute("text-anchor", "middle");
+      t1.setAttribute("fill", "#94A3B8"); t1.setAttribute("font-size", "11"); t1.setAttribute("font-family", "monospace");
+      t1.textContent = d.label + " (" + d.files + "f)"; g.appendChild(t1);
+      var t2 = document.createElementNS(ns, "text");
+      t2.setAttribute("x", x + 35); t2.setAttribute("text-anchor", "middle");
+      t2.setAttribute("fill", i === 3 ? "#D4A843" : "#8B5CF6"); t2.setAttribute("font-size", "13");
+      t2.setAttribute("font-weight", "bold"); t2.setAttribute("font-family", "monospace");
+      g.appendChild(t2);
+      return { bar: bar, t2: t2, d: d };
+    });
+    makeAnim("bench-scale", 4500, function (t) {
+      bars.forEach(function (b, i) {
+        var local = Math.max(0, Math.min(1, (t * 4.5 - i * 0.7) / 1.2));
+        var e = ease(local);
+        var h = e * (b.d.burden / 567) * 165;
+        b.bar.setAttribute("height", Math.max(2, h));
+        b.bar.setAttribute("y", 200 - Math.max(2, h));
+        b.t2.setAttribute("y", 200 - Math.max(2, h) - 8);
+        b.t2.textContent = local > 0.2 ? Math.round(e * b.d.burden) + "/q" : "";
+      });
+    });
+  })();
+})();
+</script>
+</body>
+</html>

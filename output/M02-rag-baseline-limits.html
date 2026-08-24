@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M02 · The RAG Baseline and Where It Breaks — Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0A1628;
+  --bg-secondary: #111D33;
+  --bg-card: #162033;
+  --bg-surface: #1A2740;
+  --text-primary: #E8ECF1;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --accent-primary: #D4A843;
+  --accent-hover: #E5BC5A;
+  --accent-muted: rgba(212, 168, 67, 0.15);
+  --success: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --error: #F43F5E;
+  --error-bg: rgba(244, 63, 94, 0.1);
+  --info: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.1);
+  --track-color: #6366F1;
+  --code-bg: #0D1117;
+  --code-border: #21262D;
+  --code-text: #C9D1D9;
+  --code-comment: #8B949E;
+  --code-keyword: #FF7B72;
+  --code-string: #A5D6FF;
+  --code-function: #D2A8FF;
+  --code-number: #79C0FF;
+  --transition-fast: 150ms;
+  --transition-normal: 300ms;
+  --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 3rem;
+}
+.sidebar-nav {
+  position: sticky;
+  top: 2rem;
+  height: calc(100vh - 4rem);
+  overflow-y: auto;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.sidebar-nav .nav-title {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  margin-bottom: 0.75rem;
+}
+.sidebar-nav a {
+  display: block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 0.4rem 0.6rem;
+  border-left: 2px solid var(--code-border);
+  transition: all var(--transition-fast);
+}
+.sidebar-nav a:hover {
+  color: var(--track-color);
+  border-left-color: var(--track-color);
+  background: var(--bg-secondary);
+}
+.content { max-width: 800px; min-width: 0; }
+h1, h2, h3, h4 { font-family: 'Bricolage Grotesque', sans-serif; }
+h1 { font-size: 2rem; font-weight: 700; line-height: 1.25; margin: 0.5rem 0 1rem; }
+h2 { font-size: 1.5rem; font-weight: 700; margin: 0 0 1.25rem; scroll-margin-top: 1.5rem; }
+h3 { font-size: 1.25rem; font-weight: 600; margin: 2rem 0 0.75rem; scroll-margin-top: 1.5rem; }
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem 1.5rem; }
+li { margin-bottom: 0.4rem; }
+strong { font-weight: 600; }
+a { color: var(--accent-primary); }
+.section { margin-bottom: 4rem; }
+.course-kicker {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.track-badge {
+  display: inline-block;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bg-primary);
+  background: var(--track-color);
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+  margin: 0.75rem 0 0.25rem;
+}
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+.progress-bar {
+  height: 4px;
+  background: var(--bg-surface);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--track-color), var(--accent-primary));
+  border-radius: 2px;
+  transition: width var(--transition-slow);
+}
+.objectives-box {
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.analogy-box, .tech-def-box, .callout {
+  border-radius: 0 8px 8px 0;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+.analogy-box {
+  background: var(--accent-muted);
+  border-left: 4px solid var(--accent-primary);
+}
+.analogy-box::before {
+  content: '💡 Everyday Analogy';
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  color: var(--accent-primary);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.tech-def-box {
+  background: var(--info-bg);
+  border-left: 4px solid var(--info);
+}
+.tech-def-box::before {
+  content: '📐 Technical Definition';
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  color: var(--info);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.callout { border-left: 4px solid; }
+.box-label {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-cost { background: var(--warning-bg); border-left-color: var(--accent-primary); }
+.callout-cost .box-label { color: var(--accent-primary); }
+.callout-security { background: var(--error-bg); border-left-color: var(--error); }
+.callout-security .box-label { color: var(--error); }
+.bridge {
+  border-left: 3px dotted var(--text-muted);
+  padding: 0.25rem 0 0.25rem 1.25rem;
+  margin: 2rem 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+.term-tooltip {
+  position: relative;
+  color: var(--accent-primary);
+  cursor: help;
+  border-bottom: 1px dashed var(--accent-primary);
+}
+.term-tooltip .tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--text-primary);
+  width: 280px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+  z-index: 10;
+  line-height: 1.5;
+}
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+table { border-collapse: collapse; width: 100%; margin: 1.25rem 0; font-size: 0.95rem; }
+th, td { border: 1px solid var(--code-border); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+th { background: var(--bg-card); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; }
+.table-scroll { overflow-x: auto; }
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+}
+.code-block {
+  position: relative;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  margin: 1.25rem 0;
+  overflow: hidden;
+}
+.code-block .code-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.9rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--code-border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.code-block pre {
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--code-text);
+}
+.copy-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--code-border);
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.code-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--code-border);
+  margin-top: 1.25rem;
+}
+.code-tab {
+  padding: 0.5rem 1.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+.code-tab.active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+}
+.code-panel { display: none; }
+.code-panel.active { display: block; }
+.code-panel .code-block { margin-top: 0.75rem; }
+.animation-container {
+  background: var(--bg-secondary);
+  border: 1px solid var(--code-border);
+  border-radius: 12px;
+  padding: 2rem 2rem 4rem;
+  margin: 2rem 0;
+  position: relative;
+  min-height: 300px;
+}
+.anim-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+.anim-stage { position: relative; }
+.anim-caption {
+  position: absolute;
+  bottom: 1rem;
+  left: 2rem;
+  right: 6rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  min-height: 1.2rem;
+}
+.animation-controls {
+  display: flex;
+  gap: 0.5rem;
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+}
+.animation-controls button {
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+}
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.checkpoint {
+  background: var(--success-bg);
+  border-left: 4px solid var(--success);
+  border-radius: 0 8px 8px 0;
+  padding: 1.25rem 1.5rem;
+  margin: 1.5rem 0;
+}
+.checkpoint .box-label { color: var(--success); }
+.quiz-question {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.quiz-question .q-text { font-weight: 600; margin-bottom: 0.75rem; }
+.quiz-option {
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 1rem;
+}
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-option.disabled { pointer-events: none; opacity: 0.85; }
+.quiz-feedback {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  display: none;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); color: var(--text-primary); }
+.quiz-feedback.bad { background: var(--error-bg); color: var(--text-primary); }
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.summary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-top: 3px solid var(--track-color);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  font-size: 0.95rem;
+}
+.summary-card h4 { font-size: 1rem; margin-bottom: 0.4rem; }
+.module-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 3rem 0 1rem;
+}
+.module-nav a {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--code-border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+}
+.module-nav a:hover { border-color: var(--track-color); }
+.module-nav .dir {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  display: block;
+}
+.module-nav .next { text-align: right; }
+footer { color: var(--text-muted); font-size: 0.85rem; margin-top: 2rem; }
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; padding: 1rem; }
+  .sidebar-nav {
+    position: static;
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .sidebar-nav .nav-title { width: 100%; }
+  .sidebar-nav a { border: 1px solid var(--code-border); border-radius: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animation-controls { display: none; }
+  .anim-reduced-note { display: block !important; }
+}
+.anim-reduced-note { display: none; color: var(--text-muted); font-size: 0.8rem; position: absolute; bottom: 1rem; right: 1rem; }
+</style>
+</head>
+<body>
+<div class="page-container">
+<nav class="sidebar-nav" aria-label="Module sections">
+  <div class="nav-title">M02 · On this page</div>
+  <a href="#objectives">Learning objectives</a>
+  <a href="#recap">RAG in two phases</a>
+  <a href="#shredding">Shredded context</a>
+  <a href="#roulette">The churn-rate incident</a>
+  <a href="#ops">Drift &amp; the permissions leak</a>
+  <a href="#leads">Leads vs answers</a>
+  <a href="#where-rag-wins">Where RAG still wins</a>
+  <a href="#code">Code walkthrough</a>
+  <a href="#handson">Hands-on lab</a>
+  <a href="#quiz">Knowledge check</a>
+  <a href="#summary">Module summary</a>
+  <a href="#references">References</a>
+</nav>
+
+<main class="content">
+<header class="section" id="top">
+  <div class="course-kicker">Knowledge Graphs for AI Agents · From RAG Limits to Self-Updating Codebase Brains</div>
+  <div class="track-badge">Track 1 — Foundations</div>
+  <h1>M02 · The RAG Baseline and Where It Breaks</h1>
+  <div class="meta-row">
+    <span>📍 Module 3 of 14</span>
+    <span>⏱️ ~45 minutes</span>
+    <span>🧰 Prerequisites: M00, M01</span>
+    <span>📶 Level: Beginner</span>
+  </div>
+  <div class="progress-bar" role="progressbar" aria-valuenow="3" aria-valuemin="1" aria-valuemax="14" aria-label="Course progress: module 3 of 14">
+    <div class="progress-fill" style="width: 21.4%"></div>
+  </div>
+  <p>For three years, the default answer to every enterprise AI context problem was automatic: "just build a RAG pipeline." This module is not a takedown of RAG — it's a precise autopsy of the <em>specific</em> jobs RAG was never built for. You'll watch a retrieval pipeline confidently return a stale metric definition with nothing crashing anywhere, understand exactly why no better embedding model can fix it, and learn the one-sentence rule that decides when retrieval is the right tool. You cannot evaluate the cures in Tracks 2–3 without holding this disease in your hands first.</p>
+</header>
+
+<section class="section" id="objectives">
+  <h2>Learning objectives</h2>
+  <div class="objectives-box">
+    <p>By the end of this module you will be able to:</p>
+    <ul>
+      <li>Describe RAG's <strong>two phases</strong> (setup and query) and what each one costs.</li>
+      <li>Explain <strong>shredded context</strong> — why chunking structurally destroys hierarchy, tables, and cross-references, regardless of embedding quality.</li>
+      <li>Walk through the <strong>churn-rate incident</strong>: how probabilistic retrieval of canonical facts fails silently and expensively.</li>
+      <li>Identify the <strong>operational costs</strong> nobody advertises: re-indexing, embedding drift, and the access-control leak.</li>
+      <li>State where RAG <strong>remains the right tool</strong> — and why "RAG first, graph when depth becomes a bottleneck" is the professional default.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="recap">
+  <h2>RAG in two phases (a fast, honest recap)</h2>
+  <p>You've likely built <span class="term-tooltip" tabindex="0">RAG<span class="tooltip-content">Retrieval-Augmented Generation: retrieve relevant text from your own data and paste it into the model's prompt so it can answer from your knowledge instead of its training data.</span></span> before (the sibling course spends two modules on it). Here is the whole machine in two phases, stripped to what matters for this module's argument.</p>
+  <p><strong>Phase 1 — SETUP (done once, redone on every content change):</strong> take your documents, break them into small pieces — <span class="term-tooltip" tabindex="0">chunks<span class="tooltip-content">Fixed-size text segments, typically 256–1000 tokens, cut from documents so each piece fits an embedding model's input and stays "focused."</span></span>, typically around 512 tokens. Convert each chunk into an <span class="term-tooltip" tabindex="0">embedding<span class="tooltip-content">A vector of hundreds of floats representing the text's meaning; texts with similar meaning get vectors that sit near each other.</span></span>. Store the vectors in a vector database.</p>
+  <p><strong>Phase 2 — QUERY (every single question):</strong> embed the user's question, find the <span class="term-tooltip" tabindex="0">nearest neighbors<span class="tooltip-content">The stored vectors closest to the query vector by cosine similarity — the mathematical stand-in for "most related text."</span></span> among the stored chunk vectors, paste the winning chunks into the prompt, and let the model answer. That's it: search, then generate.</p>
+  <p>Notice what the machine fundamentally IS: a <strong>similarity engine</strong>. At no point does it know what any chunk <em>means</em>, whether a chunk is <em>current</em>, or how one chunk <em>relates</em> to another. It knows distances between vectors. Every failure in this module is that one sentence wearing different costumes.</p>
+</section>
+
+<section class="section" id="shredding">
+  <h2>Shredded context — what chunking destroys</h2>
+
+  <div class="analogy-box">
+    <p><strong>Before</strong>: imagine a beautifully organized city map — districts, connecting roads, a legend, an index. Now run it through a paper shredder and try to navigate by picking up individual shreds, one at a time, choosing each shred by how visually similar it looks to a photo of your destination.</p>
+    <p><strong>The pain</strong>: each shred is genuinely a piece of the real map — nothing is fabricated — but the <em>connections</em> are gone. The road that continued onto the next shred now ends at a torn edge. Two districts that bordered each other are in separate piles. You can find shreds that resemble your destination; you cannot follow a route.</p>
+    <p><strong>The mapping</strong>: chunking is the shredder. A structured document — a schema with its table, a runbook with its ordered steps, an architecture doc whose section 4 qualifies section 2 — gets cut at token boundaries that ignore its structure entirely. Retrieval hands the model shreds. The model is then asked to answer route-shaped questions from confetti.</p>
+  </div>
+
+  <div class="tech-def-box">
+    <p>The failure has a precise structural form. As a 2026 analysis by Prism Labs put it: <em>"If cause and effect aren't co-located in the same 512-token chunk, your system has no idea they're connected."</em> Chunk boundaries are drawn by token count, not meaning — so a table's header row lands in one chunk and its data rows in another; a code example separates from the caveat below it ("never do this in production"); step 3 of a runbook loses the warning attached to step 2.</p>
+    <p>Crucially, this is <strong>not fixable with better embeddings</strong>. A perfect embedding model would perfectly represent the meaning of each shred — but the information you need (the relationship BETWEEN shreds) was destroyed before any embedding was computed. It is an inherent property of independent-chunk retrieval, which is why the fix in this course is architectural (add layers that preserve structure), not model-shopping.</p>
+    <p>Connect this to M01's multi-hop lesson: "what breaks if I alter this migration?" requires chaining facts across four files. Those facts were never in one chunk, so no similarity search — however good — can assemble the chain. Flat retrieval answers <em>"what text resembles this question?"</em>; multi-hop questions ask <em>"what connects to what?"</em>. Different question, different machine.</p>
+  </div>
+
+  <div class="animation-container" data-anim="shredder">
+    <div class="anim-title">Animation · SHREDDER — a structured document meets the chunker</div>
+    <div class="anim-stage" style="height: 320px;" aria-label="Animation of a structured document with a table and cross-references being cut into chunks, severing rows and links"></div>
+    <div class="anim-caption"></div>
+    <div class="animation-controls">
+      <button type="button" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+    <div class="anim-reduced-note">Reduced motion: showing final state.</div>
+  </div>
+</section>
+
+<section class="section" id="roulette">
+  <h2>The churn-rate incident — probabilistic retrieval meets canonical truth</h2>
+  <p class="bridge">Shredding destroys structure. The second failure is subtler: even perfectly intact chunks can be the WRONG chunks — and nothing tells you.</p>
+
+  <p>Here is the corpus's composite incident, assembled from real deployments, told in full because every beat matters. A data analyst asks the company's AI agent: <em>"Write an executive SQL query calculating our churn rate for Q2."</em> The agent embeds the query and searches a vector database holding thousands of chunked PDFs, Confluence pages, and archived Slack logs. It retrieves three high-similarity chunks: a PowerPoint deck from 2023, an old engineering wiki page, and — this detail is perfect — <em>a Slack conversation of two data engineers arguing about how churn should be calculated</em>.</p>
+  <p>All three chunks are genuinely "about churn." All three score high on similarity. And they contain <strong>three conflicting definitions</strong>. The model, given conflicting authorities and no way to rank them, blends. The query it writes pulls from the wrong schema. The dashboard ships. Nothing crashed. Nothing errored. Nobody notices for three weeks — until finance asks why weekly revenue doesn't match the invoice system.</p>
+  <p>The diagnosis, in the corpus's words: <em>"the agent confidently retrieved the wrong version of the truth, because that's all a search engine can do when the underlying knowledge was never actually settled in the first place. <strong>You built a search engine. You needed a memory.</strong>"</em></p>
+  <p>Generalize the incident and you get this module's central rule. Retrieval is <strong>probabilistic</strong>: it returns the most <em>similar</em> chunks, with no concept of <em>authoritative</em>. For exploratory questions ("what themes come up in churn discussions?") that's exactly right. For <strong>canonical facts</strong> — the metric definition, the compliance policy, the API contract, the SLA — similarity is the wrong criterion entirely. A canonical fact doesn't need to be <em>rediscovered</em> by search on every query. It needs to be written down once, correctly, and <strong>looked up</strong>. As the corpus puts it: for compliance docs, runbooks, and API specs, <em>"90% semantic similarity is a failure; 100% exactness is non-negotiable."</em></p>
+
+  <div class="animation-container" data-anim="roulette">
+    <div class="anim-title">Animation · COSINE_ROULETTE — same question, different luck (restart it a few times)</div>
+    <div class="anim-stage" style="height: 320px;" aria-label="Animation of a query retrieving three chunks of varying quality from a chunk grid, different on each run"></div>
+    <div class="anim-caption"></div>
+    <div class="animation-controls">
+      <button type="button" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+    <div class="anim-reduced-note">Reduced motion: showing final state.</div>
+  </div>
+
+  <div class="callout callout-warning">
+    <span class="box-label">⚠️ Common misconceptions</span>
+    <p><strong>"The retrieval failed."</strong> — No, and this is the trap: retrieval <em>succeeded by its own definition</em>. It returned the most similar chunks. The failure is asking a similarity engine a question whose answer needs authority, currency, and settledness — properties similarity cannot see.</p>
+    <p><strong>"A reranker / better prompt / bigger top-k fixes it."</strong> — Rerankers reorder by relevance, not authority; a stale definition is maximally relevant. Bigger top-k retrieves MORE conflicting definitions. The fix is upstream: settle the fact once, in a place built for lookups (Track 3).</p>
+    <p><strong>"This failure announces itself."</strong> — The whole point of the incident: it doesn't. Wrong-truth retrieval produces plausible output, ships quietly, and surfaces weeks later as a business discrepancy. Silent wrongness is the signature failure mode of this entire course — you'll meet its graph-world twin (stale graphs) in M11.</p>
+  </div>
+</section>
+
+<section class="section" id="ops">
+  <h2>The operational bill: drift, re-indexing, and the permissions leak</h2>
+  <p>Two costs of vector pipelines rarely make it into the launch blog post.</p>
+  <p><strong>Synchronization.</strong> Embeddings are a <em>derived copy</em> of your data, and every derived copy must be kept in sync with its source. Content changes mean re-chunking and re-embedding; embedding-model upgrades mean re-indexing <em>everything</em> (vectors from different models aren't comparable). The corpus's operators call keeping embeddings synchronized with fast-moving data "an absolute operational nightmare" — and stale vectors fail exactly like the churn incident: silently, by serving yesterday's truth with today's confidence.</p>
+  <p><strong>The access-control leak.</strong> This one costs companies real incidents. Source systems — BigQuery, Cloud Storage, your wiki — enforce per-user permissions. A typical RAG deployment <em>copies content out</em> of those systems into a vector index… and the permissions usually don't come along. Result: <strong>anyone who can query the index can see everything in it</strong>, regardless of what they were allowed to see at the source. Finance-restricted tables, HR documents, incident postmortems — flattened into one searchable pool. This is among the most common, least-discussed ways retrieval systems quietly become security problems; it's specifically why Google built OKF's companion service (Knowledge Catalog) to keep access scoped to source-system permissions — the knowledge moves, and the access rules move with it.</p>
+  <div class="callout callout-security">
+    <span class="box-label">🔒 Security callout</span>
+    <p>Before shipping any retrieval index, answer in writing: <em>who could query this index, and is that set identical to the union of who could read every source document in it?</em> If the answer is no — and by default it is — you have built a permissions bypass with a search box on it.</p>
+  </div>
+</section>
+
+<section class="section" id="leads">
+  <h2>Leads vs answers — the structural blind spot</h2>
+  <p>Now aim RAG at code specifically, because the contrast with M01 becomes crisp. Semantic code search (what Cursor's built-in indexing does) is genuinely useful for exploration: "what files relate to authentication?" works well when you don't know where to look. But semantic search has a structural blind spot the corpus names precisely: <strong>it doesn't understand relationships</strong>. It doesn't know that <code>handleAuth()</code> <em>calls</em> <code>validateToken()</code>, which <em>imports from</em> <code>jwt_utils</code>. It knows these functions contain <em>similar language</em>.</p>
+  <p>The consequence shapes the agent's whole workflow. Semantic search returns <strong>leads</strong> — similarity-ranked hints the agent must then verify by opening files one by one (paying M00's exploration tax). A graph returns <strong>answers</strong> — definitive structural facts, pre-verified at extraction time. Same user question; fundamentally different information architecture. And recall M01's provenance lesson: the graph even labels which answers are facts vs guesses. A similarity score is not a truth label — a 0.91-similarity chunk can be flat wrong, and a 0.62 one exactly right.</p>
+
+  <div class="animation-container" data-anim="leads">
+    <div class="anim-title">Animation · LEADS_VS_ANSWERS — two ways to learn who calls verify_token</div>
+    <div class="anim-stage" style="height: 320px;" aria-label="Animation comparing semantic search returning leads that require verification reads against a graph query returning one definitive answer"></div>
+    <div class="anim-caption"></div>
+    <div class="animation-controls">
+      <button type="button" data-act="play" aria-label="Play animation">▶</button>
+      <button type="button" data-act="pause" aria-label="Pause animation">⏸</button>
+      <button type="button" data-act="restart" aria-label="Restart animation">↻</button>
+    </div>
+    <div class="anim-reduced-note">Reduced motion: showing final state.</div>
+  </div>
+</section>
+
+<section class="section" id="where-rag-wins">
+  <h2>Where RAG still wins — and the professional default</h2>
+  <p class="bridge">If this module has made you want to delete your vector database: stop. That would be replacing one over-correction with another.</p>
+  <p>RAG was built to solve one problem well, and it still solves it better than anything in this course: <strong>finding relevant passages inside a huge pile of unstructured documents you cannot realistically curate ahead of time</strong>. Millions of support tickets. Years of Slack. A document lake of one-off design docs and PDFs. Nobody will ever write concept files for that corpus — and its questions are genuinely exploratory ("what themes come up in churn interviews?"), which is similarity's home turf.</p>
+  <p>Keep the base rates in view, too: industry surveys found roughly <strong>72% of enterprise RAG deployments underdelivered or failed in year one</strong> — but the dominant causes were bad chunking strategies, stale indexes, and mismatched embedding models, <em>not</em> the absence of a graph. The corpus's warning deserves italics: <em>adding a knowledge graph to a flawed retrieval pipeline gives you a flawed retrieval pipeline with higher operational overhead.</em> And in high-stakes territory, retrieval alone measurably fails: legal-domain studies show RAG systems hallucinating on <strong>17–33% of complex queries</strong>, because retrieval doesn't model multi-document logic.</p>
+  <p>So the professional default, per Atlan's guidance, is: <strong>"RAG first, graph when depth becomes a bottleneck."</strong> Run retrieval for the long tail. Watch for the two specific failure signatures — multi-hop structural questions failing (add a code graph: Track 2), canonical facts coming back stale or conflicting (add curated knowledge: Track 3). M10 turns this into a full decision matrix. Adding layers without an observed failure adds complexity, not capability.</p>
+  <div class="table-scroll">
+  <table>
+    <tr><th></th><th>Vector RAG</th><th>Knowledge graph (structural / narrative)</th></tr>
+    <tr><td>Core structure</td><td>Independent chunks in vector space</td><td>Nodes + typed edges / linked concept files</td></tr>
+    <tr><td>Retrieval</td><td>Probabilistic nearest-neighbor</td><td>Deterministic traversal / exact file read</td></tr>
+    <tr><td>Best question shape</td><td>"What's related to X?" (exploratory)</td><td>"What connects to X?" / "What IS the definition of X?" (structural, canonical)</td></tr>
+    <tr><td>Maintenance</td><td>Re-chunk, re-embed, re-index; drift management</td><td>Re-extract on change (Track 2) / git commits and lint (Track 3)</td></tr>
+    <tr><td>Failure mode</td><td>Silently plausible wrong answers</td><td>Silently stale graphs (M11's whole subject)</td></tr>
+    <tr><td>Right corpus</td><td>Massive, unstructured, uncurated</td><td>Code; stable, high-stakes, curated knowledge</td></tr>
+  </table>
+  </div>
+</section>
+
+<section class="section" id="code">
+  <h2>Code walkthrough — make the failure happen, then fix it properly</h2>
+  <p>Theory becomes conviction when the failure runs on your machine. orderflow's <code>docs/architecture.md</code> deliberately preserves a stale paragraph — an old WAU definition ("any API call in 7 days," no tester exclusion) kept under a "Historical note" heading, exactly like real wikis keep them. The canonical definition lives in <code>services/orders/metrics.py</code>. We'll build a tiny retrieval pipeline that surfaces the stale one, then answer the same question deterministically.</p>
+  <p><strong>Chunk 1 — the chunker.</strong> We split docs on paragraph boundaries into ~400-char pieces, keeping <code>{text, source, chunk_index}</code>. Note what we're already losing at this line: the "Historical note (STALE)" heading that qualifies the paragraph can land in a <em>different chunk</em> than the definition it disclaims. The shredder, in one function. <em>Gotcha:</em> we use keyword overlap instead of real embeddings — deliberately. The failure we're demonstrating is about <em>what similarity ranks</em>, not how similarity is computed; keyword scoring shows it without an API key, and a real embedder makes it worse, not better, because the stale paragraph is semantically immaculate.</p>
+  <p><strong>Chunk 2 — retrieval.</strong> Score every chunk by query-term overlap, return the top 3. The stale paragraph is keyword-dense ("weekly active users… 7 days…") so it ranks — often above the correct source, which phrases things differently in code.</p>
+  <p><strong>Chunk 3 — the deterministic alternative.</strong> Same question, zero search: read ONE known file (the M06-style concept for WAU) and print its Computation Rules. No ranking, no luck, no conflicting authorities — a lookup, because a canonical fact deserves a lookup.</p>
+
+  <div class="code-tabs" role="tablist" aria-label="Language selector">
+    <button class="code-tab active" role="tab" data-lang="python" aria-selected="true">Python</button>
+    <button class="code-tab" role="tab" data-lang="node" aria-selected="false">Node.js</button>
+  </div>
+  <div class="code-panel active" data-lang="python">
+  <div class="code-block"><div class="code-head"><span>rag_shreds.py · watch it retrieve the stale truth</span></div><pre>from pathlib import Path
+
+DOCS = Path("../sample-project/docs")
+
+# ---- Chunk 1: the shredder ----
+def chunk_docs(max_len=400):
+    chunks = []
+    for path in sorted(DOCS.glob("*.md")):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError as exc:
+            print(f"skip {path}: {exc}")      # never let one bad file kill the pipeline
+            continue
+        buf = ""
+        for para in text.split("\n\n"):
+            if len(buf) + len(para) &gt; max_len and buf:
+                chunks.append({"text": buf, "source": path.name, "i": len(chunks)})
+                buf = ""
+            buf += para + "\n\n"
+        if buf.strip():
+            chunks.append({"text": buf, "source": path.name, "i": len(chunks)})
+    return chunks
+
+# ---- Chunk 2: similarity by keyword overlap (embeddings make this WORSE, not better) ----
+def retrieve(query, chunks, k=3):
+    terms = set(query.lower().split())
+    scored = sorted(chunks,
+                    key=lambda c: -len(terms &amp; set(c["text"].lower().split())))
+    return scored[:k]
+
+chunks = chunk_docs()
+print(f"{len(chunks)} chunks indexed")
+for c in retrieve("how is weekly active users calculated?", chunks):
+    print(f"--- {c['source']} #{c['i']} ---\n{c['text'][:180]}...\n")
+# One of these is the STALE definition from architecture.md's historical note.
+# Nothing crashed. The pipeline 'worked'.
+
+# ---- Chunk 3: the deterministic alternative — a lookup, not a search ----
+import frontmatter
+concept = frontmatter.load(
+    "../M06-okf-authoring/solution/knowledge/analytics/metrics/weekly_active_users.md")
+print(concept["title"])          # exactly one authority,
+print(concept.content)           # version-controlled, current, whole.</pre></div>
+  </div>
+  <div class="code-panel" data-lang="node">
+  <div class="code-block"><div class="code-head"><span>ragShreds.mjs · the same demonstration</span></div><pre>import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+
+const DOCS = "../sample-project/docs";
+
+// ---- Chunk 1: the shredder ----
+function chunkDocs(maxLen = 400) {
+  const chunks = [];
+  for (const name of readdirSync(DOCS).filter((f) =&gt; f.endsWith(".md")).sort()) {
+    let text;
+    try { text = readFileSync(join(DOCS, name), "utf-8"); }
+    catch (err) { console.error(`skip ${name}: ${err.message}`); continue; }
+    let buf = "";
+    for (const para of text.split("\n\n")) {
+      if (buf.length + para.length &gt; maxLen &amp;&amp; buf) {
+        chunks.push({ text: buf, source: name, i: chunks.length });
+        buf = "";
+      }
+      buf += para + "\n\n";
+    }
+    if (buf.trim()) chunks.push({ text: buf, source: name, i: chunks.length });
+  }
+  return chunks;
+}
+
+// ---- Chunk 2: similarity by keyword overlap ----
+function retrieve(query, chunks, k = 3) {
+  const terms = new Set(query.toLowerCase().split(/\s+/));
+  return [...chunks]
+    .map((c) =&gt; ({ c, score: c.text.toLowerCase().split(/\s+/).filter((w) =&gt; terms.has(w)).length }))
+    .sort((a, b) =&gt; b.score - a.score)
+    .slice(0, k).map((x) =&gt; x.c);
+}
+
+const chunks = chunkDocs();
+console.log(`${chunks.length} chunks indexed`);
+for (const c of retrieve("how is weekly active users calculated?", chunks)) {
+  console.log(`--- ${c.source} #${c.i} ---\n${c.text.slice(0, 180)}...\n`);
+}
+// One of these is the STALE definition. Nothing crashed. The pipeline "worked".
+
+// ---- Chunk 3: the deterministic alternative ----
+const concept = readFileSync(
+  "../M06-okf-authoring/solution/knowledge/analytics/metrics/weekly_active_users.md", "utf-8");
+console.log(concept);   // one authority, version-controlled, current, whole
+</pre></div>
+  </div>
+
+  <div class="checkpoint">
+    <span class="box-label">🔎 What just happened?</span>
+    <p>You built both halves of this module's argument in 60 lines. The retrieval half surfaced a stale definition <em>because it was similar</em> — and no error, log line, or score warned you. The lookup half returned the canonical definition <em>because someone settled it once in a known place</em>. The question "how do we make retrieval smarter?" quietly became "why are we searching for something we could have written down?" — which is precisely the door Track 3 walks through.</p>
+  </div>
+</section>
+
+<section class="section" id="handson">
+  <h2>Hands-on lab — <code>labs/M02-rag-shreds-context</code></h2>
+  <p><strong>What you'll build</strong>: the pipeline above, from scratch, plus a short written reflection. <strong>Time</strong>: 25–35 min. <strong>Prerequisites</strong>: M01 lab; <code>pip install python-frontmatter</code>.</p>
+  <ol>
+    <li><strong>Step 1 — Chunk the docs.</strong> Write <code>chunker.py</code> splitting <code>sample-project/docs/</code> into ~400-char paragraph-aligned chunks. Run it. ✅ Expect ~8–15 chunks with <code>{text, source, chunk_index}</code>.</li>
+    <li><strong>Step 2 — Retrieve.</strong> Write <code>retrieve.py</code> scoring by term overlap for <em>"how is weekly active users calculated?"</em>; print the top 3. ✅ The stale architecture.md paragraph appears among them.</li>
+    <li><strong>Step 3 — The deterministic alternative.</strong> Load the M06 solution's WAU concept with <code>python-frontmatter</code>; print its Computation Rules. ✅ 7-day window, completed orders, tester exclusions.</li>
+    <li><strong>Step 4 — Reflect (in comments).</strong> (a) Would a better embedding model fix Step 2? (b) What <em>process</em> would have prevented the stale paragraph from existing? You'll build exactly that process in M08.</li>
+  </ol>
+  <p><em>Troubleshooting</em>: if the stale paragraph doesn't surface, your chunker may be merging whole files into one chunk — check the max-length split fires; the demonstration depends on the disclaimer heading separating from the definition.</p>
+</section>
+
+<section class="section" id="quiz">
+  <h2>Knowledge check</h2>
+
+  <div class="quiz-question">
+    <div class="q-text">1. RAG's two phases are:</div>
+    <div class="quiz-option" data-correct="false">Train, then fine-tune</div>
+    <div class="quiz-option" data-correct="true">Setup (chunk → embed → store, redone on content change) and query (embed question → nearest neighbors → paste into prompt, every question)</div>
+    <div class="quiz-option" data-correct="false">Parse, then traverse</div>
+    <div class="quiz-feedback" data-good="Right — and noticing what the machine is (a similarity engine that never knows meaning, currency, or relationships) predicts every failure in this module." data-bad="Setup: chunk, embed, store. Query: embed the question, find nearest neighbors, paste into the prompt. It's a similarity engine — that framing predicts all its failure modes."></div>
+  </div>
+
+  <div class="quiz-question">
+    <div class="q-text">2. Why can't a better embedding model fix shredded context?</div>
+    <div class="quiz-option" data-correct="false">Embedding models have a maximum quality ceiling</div>
+    <div class="quiz-option" data-correct="true">The relationships between chunks were destroyed at chunking time — before any embedding was computed; perfect shred-embeddings still can't restore severed connections</div>
+    <div class="quiz-option" data-correct="false">Better models are too expensive to run</div>
+    <div class="quiz-feedback" data-good="Exactly. 'If cause and effect aren't co-located in the same 512-token chunk, your system has no idea they're connected' — an inherent property of independent-chunk retrieval." data-bad="The information loss happens upstream: chunk boundaries sever table-from-header, warning-from-step, cause-from-effect. Embeddings represent shreds perfectly — the connections are already gone."></div>
+  </div>
+
+  <div class="quiz-question">
+    <div class="q-text">3. The deepest lesson of the churn-rate incident is:</div>
+    <div class="quiz-option" data-correct="false">The team should have used a bigger top-k</div>
+    <div class="quiz-option" data-correct="false">Slack logs should never be indexed</div>
+    <div class="quiz-option" data-correct="true">Canonical facts need to be settled once and looked up — similarity search structurally cannot distinguish authoritative from merely similar, and fails silently</div>
+    <div class="quiz-feedback" data-good="Yes: 'you built a search engine; you needed a memory.' And note the silence — three weeks to discovery, via a finance discrepancy, not an error." data-bad="Bigger top-k retrieves MORE conflicting definitions. The lesson: metric definitions are canonical facts — write them down once, look them up; don't rediscover them probabilistically per query."></div>
+  </div>
+
+  <div class="quiz-question">
+    <div class="q-text">4. The RAG permissions leak happens because:</div>
+    <div class="quiz-option" data-correct="true">Content is copied out of source systems into a vector index, and source ACLs typically don't come along — anyone who can query the index sees everything</div>
+    <div class="quiz-option" data-correct="false">Vector databases have weak password requirements</div>
+    <div class="quiz-option" data-correct="false">Embeddings can be reversed into plaintext by attackers</div>
+    <div class="quiz-feedback" data-good="Right — a permissions bypass with a search box. It's why Knowledge Catalog keeps OKF access scoped to source-system permissions: the knowledge moves and the rules move with it." data-bad="The leak is architectural: indexing copies content OUT of permission-enforcing systems into one flat searchable pool. Restricted tables and HR docs become visible to anyone who can query."></div>
+  </div>
+
+  <div class="quiz-question">
+    <div class="q-text">5. When is vector RAG still clearly the right tool?</div>
+    <div class="quiz-option" data-correct="false">Never — graphs supersede it</div>
+    <div class="quiz-option" data-correct="true">Exploratory questions over massive, genuinely unstructured, uncuratable corpora — old tickets, Slack history, document lakes</div>
+    <div class="quiz-option" data-correct="false">Retrieving exact API specifications</div>
+    <div class="quiz-feedback" data-good="Correct — similarity's home turf: nobody will ever write concept files for a million tickets, and 'what themes appear?' is a similarity question. RAG first; graph when depth becomes a bottleneck." data-bad="RAG remains best for the unstructured long tail with exploratory questions. (Exact API specs are canonical facts — the precise territory where similarity fails.) The default: RAG first, graph when depth becomes a bottleneck."></div>
+  </div>
+
+  <div class="quiz-question">
+    <div class="q-text">6. "Semantic search returns leads; a graph returns answers" means:</div>
+    <div class="quiz-option" data-correct="false">Graphs use a smarter ranking function</div>
+    <div class="quiz-option" data-correct="true">Similarity results are hints the agent must verify by reading files; graph edges are pre-verified structural facts (with provenance labels) usable directly</div>
+    <div class="quiz-option" data-correct="false">Semantic search is slower per query</div>
+    <div class="quiz-feedback" data-good="Yes — and the verification reads that leads require are exactly M00's exploration tax, reappearing after the search step." data-bad="Similarity knows handleAuth and validateToken share LANGUAGE, not that one CALLS the other. Leads must be verified (files opened, tax paid); a provenance-labeled edge is already a fact."></div>
+  </div>
+</section>
+
+<section class="section" id="summary">
+  <h2>Module summary</h2>
+  <div class="summary-grid">
+    <div class="summary-card"><h4>The machine</h4>RAG = a similarity engine: setup (chunk/embed/store) + query (nearest neighbors into the prompt). It knows distances, never meaning, currency, or relationships.</div>
+    <div class="summary-card"><h4>Shredded context</h4>Chunk boundaries sever tables, steps, and cross-references before embedding. Unfixable by better models — the loss is upstream.</div>
+    <div class="summary-card"><h4>The incident</h4>Three similar chunks, three conflicting churn definitions, one blended wrong dashboard, three silent weeks. Similar ≠ authoritative.</div>
+    <div class="summary-card"><h4>The hidden bill</h4>Perpetual re-indexing and drift; and the ACL leak — a permissions bypass with a search box, unless access rules travel with the knowledge.</div>
+    <div class="summary-card"><h4>Leads vs answers</h4>Similarity hints must be verified file-by-file; provenance-labeled edges are usable facts. Different information architectures.</div>
+    <div class="summary-card"><h4>The default</h4>RAG first — for the unstructured long tail. Graph when depth becomes a bottleneck; curation when canon goes stale. 72% of RAG failures are RAG done badly, not RAG missing a graph.</div>
+  </div>
+  <p><strong>Next — M03: Parsing Code into Graphs with tree-sitter.</strong> Track 2 begins: where M01's edges actually come from. You'll parse real orderflow source into an AST, watch a fault-tolerant parser shrug off syntax errors, and extract call edges with zero LLM calls — the deterministic pass that cannot hallucinate.</p>
+</section>
+
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul>
+    <li>Prism Labs — <em>Beyond Vector Embeddings in 2026</em> (the 512-token co-location analysis)</li>
+    <li>Atlan — <em>Knowledge Graphs vs RAG for AI</em> (2026): "RAG first, graph when depth becomes a bottleneck"</li>
+    <li>Google Cloud — Knowledge Catalog (source-permission-preserving serving for OKF bundles)</li>
+    <li>Legal-domain RAG hallucination studies (17–33% on complex multi-document queries)</li>
+    <li>The stale-definition fixture: <code>labs/sample-project/docs/architecture.md</code> (Historical note)</li>
+    <li>Lab: <code>labs/M02-rag-shreds-context</code> · canonical WAU: <code>labs/M06-okf-authoring/solution/knowledge/analytics/metrics/weekly_active_users.md</code></li>
+  </ul>
+</section>
+
+<nav class="module-nav" aria-label="Module navigation">
+  <a href="M01-knowledge-graph-fundamentals.html"><span class="dir">◀ Previous</span>M01 · Knowledge Graph Fundamentals</a>
+  <a class="next" href="M03-tree-sitter-parsing.html"><span class="dir">Next ▶</span>M03 · Parsing Code into Graphs with tree-sitter</a>
+</nav>
+<footer>Knowledge Graphs for AI Agents · Track 1 — Foundations · Module 3 of 14</footer>
+</main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll('.code-block').forEach(function (block) {
+    var head = block.querySelector('.code-head');
+    if (!head) return;
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'copy';
+    btn.setAttribute('aria-label', 'Copy code to clipboard');
+    btn.addEventListener('click', function () {
+      var code = block.querySelector('pre');
+      if (!code) return;
+      navigator.clipboard.writeText(code.textContent).then(function () {
+        btn.textContent = 'copied!';
+        setTimeout(function () { btn.textContent = 'copy'; }, 1500);
+      });
+    });
+    head.appendChild(btn);
+  });
+
+  document.querySelectorAll('.code-tabs').forEach(function (tabs) {
+    var group = [tabs];
+    var sib = tabs.nextElementSibling;
+    while (sib && sib.classList.contains('code-panel')) { group.push(sib); sib = sib.nextElementSibling; }
+    tabs.querySelectorAll('.code-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var lang = tab.getAttribute('data-lang');
+        tabs.querySelectorAll('.code-tab').forEach(function (t) {
+          t.classList.toggle('active', t === tab);
+          t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+        });
+        group.slice(1).forEach(function (p) {
+          p.classList.toggle('active', p.getAttribute('data-lang') === lang);
+        });
+      });
+    });
+  });
+
+  document.querySelectorAll('.quiz-question').forEach(function (q) {
+    var feedback = q.querySelector('.quiz-feedback');
+    q.querySelectorAll('.quiz-option').forEach(function (opt) {
+      opt.setAttribute('role', 'button');
+      opt.setAttribute('tabindex', '0');
+      function answer() {
+        if (q.classList.contains('answered')) return;
+        q.classList.add('answered');
+        var correct = opt.getAttribute('data-correct') === 'true';
+        opt.classList.add(correct ? 'correct' : 'incorrect');
+        q.querySelectorAll('.quiz-option').forEach(function (o) {
+          o.classList.add('disabled');
+          if (o.getAttribute('data-correct') === 'true') o.classList.add('correct');
+        });
+        feedback.textContent = correct ? feedback.getAttribute('data-good') : feedback.getAttribute('data-bad');
+        feedback.classList.add('show', correct ? 'good' : 'bad');
+      }
+      opt.addEventListener('click', answer);
+      opt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); answer(); } });
+    });
+  });
+
+  function Seq(container, build) {
+    var stage = container.querySelector('.anim-stage');
+    var caption = container.querySelector('.anim-caption');
+    var api = {
+      stage: stage,
+      caption: function (t) { if (caption) caption.textContent = t; },
+      steps: [], i: 0, timer: null, playing: false, interval: 1000
+    };
+    function runStep() {
+      if (api.i >= api.steps.length) { api.playing = false; return; }
+      api.steps[api.i++]();
+      if (api.playing) api.timer = setTimeout(runStep, api.interval);
+    }
+    api.play = function () {
+      if (api.playing) return;
+      if (api.i >= api.steps.length) api.restart(true);
+      api.playing = true; runStep();
+    };
+    api.pause = function () { api.playing = false; clearTimeout(api.timer); };
+    api.restart = function (silent) {
+      api.pause(); api.i = 0; stage.innerHTML = ''; api.caption('');
+      build(api);
+      if (!silent) api.play();
+    };
+    api.finish = function () {
+      api.pause(); api.i = 0; stage.innerHTML = ''; api.caption('');
+      build(api);
+      while (api.i < api.steps.length) api.steps[api.i++]();
+    };
+    build(api);
+    var controls = container.querySelector('.animation-controls');
+    if (controls) {
+      controls.addEventListener('click', function (e) {
+        var act = e.target.getAttribute('data-act');
+        if (act === 'play') api.play();
+        if (act === 'pause') api.pause();
+        if (act === 'restart') api.restart();
+      });
+    }
+    if (reduced) api.finish();
+    return api;
+  }
+
+  function el(parent, css, text) {
+    var d = document.createElement('div');
+    if (css) for (var k in css) d.style[k] = css[k];
+    if (text !== undefined) d.textContent = text;
+    parent.appendChild(d);
+    return d;
+  }
+
+  /* SHREDDER */
+  var shC = document.querySelector('[data-anim="shredder"]');
+  if (shC) Seq(shC, function (api) {
+    var s = api.stage;
+    s.style.display = 'grid';
+    s.style.gridTemplateColumns = '1fr 80px 1fr';
+    s.style.gap = '0.75rem';
+    s.style.alignItems = 'center';
+    var doc = el(s, { background: 'var(--bg-card)', border: '1px solid var(--code-border)', borderRadius: '10px', padding: '0.8rem', fontSize: '0.72rem', fontFamily: "'JetBrains Mono',monospace", color: 'var(--text-secondary)', lineHeight: '1.9' });
+    doc.innerHTML = '<div style="color:var(--text-primary);font-weight:600"># orders_fact schema</div>' +
+      '<div data-part="hdr" style="border:1px solid var(--info);border-radius:4px;padding:0 4px">| column | type | meaning |</div>' +
+      '<div data-part="row1" style="border:1px solid var(--info);border-radius:4px;padding:0 4px;border-top:none">| order_id | STR | unique id |</div>' +
+      '<div data-part="row2" style="border:1px solid var(--info);border-radius:4px;padding:0 4px;border-top:none">| customer_id | STR | FK → customers</div>' +
+      '<div style="margin-top:6px" data-part="warn">⚠ excludes internal testers</div>' +
+      '<div data-part="def">WAU counts completed orders…</div>' +
+      '<div data-part="link" style="color:var(--accent-primary)">see [customers.md] for joins</div>';
+    var mid = el(s, { textAlign: 'center' });
+    el(mid, { fontSize: '1.6rem' }, '🔪');
+    el(mid, { fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: "'JetBrains Mono',monospace" }, 'chunker\n(512 tok)');
+    var out = el(s, { display: 'flex', flexDirection: 'column', gap: '0.5rem' });
+    api.steps.push(function () { api.caption('A structured doc: a schema table, a warning attached to a definition, a cross-reference link. Everything connected.'); });
+    api.steps.push(function () {
+      api.caption('The chunker cuts at token counts, not meaning. Chunk 1 takes the header and one row…');
+      var c1 = el(out, { background: 'var(--bg-card)', border: '1px dashed var(--warning)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.68rem', fontFamily: "'JetBrains Mono',monospace", color: 'var(--text-secondary)' }, 'CHUNK 1: | column | type … | order_id …');
+      doc.querySelector('[data-part="hdr"]').style.opacity = '0.25';
+      doc.querySelector('[data-part="row1"]').style.opacity = '0.25';
+    });
+    api.steps.push(function () {
+      api.caption('…chunk 2 gets the remaining row — a table row with no header. What does "STR, FK" mean now? The chunk can\'t say.');
+      el(out, { background: 'var(--bg-card)', border: '1px dashed var(--warning)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.68rem', fontFamily: "'JetBrains Mono',monospace", color: 'var(--text-secondary)' }, 'CHUNK 2: | customer_id | STR | FK → …');
+      doc.querySelector('[data-part="row2"]').style.opacity = '0.25';
+    });
+    api.steps.push(function () {
+      api.caption('The definition separates from its warning. A retriever can now serve the definition WITHOUT the "excludes testers" caveat.');
+      var c3 = el(out, { background: 'var(--bg-card)', border: '1px dashed var(--error)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.68rem', fontFamily: "'JetBrains Mono',monospace", color: 'var(--text-secondary)' }, 'CHUNK 3: WAU counts completed orders…   (⚠ warning left behind)');
+      doc.querySelector('[data-part="def"]').style.opacity = '0.25';
+      doc.querySelector('[data-part="warn"]').style.color = 'var(--error)';
+    });
+    api.steps.push(function () {
+      api.caption('And the cross-reference link? Severed — in vector space there is no edge to follow to customers.md.');
+      var c4 = el(out, { background: 'var(--bg-card)', border: '1px dashed var(--error)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.68rem', fontFamily: "'JetBrains Mono',monospace", color: 'var(--error)' }, 'CHUNK 4: see [customers.md] ✂ (link dead)');
+      doc.querySelector('[data-part="link"]').style.opacity = '0.25';
+    });
+    api.steps.push(function () {
+      api.caption('Every shred is real text — nothing fabricated. But header↔row, warning↔definition, doc↔doc: the connections are gone, before any embedding was computed.');
+    });
+  });
+
+  /* COSINE_ROULETTE */
+  var crC = document.querySelector('[data-anim="roulette"]');
+  if (crC) Seq(crC, function (api) {
+    var s = api.stage;
+    s.style.display = 'grid';
+    s.style.gridTemplateRows = 'auto 1fr';
+    s.style.gap = '0.75rem';
+    var qbox = el(s, { background: 'var(--bg-card)', border: '1px solid var(--track-color)', borderRadius: '10px', padding: '0.6rem 1rem', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.8rem', color: 'var(--text-primary)', justifySelf: 'center' }, '“Calculate our churn rate for Q2”');
+    var grid = el(s, { display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: '6px', alignContent: 'start' });
+    var kinds = [
+      { label: '2023 deck', color: 'var(--warning)', text: 'churn (2023 PowerPoint) — outdated formula' },
+      { label: 'old wiki', color: 'var(--warning)', text: 'engineering wiki page — deprecated schema' },
+      { label: 'slack fight', color: 'var(--error)', text: 'two engineers ARGUING about churn — never settled' },
+      { label: 'current def', color: 'var(--success)', text: 'the actually-correct definition' }
+    ];
+    var cells = [];
+    for (var i = 0; i < 18; i++) {
+      var cell = el(grid, { height: '38px', borderRadius: '6px', background: 'var(--bg-surface)', border: '1px solid var(--code-border)', fontSize: '0.6rem', fontFamily: "'JetBrains Mono',monospace", color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .3s', textAlign: 'center' }, 'chunk ' + i);
+      cells.push(cell);
+    }
+    var picks = [];
+    api.steps.push(function () {
+      api.caption('The query becomes a vector. 18 chunks about "churn" sit in the index — decks, wikis, Slack, one current definition. All semantically close.');
+    });
+    api.steps.push(function () {
+      var pool = [0, 1, 2, 3].sort(function () { return Math.random() - 0.5; }).slice(0, 3);
+      picks = pool.map(function (k, idx) {
+        var cell = cells[Math.floor(Math.random() * cells.length)];
+        while (picks.indexOf(cell) !== -1) cell = cells[Math.floor(Math.random() * cells.length)];
+        var kind = kinds[k];
+        cell.style.border = '1px solid ' + kind.color;
+        cell.style.color = 'var(--text-primary)';
+        cell.style.background = 'var(--bg-card)';
+        cell.textContent = kind.label + ' · ' + (0.95 - idx * 0.02).toFixed(2);
+        return cell;
+      });
+      api.caption('Top-3 by cosine similarity, scores 0.91–0.95. Similar? Absolutely. Authoritative? The score cannot say.');
+    });
+    api.steps.push(function () {
+      api.caption('The model blends whatever came back and writes the query. Restart the animation — different chunks win each run. That variance IS the roulette.');
+    });
+    api.steps.push(function () {
+      api.caption('Three weeks later, finance asks why revenue doesn\'t match invoices. Nothing ever crashed. You built a search engine; you needed a memory.');
+      qbox.style.borderColor = 'var(--error)';
+    });
+  });
+
+  /* LEADS_VS_ANSWERS */
+  var lvC = document.querySelector('[data-anim="leads"]');
+  if (lvC) Seq(lvC, function (api) {
+    var s = api.stage;
+    s.style.display = 'grid';
+    s.style.gridTemplateColumns = '1fr 1fr';
+    s.style.gap = '1rem';
+    function panel(title) {
+      var p = el(s, { position: 'relative', background: 'var(--bg-card)', border: '1px solid var(--code-border)', borderRadius: '10px', padding: '2.2rem 0.8rem 0.8rem', minHeight: '260px' });
+      el(p, { position: 'absolute', top: '0.5rem', left: '0.8rem', fontFamily: "'Bricolage Grotesque',sans-serif", fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--text-muted)' }, title);
+      return p;
+    }
+    var L = panel('Semantic search → leads');
+    var R = panel('Graph query → answer');
+    var lList = el(L, { display: 'flex', flexDirection: 'column', gap: '0.4rem' });
+    var lMeter = el(L, { marginTop: '0.6rem', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.72rem', color: 'var(--text-secondary)' }, 'files opened: 0 · tokens: 0');
+    var rList = el(R, { display: 'flex', flexDirection: 'column', gap: '0.4rem' });
+    var rMeter = el(R, { marginTop: '0.6rem', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.72rem', color: 'var(--text-secondary)' }, 'tool calls: 0 · tokens: 0');
+    api.steps.push(function () {
+      api.caption('Question: who calls verify_token? Left: similarity over code. Right: one graph lookup.');
+    });
+    api.steps.push(function () {
+      ['auth.py — 0.89 "contains verify, token…"', 'webhooks.py — 0.84 "token-adjacent language"', 'app.py — 0.81 "auth-flavored words"'].forEach(function (t, i) {
+        el(lList, { border: '1px solid var(--warning)', borderRadius: '6px', padding: '0.35rem 0.5rem', fontSize: '0.7rem', fontFamily: "'JetBrains Mono',monospace", color: 'var(--text-secondary)' }, 'LEAD ' + (i + 1) + ': ' + t);
+      });
+      api.caption('Three leads. Each says "this file contains similar LANGUAGE" — none says "this file CALLS it."');
+    });
+    api.steps.push(function () {
+      lMeter.textContent = 'files opened: 1 · tokens: 2,400 — verifying lead 1… a real call site ✓';
+      api.caption('Now the verification reads begin: open each lead, read enough code to judge. The exploration tax returns.');
+    });
+    api.steps.push(function () {
+      lMeter.textContent = 'files opened: 3 · tokens: 7,900 — lead 2: just a comment ✗ · lead 3: an import ✗';
+      lMeter.style.color = 'var(--warning)';
+    });
+    api.steps.push(function () {
+      el(rList, { border: '1px solid var(--success)', borderRadius: '6px', padding: '0.35rem 0.5rem', fontSize: '0.7rem', fontFamily: "'JetBrains Mono',monospace", color: 'var(--text-primary)' }, 'graph_callers("verify_token") → ["post_invoice"]  · provenance: EXTRACTED');
+      rMeter.textContent = 'tool calls: 1 · tokens: 15';
+      rMeter.style.color = 'var(--success)';
+      api.caption('The graph returns the answer — pre-verified at extraction time, provenance attached. 7,900 tokens vs 15, and only one of the two is labeled fact-vs-guess.');
+    });
+  });
+})();
+</script>
+</body>
+</html>

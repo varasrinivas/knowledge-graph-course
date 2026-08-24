@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M05 · The Tool Landscape: CodeGraph, okf-rs, and Friends — Knowledge Graphs for AI Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0A1628; --bg-secondary: #111D33; --bg-card: #162033; --bg-surface: #1A2740;
+  --text-primary: #E8ECF1; --text-secondary: #94A3B8; --text-muted: #64748B;
+  --accent-primary: #D4A843; --accent-hover: #E5BC5A; --accent-muted: rgba(212,168,67,0.15);
+  --success: #10B981; --success-bg: rgba(16,185,129,0.1);
+  --warning: #F59E0B; --warning-bg: rgba(245,158,11,0.1);
+  --error: #F43F5E; --error-bg: rgba(244,63,94,0.1);
+  --info: #3B82F6; --info-bg: rgba(59,130,246,0.1);
+  --track-overview: #D4A843; --track-foundations: #6366F1; --track-structural: #8B5CF6;
+  --track-narrative: #06B6D4; --track-serving: #F97316; --track-production: #22C55E; --track-capstone: #D4A843;
+  --track-color: #8B5CF6;
+  --code-bg: #0D1117; --code-border: #21262D; --code-text: #C9D1D9; --code-comment: #8B949E;
+  --code-keyword: #FF7B72; --code-string: #A5D6FF; --code-function: #D2A8FF; --code-number: #79C0FF;
+  --transition-fast: 150ms; --transition-normal: 300ms; --transition-slow: 500ms;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Source Sans 3', sans-serif; font-size: 1.05rem; line-height: 1.7; }
+h1, h2, h3, h4 { font-family: 'Bricolage Grotesque', sans-serif; line-height: 1.25; }
+h1 { font-size: 2rem; font-weight: 700; }
+h2 { font-size: 1.5rem; font-weight: 700; margin: 0 0 1rem; padding-top: .5rem; }
+h3 { font-size: 1.25rem; font-weight: 600; margin: 2rem 0 .75rem; }
+p { margin-bottom: 1rem; }
+a { color: var(--accent-primary); }
+strong { font-weight: 600; }
+ul, ol { margin: 0 0 1rem 1.5rem; }
+li { margin-bottom: .4rem; }
+code { font-family: 'JetBrains Mono', monospace; font-size: .9rem; background: var(--bg-surface); padding: .1em .35em; border-radius: 4px; }
+.page-container { max-width: 1200px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: 240px 1fr; gap: 3rem; }
+.sidebar-nav { position: sticky; top: 2rem; height: calc(100vh - 4rem); overflow-y: auto; font-family: 'Bricolage Grotesque', sans-serif; font-size: .85rem; }
+.sidebar-nav .nav-title { color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; margin-bottom: .75rem; }
+.sidebar-nav a { display: block; color: var(--text-secondary); text-decoration: none; padding: .35rem .6rem; border-left: 2px solid var(--code-border); transition: all var(--transition-fast); }
+.sidebar-nav a:hover { color: var(--text-primary); }
+.sidebar-nav a.active { color: var(--track-color); border-left-color: var(--track-color); }
+.content { max-width: 800px; min-width: 0; }
+.section { margin-bottom: 4rem; }
+.course-kicker { font-family: 'Bricolage Grotesque', sans-serif; font-size: .85rem; color: var(--text-muted); letter-spacing: .05em; }
+.track-chip { display: inline-block; background: color-mix(in srgb, var(--track-color) 18%, transparent); color: var(--track-color); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: .8rem; padding: .2rem .7rem; border-radius: 999px; margin: .8rem 0 .6rem; }
+.progress-bar { height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; margin: 1rem 0; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--track-color), var(--accent-primary)); border-radius: 2px; transition: width var(--transition-slow); }
+.meta-row { display: flex; flex-wrap: wrap; gap: 1.25rem; color: var(--text-secondary); font-size: .9rem; margin-top: .75rem; }
+.meta-row span strong { color: var(--text-primary); }
+.objectives { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; }
+.objectives ul { margin-bottom: 0; }
+.skill-chip { display: inline-block; background: var(--info-bg); color: var(--info); border-radius: 999px; font-size: .78rem; padding: .15rem .65rem; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; margin-left: .5rem; vertical-align: middle; }
+.analogy-box, .tech-def-box, .callout { border-radius: 0 8px 8px 0; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid; }
+.analogy-box { background: var(--accent-muted); border-left-color: var(--accent-primary); }
+.analogy-box::before { content: '💡 Everyday Analogy'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--accent-primary); display: block; margin-bottom: .5rem; }
+.tech-def-box { background: var(--info-bg); border-left-color: var(--info); }
+.tech-def-box::before { content: '📐 Technical Definition'; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--info); display: block; margin-bottom: .5rem; }
+.callout .box-label { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: .5rem; }
+.callout-why { background: var(--success-bg); border-left-color: var(--success); }
+.callout-why .box-label { color: var(--success); }
+.callout-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.callout-warning .box-label { color: var(--warning); }
+.callout-cost { background: var(--warning-bg); border-left-color: var(--accent-primary); }
+.callout-cost .box-label { color: var(--accent-primary); }
+.callout-security { background: var(--error-bg); border-left-color: var(--error); }
+.callout-security .box-label { color: var(--error); }
+.checkpoint { background: var(--success-bg); border: 1px solid rgba(16,185,129,.35); border-radius: 8px; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+.checkpoint .box-label { color: var(--success); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; display: block; margin-bottom: .35rem; }
+.bridge { font-style: italic; color: var(--text-secondary); border-top: 1px dashed var(--code-border); border-bottom: 1px dashed var(--code-border); padding: .9rem .25rem; margin: 2rem 0; }
+.term-tooltip { position: relative; color: var(--accent-primary); cursor: help; border-bottom: 1px dashed var(--accent-primary); }
+.term-tooltip .tooltip-content { position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--accent-primary); border-radius: 8px; padding: .75rem 1rem; font-size: .85rem; color: var(--text-primary); width: 280px; opacity: 0; pointer-events: none; transition: opacity var(--transition-fast); z-index: 10; font-style: normal; font-weight: 400; line-height: 1.5; }
+.term-tooltip:hover .tooltip-content, .term-tooltip:focus .tooltip-content { opacity: 1; }
+.code-card { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 10px; margin: 1.25rem 0; overflow: hidden; }
+.code-card .code-head { display: flex; justify-content: space-between; align-items: center; padding: .45rem .9rem; border-bottom: 1px solid var(--code-border); font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: var(--text-muted); }
+.copy-btn { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: .72rem; border-radius: 6px; padding: .25rem .6rem; cursor: pointer; transition: all var(--transition-fast); }
+.copy-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.code-card pre { padding: 1rem; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: .85rem; line-height: 1.6; color: var(--code-text); }
+.code-card pre code { background: none; padding: 0; font-size: inherit; }
+.tok-k { color: var(--code-keyword); } .tok-s { color: var(--code-string); } .tok-c { color: var(--code-comment); font-style: italic; } .tok-f { color: var(--code-function); } .tok-n { color: var(--code-number); }
+.code-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--code-border); margin-top: 1.25rem; }
+.code-tab { padding: .5rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: .8rem; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px; color: var(--text-muted); transition: all var(--transition-fast); }
+.code-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+.tab-panel { display: none; } .tab-panel.active { display: block; }
+.animation-container { background: var(--bg-secondary); border: 1px solid var(--code-border); border-radius: 12px; padding: 1.5rem 1.5rem 4rem; margin: 2rem 0; position: relative; min-height: 300px; }
+.anim-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: .85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 1rem; }
+.animation-controls { display: flex; gap: .5rem; position: absolute; bottom: 1rem; right: 1rem; }
+.animation-controls button { background: var(--bg-card); border: 1px solid var(--code-border); color: var(--text-primary); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all var(--transition-fast); }
+.animation-controls button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.anim-caption { position: absolute; bottom: 1.1rem; left: 1.5rem; right: 10rem; color: var(--text-secondary); font-size: .85rem; }
+.anim-fallback { display: none; color: var(--text-secondary); font-size: .9rem; }
+.quiz-question { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.quiz-question h4 { margin-bottom: .75rem; font-size: 1.02rem; }
+.quiz-option { padding: .75rem 1rem; margin: .5rem 0; border: 1px solid var(--code-border); border-radius: 8px; cursor: pointer; transition: all var(--transition-fast); }
+.quiz-option:hover { border-color: var(--accent-primary); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); }
+.quiz-option.incorrect { border-color: var(--error); background: var(--error-bg); }
+.quiz-feedback { margin-top: .75rem; padding: .75rem; border-radius: 8px; font-size: .9rem; display: none; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); color: var(--text-primary); }
+.quiz-feedback.bad { background: var(--error-bg); color: var(--text-primary); }
+table.facts { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: .92rem; }
+table.facts th, table.facts td { border: 1px solid var(--code-border); padding: .55rem .75rem; text-align: left; vertical-align: top; }
+table.facts th { background: var(--bg-surface); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; }
+.table-wrap { overflow-x: auto; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 1rem; margin: 1.25rem 0; }
+.summary-card { background: var(--bg-card); border-radius: 10px; padding: 1.1rem 1.2rem; border-top: 3px solid var(--track-color); }
+.summary-card h4 { font-size: .95rem; margin-bottom: .4rem; }
+.summary-card p { font-size: .88rem; color: var(--text-secondary); margin: 0; }
+.prevnext { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; }
+.prevnext a { flex: 1; background: var(--bg-card); border: 1px solid var(--code-border); border-radius: 10px; padding: 1rem 1.25rem; text-decoration: none; color: var(--text-primary); transition: border-color var(--transition-fast); font-family: 'Bricolage Grotesque', sans-serif; }
+.prevnext a:hover { border-color: var(--track-color); }
+.prevnext .dir { display: block; font-size: .75rem; color: var(--text-muted); }
+.ref-list li { margin-bottom: .5rem; }
+@media (max-width: 900px) {
+  .page-container { grid-template-columns: 1fr; padding: 1.25rem; }
+  .sidebar-nav { position: static; height: auto; margin-bottom: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .anim-stage, .animation-controls { display: none !important; }
+  .anim-fallback { display: block !important; }
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+<nav class="sidebar-nav" aria-label="Module sections">
+  <div class="nav-title">Module 6 of 14</div>
+  <a href="#objectives">Learning objectives</a>
+  <a href="#codegraph">CodeGraph</a>
+  <a href="#codegraph-bench">CodeGraph's benchmarks</a>
+  <a href="#autosync">Auto-sync architecture</a>
+  <a href="#routes">Route recognition</a>
+  <a href="#okfrs">okf-rs</a>
+  <a href="#semantic-vs">Semantic indexing vs graphs</a>
+  <a href="#cloud">The cloud alternatives</a>
+  <a href="#axes">Comparison axes</a>
+  <a href="#exercise">Hands-on exercise</a>
+  <a href="#quiz">Knowledge check</a>
+  <a href="#summary">Summary</a>
+  <a href="#references">References</a>
+</nav>
+<main class="content">
+
+<header class="section" id="top">
+  <div class="course-kicker">Knowledge Graphs for AI Agents · From RAG Limits to Self-Updating Codebase Brains</div>
+  <span class="track-chip">Track 2 — Structural Graphs</span>
+  <h1>M05 · The Tool Landscape: CodeGraph, okf-rs, and Friends</h1>
+  <div class="progress-bar" role="progressbar" aria-valuenow="6" aria-valuemin="1" aria-valuemax="14" aria-label="Module 6 of 14"><div class="progress-fill" style="width:42.8%"></div></div>
+  <div class="meta-row">
+    <span>📍 <strong>Module 6 of 14</strong></span>
+    <span>⏱ <strong>~45 minutes</strong></span>
+    <span>🎯 Level: <strong>Intermediate</strong></span>
+    <span>📋 Prerequisites: <strong>M03, M04</strong></span>
+  </div>
+</header>
+
+<section class="section" id="objectives">
+  <h2>Learning objectives <span class="skill-chip">Intermediate</span></h2>
+  <div class="objectives">
+    <ul>
+      <li>Explain CodeGraph's architecture — tree-sitter → SQLite + FTS5, fully local, one MCP call per answer — and read its 7-project benchmark table critically.</li>
+      <li>Describe the three-layer auto-sync design (OS watchers → debounced batching → staleness flags) and why "no rebuild step" is an architectural achievement, not a slogan.</li>
+      <li>Explain okf-rs's different bet: a git-diffable Markdown bundle instead of a database, with deterministic output and CI-grade validation.</li>
+      <li>Contrast structural graphs with Cursor-style semantic indexing (answers vs leads) and with cloud tools (data-sovereignty constraints).</li>
+      <li>Apply six comparison axes to evaluate <em>any</em> code-knowledge tool — including ones that don't exist yet.</li>
+    </ul>
+  </div>
+  <p style="margin-top:1rem;">Graphify (M04) is one point in a design space that filled up fast. This module maps the rest of it — not as a product roundup, but as a set of <em>design decisions</em>: where the graph lives, how it stays fresh, what it labels, and where your code goes. Learn the axes and every future tool launch becomes a 10-minute evaluation instead of a leap of faith.</p>
+</section>
+
+<section class="section" id="codegraph">
+  <h2>CodeGraph: the database bet</h2>
+
+  <div class="tech-def-box">
+    <p><strong>CodeGraph</strong> is an MIT-licensed, open-source code intelligence tool (32,100 GitHub stars) that parses every source file with tree-sitter, extracts symbols (functions, classes, methods, interfaces) and edges (calls, imports, inheritance, implementations), and stores everything in a local <span class="term-tooltip" tabindex="0">SQLite<span class="tooltip-content">The embedded, serverless SQL database that lives in a single file — no server process, no configuration. The most deployed database on earth.</span></span> database with <span class="term-tooltip" tabindex="0">FTS5<span class="tooltip-content">SQLite's built-in Full-Text Search extension (version 5): tokenizes text into an index so "which rows mention X" is answered without scanning every row.</span></span> full-text search enabled. The entire graph lives in one file: <code>.codegraph/codegraph.db</code>. No cloud component, no API key, no network connection, no data transmission.</p>
+  </div>
+
+  <p>Where Graphify's canonical output is three files an assistant reads, CodeGraph's center of gravity is the query path: when an AI agent asks "what calls this function?" or "trace the full impact of changing this module," CodeGraph responds <strong>in a single MCP tool call</strong> — entry points, related symbols, and relevant code snippets. No file-by-file exploration, no agent loops, no context windows bloated with irrelevant file contents. Recall from M00 that most agent tokens are exploration, not reasoning; CodeGraph's design attacks exactly that line item.</p>
+
+  <p>The installer is deliberately zero-configuration: it auto-detects which AI tools are present — Claude Code, Cursor, Codex CLI, OpenCode, Gemini CLI, and others — and wires up the MCP integration without manual setup:</p>
+  <div class="code-card"><div class="code-head"><span>shell · install &amp; init</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code><span class="tok-c"># macOS / Linux</span>
+curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh
+<span class="tok-c"># Windows PowerShell</span>
+irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
+
+<span class="tok-c"># then, per project:</span>
+cd your-project
+codegraph init -i     <span class="tok-c"># -i = initial full-graph build</span></code></pre></div>
+  <p>Practical notes worth keeping: the initial build on very large projects (100,000+ files) can take ten minutes or more — a one-time cost, after which all sync is incremental. macOS users should install Xcode command-line tools first (<code>xcode-select --install</code>); the fallback compatibility mode runs 5–10× slower. Default exclusions cover <code>node_modules</code>, <code>vendor</code>, <code>dist</code>, <code>build</code>, <code>target</code>, <code>.venv</code>, gitignored files, and files over 1&nbsp;MB. Supported languages: TypeScript, Python, Rust, Java, Go, Swift, Kotlin, C/C++, C#, Ruby, PHP, Dart, plus template languages like Svelte and Vue — with the deepest coverage in TypeScript, Python, Rust, and Go, and Objective-C listed as partial.</p>
+</section>
+
+<section class="section" id="codegraph-bench">
+  <h2>CodeGraph's benchmarks: the best table in the field</h2>
+  <p>CodeGraph's team ran the most rigorous comparison published so far: seven real open-source projects in seven languages, identical exploration tasks, the same model (Claude Opus 4.7 in headless mode, <code>claude -p</code>), four runs per arm, medians reported — the sole variable being whether the graph was available. Vendor-reported, but methodologically serious. Here is the table, and then the three patterns that matter more than the table:</p>
+  <div class="table-wrap"><table class="facts">
+    <thead><tr><th>Codebase</th><th>Language</th><th>Size</th><th>Token cut</th><th>Cost cut</th><th>Speedup</th><th>Ops cut</th></tr></thead>
+    <tbody>
+      <tr><td>VS Code</td><td>TypeScript</td><td>10,000 files</td><td><strong>78%</strong></td><td>26%</td><td>52%</td><td>85%</td></tr>
+      <tr><td>Excalidraw</td><td>TypeScript</td><td>~640 files</td><td><strong>90%</strong></td><td>52%</td><td>73%</td><td>96%</td></tr>
+      <tr><td>Tokio</td><td>Rust</td><td>~790 files</td><td><strong>86%</strong></td><td>82%</td><td>71%</td><td>92%</td></tr>
+      <tr><td>Django</td><td>Python</td><td>~3,000 files</td><td>36%</td><td>12%</td><td>19%</td><td>53%</td></tr>
+      <tr><td>Alamofire</td><td>Swift</td><td>~110 files</td><td>64%</td><td>47%</td><td>48%</td><td>83%</td></tr>
+      <tr><td>OkHttp</td><td>Java</td><td>~645 files</td><td>13%</td><td>2%</td><td>31%</td><td>45%</td></tr>
+      <tr><td>Gin</td><td>Go</td><td>~110 files</td><td>34%</td><td>21%</td><td>27%</td><td>40%</td></tr>
+    </tbody>
+  </table></div>
+  <p>Aggregates: <strong>57% fewer tokens, 71% fewer tool calls, 46% faster responses, 35% lower costs</strong>. Now the patterns:</p>
+  <p><strong>Pattern 1 — size correlates with savings.</strong> On VS Code's 10,000-file monorepo, token usage dropped from 2.8&nbsp;million to 601,000 per benchmark run. On Excalidraw, from 3.5&nbsp;million to 344,000. The larger the haystack, the more the AI flails without a map — the same corpus-topology law behind Graphify's 6.8×–49× spread in M04, seen from the other side.</p>
+  <p><strong>Pattern 2 — Rust benefits disproportionately.</strong> Tokio's cost fell 82% ($2.41 → $0.42). The likely cause: Rust's module system — <code>mod</code> declarations, <code>use</code> paths, <code>pub use</code> re-exports, nested hierarchies — creates exploration paths that punish agent-based traversal hardest, and the graph resolves them in one query.</p>
+  <p><strong>Pattern 3 — small repos see diminishing returns.</strong> OkHttp managed 13%; Gin 34%. At small scale brute force isn't that punishing, so the map's marginal value shrinks — the ~500-file floor again, now with per-language data.</p>
+  <p>And the caveat that reframes everything: <em>these are not model improvements</em>. Same model in both arms. Every saved token was mechanical file exploration eliminated — work that contributed nothing to answer quality. As the CodeGraph write-up put it: the fastest way to make an AI coding tool better might not be to make it smarter — <strong>it might be to give it a map</strong>.</p>
+
+  <div class="animation-container" id="anim-scale">
+    <div class="anim-title">Animation · BENCH_SCALE — savings vs. repo size</div>
+    <div class="anim-stage" style="position:relative;height:280px;">
+      <svg viewBox="0 0 760 280" width="100%" height="100%" aria-label="Animated scatter of token savings versus repository size rising with scale">
+        <g font-family="JetBrains Mono, monospace" font-size="10">
+          <line x1="70" y1="230" x2="720" y2="230" stroke="#334155"/>
+          <line x1="70" y1="230" x2="70" y2="30" stroke="#334155"/>
+          <text x="395" y="262" text-anchor="middle" fill="#64748B">repo size (files, log scale) →</text>
+          <text x="30" y="130" fill="#64748B" transform="rotate(-90 30 130)">token cut % →</text>
+          <g id="sc-p1" opacity="0"><circle cx="160" cy="204" r="7" fill="#F43F5E"/><text x="160" y="188" text-anchor="middle" fill="#94A3B8">OkHttp 13%</text></g>
+          <g id="sc-p2" opacity="0"><circle cx="140" cy="162" r="7" fill="#F59E0B"/><text x="140" y="146" text-anchor="middle" fill="#94A3B8">Gin 34%</text></g>
+          <g id="sc-p3" opacity="0"><circle cx="240" cy="102" r="7" fill="#10B981"/><text x="240" y="86" text-anchor="middle" fill="#94A3B8">Alamofire 64%</text></g>
+          <g id="sc-p4" opacity="0"><circle cx="360" cy="58" r="7" fill="#10B981"/><text x="360" y="42" text-anchor="middle" fill="#94A3B8">Tokio 86%</text></g>
+          <g id="sc-p5" opacity="0"><circle cx="340" cy="50" r="7" fill="#10B981"/><text x="350" y="36" text-anchor="middle" fill="#94A3B8" opacity="0"> </text></g>
+          <g id="sc-p6" opacity="0"><circle cx="480" cy="158" r="7" fill="#F59E0B"/><text x="480" y="142" text-anchor="middle" fill="#94A3B8">Django 36%</text></g>
+          <g id="sc-p7" opacity="0"><circle cx="640" cy="74" r="7" fill="#10B981"/><text x="640" y="58" text-anchor="middle" fill="#94A3B8">VS Code 78%</text></g>
+          <g id="sc-p8" opacity="0"><circle cx="300" cy="42" r="7" fill="#10B981"/><text x="300" y="28" text-anchor="middle" fill="#94A3B8">Excalidraw 90%</text></g>
+          <path id="sc-trend" d="M 110 200 C 300 120, 480 90, 700 70" stroke="#8B5CF6" stroke-width="2" fill="none" stroke-dasharray="500" stroke-dashoffset="500"/>
+        </g>
+      </svg>
+    </div>
+    <div class="anim-fallback"><p>Static description: a scatter plot of token savings vs repo size. Small repos cluster low (OkHttp 13%, Gin 34%); mid-size and large repos climb (Alamofire 64%, VS Code 78%, Tokio 86%, Excalidraw 90%); Django (36%) sits below trend. A rising trend line shows: the bigger the haystack, the more the map saves — with real scatter around the trend.</p></div>
+    <div class="anim-caption" id="anim-scale-caption">Press play to place all seven projects. The trend rises; the scatter is real too.</div>
+    <div class="animation-controls">
+      <button data-anim="scale" data-act="play" aria-label="Play benchmark scale animation">▶</button>
+      <button data-anim="scale" data-act="pause" aria-label="Pause benchmark scale animation">⏸</button>
+      <button data-anim="scale" data-act="restart" aria-label="Restart benchmark scale animation">↻</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="autosync">
+  <h2>The auto-sync architecture: three layers of staying fresh</h2>
+
+  <div class="analogy-box">
+    <p><strong>Before</strong>: think of a shared team calendar that only updates when someone remembers to click "refresh." Meetings move, rooms change — and everyone keeps showing up to the old room, because the calendar looked perfectly confident.</p>
+    <p><strong>The pain</strong>: the failure isn't that the calendar is wrong once; it's that nothing <em>tells you</em> it's wrong. A confident stale answer beats no answer at being dangerous.</p>
+    <p><strong>The mapping</strong>: a code graph is that calendar, and commits are the moving meetings. CodeGraph's answer is a three-layer sync design whose goal is that no human ever clicks refresh — and whose most underrated layer is the one that admits when it's behind.</p>
+  </div>
+
+  <p><strong>Layer 1 — native OS file watchers.</strong> macOS <code>FSEvents</code>, Windows <code>ReadDirectoryChangesW</code>, Linux <code>inotify</code> — the lowest-level change-notification mechanism each OS provides. No polling, no CPU overhead; when a file is saved, the OS pushes the notification.</p>
+  <p><strong>Layer 2 — debounced batching.</strong> A two-second quiet window collects all changes and collapses them into a single incremental sync. A refactor that touches five files in rapid succession triggers <em>one</em> re-index, not five. (Incremental parsing from M03 is what makes each sync proportional to the edit.)</p>
+  <p><strong>Layer 3 — staleness flags and reconnection reconciliation.</strong> Files not yet synchronized are explicitly marked <em>stale</em>, so agents know to read them directly rather than trust outdated graph data. When an AI tool reconnects, a fast (size, mtime) comparison with content-hash verification identifies only the changed files to resync.</p>
+  <p>The result: an index that stays current with zero developer attention — <em>"there is no rebuild-the-index step in anyone's workflow."</em> Layer 3 deserves special respect: it is the only layer that handles its own failure, telling the consumer "don't trust me on these files yet." Hold that thought — M11 is an entire module about graph-freshness systems that <em>lack</em> such a layer, and the silent, documented ways they rot.</p>
+
+  <div class="animation-container" id="anim-sync">
+    <div class="anim-title">Animation · SYNC_LAYERS — a save travels the pipeline</div>
+    <div class="anim-stage" style="position:relative;height:280px;">
+      <svg viewBox="0 0 760 280" width="100%" height="100%" aria-label="Animation of a file save moving through OS watcher, debounce window, and batch sync, with a staleness flag path">
+        <g font-family="JetBrains Mono, monospace" font-size="11">
+          <g id="sy-s1"><rect x="20" y="40" width="150" height="46" rx="8" fill="#162033" stroke="#94A3B8"/><text x="95" y="59" text-anchor="middle" fill="#E8ECF1">file saved</text><text x="95" y="74" text-anchor="middle" fill="#64748B" font-size="9">webhooks.py ×3, app.py ×2</text></g>
+          <g id="sy-s2" opacity="0"><rect x="230" y="40" width="150" height="46" rx="8" fill="#1A2740" stroke="#8B5CF6" stroke-width="2"/><text x="305" y="59" text-anchor="middle" fill="#8B5CF6">OS watcher</text><text x="305" y="74" text-anchor="middle" fill="#64748B" font-size="9">FSEvents / inotify / RDCW</text></g>
+          <g id="sy-s3" opacity="0"><rect x="440" y="40" width="150" height="46" rx="8" fill="#1A2740" stroke="#D4A843" stroke-width="2"/><text x="515" y="59" text-anchor="middle" fill="#D4A843">debounce 2s</text><text x="515" y="74" text-anchor="middle" fill="#64748B" font-size="9">5 events → 1 batch</text></g>
+          <rect id="sy-fill" x="444" y="88" width="0" height="5" rx="2" fill="#D4A843"/>
+          <g id="sy-s4" opacity="0"><rect x="440" y="150" width="150" height="46" rx="8" fill="#1A2740" stroke="#10B981" stroke-width="2"/><text x="515" y="169" text-anchor="middle" fill="#10B981">incremental sync</text><text x="515" y="184" text-anchor="middle" fill="#64748B" font-size="9">codegraph.db updated</text></g>
+          <g id="sy-s5" opacity="0"><rect x="230" y="150" width="150" height="46" rx="8" fill="#1A2740" stroke="#F43F5E" stroke-width="2"/><text x="305" y="169" text-anchor="middle" fill="#F43F5E">stale flag</text><text x="305" y="184" text-anchor="middle" fill="#64748B" font-size="9">"read these directly"</text></g>
+          <g id="sy-note" opacity="0"><text x="380" y="250" text-anchor="middle" fill="#94A3B8" font-size="12" font-family="Source Sans 3, sans-serif">Not-yet-synced files are flagged stale — the layer that admits when it's behind.</text></g>
+        </g>
+      </svg>
+    </div>
+    <div class="anim-fallback"><p>Static description: five file-save events flow into the OS watcher, collect inside a 2-second debounce window (a filling bar), and emerge as one incremental sync into codegraph.db. A parallel red path shows unsynced files getting an explicit stale flag telling agents to read them directly.</p></div>
+    <div class="anim-caption" id="anim-sync-caption">Five saves become one sync; anything not yet synced says so out loud.</div>
+    <div class="animation-controls">
+      <button data-anim="sync" data-act="play" aria-label="Play sync animation">▶</button>
+      <button data-anim="sync" data-act="pause" aria-label="Pause sync animation">⏸</button>
+      <button data-anim="sync" data-act="restart" aria-label="Restart sync animation">↻</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="routes">
+  <h2>Framework route recognition</h2>
+  <p>One CodeGraph feature earns its own section because it solves a debugging chore every API developer knows: <em>"which handler processes <code>POST /api/users</code>?"</em> Answering that by hand means finding the route config, tracing to the view, verifying the middleware — multiple search-and-verify cycles through indirection that exists precisely to keep routing declarative.</p>
+  <p>CodeGraph natively recognizes routing patterns across <strong>14 web frameworks</strong>, covering all four routing paradigms:</p>
+  <div class="table-wrap"><table class="facts">
+    <thead><tr><th>Paradigm</th><th>Examples</th><th>What the extractor reads</th></tr></thead>
+    <tbody>
+      <tr><td>Annotation-based</td><td>Spring, NestJS</td><td><code>@GetMapping</code>/<code>@Controller</code>-style annotations on classes and methods</td></tr>
+      <tr><td>Decorator-based</td><td>Flask, FastAPI</td><td><code>@app.post("/invoices")</code> decorators — exactly what orderflow's billing app uses</td></tr>
+      <tr><td>DSL-based</td><td>Rails, Laravel</td><td>routes files written in a routing mini-language</td></tr>
+      <tr><td>File-convention</td><td>Django URLconf, SvelteKit</td><td>URL structure encoded in file layout / urlpatterns</td></tr>
+    </tbody>
+  </table></div>
+  <p>With that in the graph, the URL maps directly to the handler function — through middleware chains, route includes, and decorator stacks — in a single query. For teams managing microservices or large API surfaces, this feature alone can justify the installation.</p>
+</section>
+
+<div class="bridge">CodeGraph bets on a database and watchers. The next tool looked at the same problem and bet on… Markdown files in git. Both bets are coherent — and the difference between them previews the entire narrative-knowledge track.</div>
+
+<section class="section" id="okfrs">
+  <h2>okf-rs: the Markdown-bundle bet</h2>
+
+  <div class="tech-def-box">
+    <p><strong>okf-rs</strong> is an open-source Rust CLI (by Jeremy Jeanne, MIT/Apache-2.0 dual-licensed) that turns a codebase into a portable <span class="term-tooltip" tabindex="0">Open Knowledge Format<span class="tooltip-content">OKF: Google Cloud's June 2026 spec for knowledge as a directory of Markdown files with YAML frontmatter. Track 3 of this course (M06–M08) covers it in depth.</span></span> knowledge base: plain Markdown files with YAML frontmatter, cross-linked into a real call graph, readable by humans <em>and</em> agents. No proprietary database, no vector store, no SDK required to read it back. It's git-diffable, greppable, and renders natively on GitHub.</p>
+  </div>
+
+  <p>The output difference is philosophical. Where CodeGraph's graph lives in <code>codegraph.db</code> (query it through the tool), okf-rs generates a <code>knowledge/</code> directory — one <code>.md</code> file per module, struct, enum, function, or method:</p>
+  <div class="code-card"><div class="code-head"><span>shell · generate &amp; validate</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code>$ okf-rs generate .
+Generated 146 concepts into knowledge
+  Module 16   Struct 18   Enum 6   Function 87   Method 19
+
+$ okf-rs validate
+knowledge — no issues found</code></pre></div>
+  <p>A single generated concept looks like this — remember the shape; you'll be writing these by hand in M06:</p>
+  <div class="code-card"><div class="code-head"><span>knowledge/…/verify_token.md</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code>---
+type: Rust Method
+title: verify_token
+resource: src/main.rs#L4-L6
+generated:
+  by: okf-rs/0.1.0
+---
+
+## Signature
+`fn verify_token(&amp;self, token: &amp;str) -&gt; bool`
+
+## Calls
+- [decode_jwt](../../../functions/src/Auth/decode_jwt.md)</code></pre></div>
+
+  <p>Its design principles read like a checklist of everything this track has taught: <strong>Open</strong> — the output <em>is</em> the artifact, no runtime needed to read it. <strong>Fast</strong> — native Rust core on tree-sitter, not a compiler frontend. <strong>Deterministic</strong> — identical source produces byte-identical output (no timestamps, no unordered-map noise; M03's reproducibility argument as a hard guarantee). <strong>AI-ready without requiring AI</strong> — structured enough for an LLM to consume, no LLM involved in producing it.</p>
+
+  <p>And the feature list runs deep for a young tool. Highlights, grouped:</p>
+  <ul>
+    <li><strong>Extraction</strong>: 11 languages (Rust, Python, TypeScript, JavaScript, Go, Java, C#, PHP, Kotlin, C/C++, Swift) with per-language visibility rules (M03's table); a resolved call graph covering bare, method/<code>self</code>/<code>this</code>, static, scoped, and qualified calls; optional LSP-backed disambiguation (<code>--lsp</code>, via rust-analyzer/pyright); content-hash incremental caching and a <code>watch</code> mode with debouncing.</li>
+    <li><strong>Search</strong>: exact/substring, ranked full-text (Tantivy, with camelCase/snake_case boundary matching — <code>verifyToken</code> finds <code>verify_token</code>), and optional semantic search against any OpenAI-compatible embeddings endpoint.</li>
+    <li><strong>Optional AI enrichment — genuinely optional</strong>: <code>generate --enrich</code> fills in missing descriptions via any OpenAI-compatible endpoint (Ollama, LM Studio, a cloud provider) and <em>never overwrites</em> an existing description; <code>suggest-links</code> proposes plausible missing relationships, advisory only.</li>
+    <li><strong>Deterministic architecture extraction — no AI required</strong>: <code>graph layers</code> (dependency depth), <code>graph domains</code>, <code>graph communities</code> (Clauset–Newman–Moore modularity clustering — verified by dogfooding to split an 18-crate workspace that connected-components collapses into one blob), <code>graph patterns</code> (Builder/Singleton/Factory/Visitor signals), <code>graph features</code> (REST endpoints, DB models by convention).</li>
+    <li><strong>CI &amp; review</strong>: <code>impact &lt;ref-a&gt; &lt;ref-b&gt;</code> scores every changed concept by transitive-caller count (blast radius — M01's metric, productionized), public-API membership, and cycle participation; <code>review</code> renders a sticky-comment-ready Markdown report with <code>--fail-on-risk</code> gating and a ready-made GitHub Action.</li>
+    <li><strong>Validation built for CI</strong>: schema checks, dangling-link and orphan detection, duplicate identities, <code>Calls</code>/<code>CalledBy</code> asymmetry — with a <code>--ci</code> flag that hardens warnings into failures.</li>
+    <li><strong>Exports</strong>: HTML, paginated PDF, GraphML (Gephi/yEd), Obsidian vaults, and a two-way DITA bridge — round-tripped on its own 715-concept export with zero data loss.</li>
+    <li><strong>MCP server</strong>: <code>okf-mcp</code> exposes <code>search</code>, <code>graph_callers</code>, <code>graph_callees</code>, <code>graph_api</code>, <code>graph_cycles</code>, <code>graph_modules</code>, <code>graph_path</code>, and a composite <code>explore</code>. One-line registration:
+    <div class="code-card"><div class="code-head"><span>shell · register with Claude Code</span><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre><code>claude mcp add okf-rs -- /path/to/okf-mcp /path/to/project</code></pre></div>
+    Because it speaks plain MCP over stdio, the same binary works with any MCP client — build the bundle once, every agent in your toolchain gets it. (M09 dissects this server and its token economics, including the ~400× per-query worked example.)</li>
+  </ul>
+  <p>One more habit worth copying: every feature was dogfooded against okf-rs's own ~850-concept codebase — which caught a real DTD-handling bug in the DITA round-trip that a hand-written fixture would have missed. <code>init</code> also idempotently updates <code>CLAUDE.md</code>, <code>AGENTS.md</code>, and <code>.github/copilot-instructions.md</code> with a marked section pointing agents at the bundle, and the CI recipe <code>okf-rs generate --no-cache &amp;&amp; okf-rs validate --ci</code> ensures a stale bundle never ships silently — a one-line preview of everything M11 stands for.</p>
+</section>
+
+<section class="section" id="semantic-vs">
+  <h2>Semantic indexing vs structural graphs: leads vs answers</h2>
+  <p>Cursor's built-in codebase indexing is the most widely deployed alternative, and it works on a different principle: <strong>vector embeddings</strong>. Your query is vectorized; the system returns code snippets ranked by similarity. Genuinely useful for exploration — "what files are related to authentication?" — when you don't know where to look.</p>
+  <p>But recall M02's structural blind spot, now in its sharpest form: semantic search doesn't understand relationships. It doesn't know that <code>handleAuth()</code> <em>calls</em> <code>validateToken()</code>, which <em>imports from</em> <code>jwt_utils</code> — it knows these functions contain similar <em>language</em>. So the AI receives <strong>leads</strong> — similarity-ranked hints it must verify by reading files one by one. A structural graph returns <strong>answers</strong> — definitive relationships, no verification reads. For code exploration, that's a fundamentally different information architecture, and it's why the two approaches complement rather than replace each other (M10 makes this a full three-layer design).</p>
+
+  <div class="callout-warning callout">
+    <span class="box-label">⚠️ Common Misconceptions</span>
+    <p><strong>"Structural tools make semantic indexing obsolete."</strong> — No. "Find things <em>related to</em> payments" is a semantic question; "find things that <em>call</em> <code>charge()</code>" is structural. You met the honest data in M04: on QA accuracy Graphify <em>ties</em> dense vector RAG. Different questions, different layers.</p>
+    <p><strong>"These tools improve the model's reasoning."</strong> — They are enhancers, not replacements: they cut exploration cost. If you ask "why is this query slow?" or "design a caching layer," the heavy cognitive lifting remains with the model — the graph just delivers the relevant context cheaply.</p>
+    <p><strong>"Local vs cloud is just a preference."</strong> — For regulated industries and proprietary codebases it's a hard constraint: cloud indexing means your code leaves the machine. That single row of the comparison table can end the evaluation before benchmarks matter.</p>
+  </div>
+</section>
+
+<section class="section" id="cloud">
+  <h2>The cloud alternatives</h2>
+  <ul>
+    <li><strong>Gemini Code Assist</strong> (formerly Google Cloud Code): cloud-hosted understanding that handles enormous repositories — but your code is processed on Google's infrastructure. For data-sovereignty environments, that's disqualifying regardless of quality.</li>
+    <li><strong>Sourcegraph</strong>: powerful universal code search and browsing; requires server deployment, indexer configuration, and maintenance. Right for organizations needing a shared platform; heavy for individuals.</li>
+    <li><strong>GitHub Copilot's codebase indexing</strong>: limited beta, cloud-only, restricted rollout.</li>
+  </ul>
+  <p>Against that landscape, the local tools' shared niche is precise: <strong>local-first, zero-configuration, structured-graph code intelligence</strong> — no servers, no API keys, no data transmission, and deterministic relationships instead of probability scores. Within the niche, the differentiation is the storage substrate and freshness model you've now seen from both sides.</p>
+</section>
+
+<section class="section" id="axes">
+  <h2>The six comparison axes</h2>
+  <p>Tools will keep launching. Evaluate every one of them on these six axes — each axis is a question with concrete consequences:</p>
+  <div class="table-wrap"><table class="facts">
+    <thead><tr><th>Axis</th><th>The question</th><th>The spread you've seen</th></tr></thead>
+    <tbody>
+      <tr><td>1 · Storage substrate</td><td>Where does the graph live?</td><td>SQLite DB (CodeGraph) · JSON + HTML + MD artifacts (Graphify) · Markdown bundle in git (okf-rs)</td></tr>
+      <tr><td>2 · Sync model</td><td>How does it stay fresh?</td><td>OS watchers + debounce + stale flags (CodeGraph) · watch mode + content-hash cache (okf-rs) · manual/hook-driven rebuilds (Graphify — M11's cautionary tale)</td></tr>
+      <tr><td>3 · Provenance labeling</td><td>Does it say what's a fact vs a guess?</td><td>EXTRACTED/INFERRED(/AMBIGUOUS) tags (Graphify, okf-rs, the course extractor) · unlabeled</td></tr>
+      <tr><td>4 · Local vs cloud</td><td>Does code leave the machine?</td><td>Fully local (all three locals) · cloud-processed (Gemini, Copilot) · self-hosted server (Sourcegraph)</td></tr>
+      <tr><td>5 · Query surface</td><td>How do agents and humans ask?</td><td>MCP single-call (CodeGraph, okf-mcp) · CLI + slash-command + MCP (Graphify) · CLI + MCP + exports (okf-rs)</td></tr>
+      <tr><td>6 · Multimodal reach</td><td>Code only, or docs/PDFs/images too?</td><td>Code + docs/PDFs/images/video via LLM pass (Graphify) · code-focused (CodeGraph, okf-rs — though okf-rs imports DITA doc corpora)</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="animation-container" id="anim-matrix">
+    <div class="anim-title">Animation · TOOL_MATRIX — three tools, six axes</div>
+    <div class="anim-stage" style="position:relative;height:300px;">
+      <svg viewBox="0 0 760 300" width="100%" height="100%" aria-label="Animated comparison matrix filling in tool characteristics across six axes">
+        <g font-family="JetBrains Mono, monospace" font-size="10">
+          <text x="250" y="30" text-anchor="middle" fill="#8B5CF6" font-size="12">Graphify</text>
+          <text x="430" y="30" text-anchor="middle" fill="#10B981" font-size="12">CodeGraph</text>
+          <text x="610" y="30" text-anchor="middle" fill="#D4A843" font-size="12">okf-rs</text>
+          <g fill="#94A3B8">
+            <text x="20" y="65">substrate</text><text x="20" y="105">sync</text><text x="20" y="145">provenance</text>
+            <text x="20" y="185">local?</text><text x="20" y="225">query</text><text x="20" y="265">multimodal</text>
+          </g>
+          <g id="mx-cells">
+            <g id="mx-c1" opacity="0"><text x="250" y="65" text-anchor="middle" fill="#E8ECF1">3 artifacts</text><text x="430" y="65" text-anchor="middle" fill="#E8ECF1">SQLite+FTS5</text><text x="610" y="65" text-anchor="middle" fill="#E8ECF1">md bundle</text></g>
+            <g id="mx-c2" opacity="0"><text x="250" y="105" text-anchor="middle" fill="#F59E0B">hooks/manual</text><text x="430" y="105" text-anchor="middle" fill="#10B981">watchers+flags</text><text x="610" y="105" text-anchor="middle" fill="#10B981">watch+hash</text></g>
+            <g id="mx-c3" opacity="0"><text x="250" y="145" text-anchor="middle" fill="#10B981">EXTR/INF</text><text x="430" y="145" text-anchor="middle" fill="#94A3B8">—</text><text x="610" y="145" text-anchor="middle" fill="#10B981">deterministic</text></g>
+            <g id="mx-c4" opacity="0"><text x="250" y="185" text-anchor="middle" fill="#10B981">✓ local</text><text x="430" y="185" text-anchor="middle" fill="#10B981">✓ local</text><text x="610" y="185" text-anchor="middle" fill="#10B981">✓ local</text></g>
+            <g id="mx-c5" opacity="0"><text x="250" y="225" text-anchor="middle" fill="#E8ECF1">CLI+/cmd+MCP</text><text x="430" y="225" text-anchor="middle" fill="#E8ECF1">MCP 1-call</text><text x="610" y="225" text-anchor="middle" fill="#E8ECF1">CLI+MCP+exports</text></g>
+            <g id="mx-c6" opacity="0"><text x="250" y="265" text-anchor="middle" fill="#10B981">code+docs+imgs</text><text x="430" y="265" text-anchor="middle" fill="#94A3B8">code</text><text x="610" y="265" text-anchor="middle" fill="#94A3B8">code+DITA</text></g>
+          </g>
+          <line x1="160" y1="40" x2="160" y2="280" stroke="#334155"/>
+        </g>
+      </svg>
+    </div>
+    <div class="anim-fallback"><p>Static description: a matrix fills row by row. Substrate: Graphify = 3 artifacts, CodeGraph = SQLite+FTS5, okf-rs = Markdown bundle. Sync: hooks/manual vs watchers+stale-flags vs watch+content-hash. Provenance: EXTRACTED/INFERRED (Graphify, okf-rs), unlabeled (CodeGraph). All three are fully local. Query surfaces: CLI/slash/MCP vs single-call MCP vs CLI+MCP+exports. Multimodal: Graphify covers docs/images; the others are code-focused.</p></div>
+    <div class="anim-caption" id="anim-matrix-caption">Same problem, three coherent designs — the axes are where they diverge.</div>
+    <div class="animation-controls">
+      <button data-anim="matrix" data-act="play" aria-label="Play tool matrix animation">▶</button>
+      <button data-anim="matrix" data-act="pause" aria-label="Pause tool matrix animation">⏸</button>
+      <button data-anim="matrix" data-act="restart" aria-label="Restart tool matrix animation">↻</button>
+    </div>
+  </div>
+
+  <div class="callout-why callout">
+    <span class="box-label">✅ Why It Matters</span>
+    <p>In the 90 days after Karpathy's April 2026 post, this space went from zero to three serious open-source tools plus Google's spec. Whatever launches next quarter, the six axes will still be the evaluation: substrate, sync, provenance, locality, query surface, reach. Add M04's two honesty checks — replicated-vs-vendor numbers, and the ~500-file floor — and M11's question ("how would you detect a stale graph within 24 hours?"), and you have a complete due-diligence kit.</p>
+  </div>
+</section>
+
+<section class="section" id="exercise">
+  <h2>Hands-on exercise: build the matrix for your own repo</h2>
+  <p>No lab folder for this module — the exercise runs on <em>your</em> real project. Time: ~30 minutes.</p>
+  <ol>
+    <li><strong>Step 1 — profile the repo.</strong> Count files and languages (<code>git ls-files | wc -l</code>; look at extensions). Note whether you're above or below the ~500-file floor and which benchmark row (Gin? Django? VS Code?) your repo most resembles.</li>
+    <li><strong>Step 2 — fill the six axes for your constraints.</strong> For each axis, write the requirement your environment imposes (e.g., "code cannot leave the machine" → axis 4 eliminates cloud tools immediately; "we live in PRs" → axis 2 favors okf-rs's git-diffable bundle).</li>
+    <li><strong>Step 3 — pick and verify.</strong> Choose the tool the matrix points to. Install it, build the graph, and ask the three orderflow-style questions from the M04 lab ("who calls X", a path query, an impact query). ✅ Checkpoint: each answer verified against your own knowledge of the code.</li>
+    <li><strong>Step 4 — record the honest number.</strong> Measure one real task with and without the graph (tokens or wall-clock). Compare against the benchmark row you predicted in Step 1. Keep this note — the capstone asks for it.</li>
+  </ol>
+  <p><strong>Stretch</strong>: run TWO tools on the same repo and diff their edge sets for one module. Where they disagree, determine which is right by reading the code — you'll usually find an INFERRED edge on one side and silence on the other, which is the provenance axis made tangible.</p>
+</section>
+
+<section class="section" id="quiz">
+  <h2>Knowledge check</h2>
+
+  <div class="quiz-question" data-q="1">
+    <h4>1. Where does CodeGraph's entire knowledge graph live?</h4>
+    <div class="quiz-option" data-correct="false">In a cloud index synced via the CodeGraph API</div>
+    <div class="quiz-option" data-correct="true">In a single local SQLite file — <code>.codegraph/codegraph.db</code> — with FTS5 full-text search; no cloud, no API key, no data transmission</div>
+    <div class="quiz-option" data-correct="false">In a directory of Markdown files</div>
+    <div class="quiz-option" data-correct="false">In the assistant's context window</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="2">
+    <h4>2. In CodeGraph's 7-project benchmark, Tokio (Rust) saved 86% of tokens while OkHttp (Java) saved 13%. What best explains the spread?</h4>
+    <div class="quiz-option" data-correct="false">The Rust grammar is more accurate than the Java grammar</div>
+    <div class="quiz-option" data-correct="true">Corpus topology: Rust's module system (mod/use/pub use re-exports) punishes agent exploration hardest, so the map saves most; OkHttp is small enough that brute force isn't very costly</div>
+    <div class="quiz-option" data-correct="false">Java code cannot be graphed reliably</div>
+    <div class="quiz-option" data-correct="false">Different models were used for the two projects</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="3">
+    <h4>3. What is Layer 3 of CodeGraph's auto-sync, and why does this course keep pointing at it?</h4>
+    <div class="quiz-option" data-correct="false">A cron job that rebuilds the full index nightly</div>
+    <div class="quiz-option" data-correct="true">Staleness flags + reconnection reconciliation: unsynced files are explicitly marked so agents read them directly — it's the layer that admits when the graph is behind, which M11 shows most setups lack</div>
+    <div class="quiz-option" data-correct="false">A two-second debounce window for batching changes</div>
+    <div class="quiz-option" data-correct="false">Native OS file watchers</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="4">
+    <h4>4. What is okf-rs's determinism guarantee, and what does it enable?</h4>
+    <div class="quiz-option" data-correct="true">Identical source → byte-identical output (no timestamps, no unordered-map noise), so a graph diff in a PR shows exactly and only what the code change changed</div>
+    <div class="quiz-option" data-correct="false">It always produces the same number of concepts regardless of input</div>
+    <div class="quiz-option" data-correct="false">Its LLM enrichment always writes identical descriptions</div>
+    <div class="quiz-option" data-correct="false">It guarantees zero INFERRED edges</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="5">
+    <h4>5. Cursor's semantic index returns "leads"; a structural graph returns "answers." What's the operational difference?</h4>
+    <div class="quiz-option" data-correct="false">Leads are free; answers cost tokens</div>
+    <div class="quiz-option" data-correct="true">Leads are similarity-ranked hints the agent must verify by reading files one by one; answers are definitive relationships (X calls Y) needing no verification reads — a different information architecture for exploration tasks</div>
+    <div class="quiz-option" data-correct="false">Leads come from the CLI, answers from MCP</div>
+    <div class="quiz-option" data-correct="false">There is no practical difference</div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-question" data-q="6">
+    <h4>6. Your security team requires that proprietary code never leave developer machines. Which axis decides, and what survives?</h4>
+    <div class="quiz-option" data-correct="false">Axis 5 (query surface) — only MCP tools survive</div>
+    <div class="quiz-option" data-correct="true">Axis 4 (local vs cloud): Gemini Code Assist and Copilot indexing are eliminated regardless of quality; Graphify, CodeGraph, and okf-rs all run fully local and remain candidates</div>
+    <div class="quiz-option" data-correct="false">Axis 1 (substrate) — only SQLite tools survive</div>
+    <div class="quiz-option" data-correct="false">No axis addresses this; it's a benchmark question</div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="summary">
+  <h2>Module summary</h2>
+  <div class="summary-grid">
+    <div class="summary-card"><h4>CodeGraph</h4><p>tree-sitter → SQLite+FTS5, fully local, one MCP call per answer. Benchmarks: 57% fewer tokens / 71% fewer tool calls aggregate; savings scale with repo size (90% Excalidraw ↔ 13% OkHttp).</p></div>
+    <div class="summary-card"><h4>Auto-sync done right</h4><p>OS watchers → 2s debounce → staleness flags. The flag layer — admitting what's behind — is the design M11 will show everyone else missing.</p></div>
+    <div class="summary-card"><h4>okf-rs</h4><p>The Markdown-bundle bet: git-diffable, byte-deterministic, CI-validated, MCP-served, with impact/review PR automation. Bridges directly into Track 3.</p></div>
+    <div class="summary-card"><h4>Six axes</h4><p>Substrate · sync · provenance · locality · query surface · reach. Plus the standing caveats: enhancers-not-replacements, and semantic vs structural = leads vs answers.</p></div>
+  </div>
+  <p><strong>What we built on orderflow</strong>: nothing new in code this time — instead, a durable evaluation kit, plus your own repo's profile and (if you did the stretch) a two-tool edge diff that made provenance labeling concrete.</p>
+  <p><strong>Next module preview</strong>: Track 3 begins. okf-rs generated Markdown-with-frontmatter files because a spec told it what shape agents can rely on. That spec — Google's Open Knowledge Format, one required field, a single page of conformance rules, and a surprising amount of design wisdom — is M06.</p>
+</section>
+
+<section class="section" id="references">
+  <h2>References</h2>
+  <ul class="ref-list">
+    <li>CodeGraph — GitHub repository (MIT); 7-project benchmark methodology and results; auto-sync and route-recognition docs</li>
+    <li>okf-rs — <a href="https://github.com/jyjeanne/okf-rs" rel="noopener">github.com/jyjeanne/okf-rs</a> (releases, ROADMAP.md, pr-review.yml GitHub Action)</li>
+    <li>Graphify — M04's references; BENCHMARKS.md for the vendor-vs-replicated context</li>
+    <li>Sourcegraph, Gemini Code Assist, GitHub Copilot indexing — vendor docs (cloud/server alternatives)</li>
+    <li>Course exercise: this module's embedded 4-step matrix exercise (no lab folder)</li>
+  </ul>
+  <div class="prevnext">
+    <a href="M04-graphify-in-practice.html"><span class="dir">← Previous</span> M04 · Graphify in Practice</a>
+    <a href="M06-okf-specification.html" style="text-align:right;"><span class="dir">Next →</span> M06 · The OKF Specification</a>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.closest('.code-card').querySelector('pre');
+      var text = pre.innerText;
+      function done() { btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); }
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, done); }
+      else { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); done(); }
+    });
+  });
+
+  document.querySelectorAll('.code-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var group = tab.getAttribute('data-tabgroup'), name = tab.getAttribute('data-tab');
+      document.querySelectorAll('.code-tab[data-tabgroup="' + group + '"]').forEach(function (t) { t.classList.toggle('active', t === tab); });
+      document.querySelectorAll('.tab-panel[data-tabgroup="' + group + '"]').forEach(function (p) { p.classList.toggle('active', p.getAttribute('data-tabname') === name); });
+    });
+  });
+
+  document.querySelectorAll('.quiz-question').forEach(function (q) {
+    var fb = q.querySelector('.quiz-feedback');
+    q.querySelectorAll('.quiz-option').forEach(function (opt) {
+      opt.setAttribute('tabindex', '0'); opt.setAttribute('role', 'button');
+      function answer() {
+        if (q.dataset.answered) return;
+        q.dataset.answered = '1';
+        var correct = opt.getAttribute('data-correct') === 'true';
+        opt.classList.add(correct ? 'correct' : 'incorrect');
+        if (!correct) q.querySelectorAll('.quiz-option[data-correct="true"]').forEach(function (c) { c.classList.add('correct'); });
+        fb.textContent = (correct ? '✅ Correct. ' : '❌ Not quite. ') + explain(q);
+        fb.classList.add('show', correct ? 'good' : 'bad');
+      }
+      opt.addEventListener('click', answer);
+      opt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); answer(); } });
+    });
+  });
+  function explain(q) {
+    var map = {
+      '1': 'One file, fully local: .codegraph/codegraph.db (SQLite + FTS5). No scattered cache artifacts, and the primary barrier for regulated codebases — data leaving the machine — simply doesn\'t exist.',
+      '2': 'Same model both arms; the variable is how punishing exploration is. Rust\'s mod/use/re-export paths are maximally punishing (86% saved, $2.41→$0.42); small repos leave little for the map to save.',
+      '3': 'Watchers and debouncing keep the graph fresh; the stale flags keep it HONEST when it isn\'t fresh yet. M11\'s failure catalog is largely a list of systems missing exactly this layer.',
+      '4': 'Byte-identical reruns mean the bundle diffs cleanly in git — so PR review of knowledge changes works like PR review of code. Timestamps or map-ordering noise would destroy that.',
+      '5': 'Similarity says "these smell related"; structure says "this calls that." Leads require verification reads (tokens); answers don\'t. Exploration tasks feel this difference most.',
+      '6': 'Data sovereignty is axis 4 and it\'s binary: cloud-processed tools are out before quality is discussed. All three course tools run entirely locally.'
+    };
+    return map[q.getAttribute('data-q')] || '';
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.sidebar-nav a'));
+  var targets = links.map(function (l) { return document.getElementById(l.getAttribute('href').slice(1)); }).filter(Boolean);
+  function spy() {
+    var pos = window.scrollY + 120, active = targets[0];
+    targets.forEach(function (t) { if (t.offsetTop <= pos) active = t; });
+    links.forEach(function (l) { l.classList.toggle('active', l.getAttribute('href') === '#' + active.id); });
+  }
+  window.addEventListener('scroll', spy, { passive: true }); spy();
+
+  function timeline(steps) {
+    var raf = null, start = null, elapsed = 0, done = {};
+    function frame(ts) {
+      if (start === null) start = ts - elapsed;
+      elapsed = ts - start;
+      steps.forEach(function (s, i) { if (elapsed >= s.at && !done[i]) { done[i] = true; s.fn(); } });
+      if (elapsed < steps[steps.length - 1].at + 400) raf = requestAnimationFrame(frame); else raf = null;
+    }
+    return {
+      play: function () { if (reduced) return; if (!raf) raf = requestAnimationFrame(frame); },
+      pause: function () { if (raf) { cancelAnimationFrame(raf); raf = null; } },
+      restart: function (resetFn) { this.pause(); start = null; elapsed = 0; done = {}; resetFn(); this.play(); }
+    };
+  }
+  function show(id, on) { var el = document.getElementById(id); if (el) el.style.opacity = on ? '1' : '0'; }
+  function fadeSetup(ids) { ids.forEach(function (id) { var el = document.getElementById(id); if (el) { el.style.transition = 'opacity .5s'; show(id, false); } }); }
+  function caption(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; }
+  var anims = {};
+
+  /* BENCH_SCALE */
+  (function () {
+    var pts = ['sc-p1', 'sc-p2', 'sc-p3', 'sc-p6', 'sc-p4', 'sc-p8', 'sc-p7'];
+    var trend = document.getElementById('sc-trend');
+    function reset() {
+      fadeSetup(pts);
+      if (trend) { trend.style.transition = 'none'; trend.setAttribute('stroke-dashoffset', '500'); }
+      caption('anim-scale-caption', 'Press play to place all seven projects. The trend rises; the scatter is real too.');
+    }
+    reset();
+    var tl = timeline([
+      { at: 300, fn: function () { show('sc-p1', 1); show('sc-p2', 1); caption('anim-scale-caption', 'Small repos first: OkHttp 13%, Gin 34% — brute force isn\'t punishing yet.'); } },
+      { at: 1200, fn: function () { show('sc-p3', 1); show('sc-p6', 1); caption('anim-scale-caption', 'Alamofire 64%; Django 36% sits below trend — topology, not just size.'); } },
+      { at: 2100, fn: function () { show('sc-p4', 1); show('sc-p8', 1); caption('anim-scale-caption', 'Tokio 86% (Rust module maze), Excalidraw 90%.'); } },
+      { at: 2900, fn: function () { show('sc-p7', 1); if (trend) { trend.style.transition = 'stroke-dashoffset 1.2s ease-out'; trend.setAttribute('stroke-dashoffset', '0'); } caption('anim-scale-caption', 'VS Code 78% at 10,000 files: 2.8M → 601K tokens. Bigger haystack, better map.'); } }
+    ]);
+    anims.scale = { play: tl.play.bind(tl), pause: tl.pause.bind(tl), restart: function () { tl.restart(reset); } };
+  })();
+
+  /* SYNC_LAYERS */
+  (function () {
+    var ids = ['sy-s2', 'sy-s3', 'sy-s4', 'sy-s5', 'sy-note'];
+    var fill = document.getElementById('sy-fill');
+    function reset() {
+      fadeSetup(ids);
+      if (fill) { fill.style.transition = 'none'; fill.setAttribute('width', '0'); }
+      caption('anim-sync-caption', 'Five saves become one sync; anything not yet synced says so out loud.');
+    }
+    reset();
+    var tl = timeline([
+      { at: 300, fn: function () { show('sy-s2', 1); caption('anim-sync-caption', 'The OS pushes each save notification — no polling, no CPU tax.'); } },
+      { at: 1100, fn: function () { show('sy-s3', 1); if (fill) { fill.style.transition = 'width 1.2s linear'; fill.setAttribute('width', '142'); } caption('anim-sync-caption', 'A 2-second quiet window collects five events into one batch…'); } },
+      { at: 2500, fn: function () { show('sy-s4', 1); caption('anim-sync-caption', '…and one incremental sync updates codegraph.db.'); } },
+      { at: 3300, fn: function () { show('sy-s5', 1); show('sy-note', 1); caption('anim-sync-caption', 'Meanwhile, anything not yet synced carries an explicit stale flag: "read me directly."'); } }
+    ]);
+    anims.sync = { play: tl.play.bind(tl), pause: tl.pause.bind(tl), restart: function () { tl.restart(reset); } };
+  })();
+
+  /* TOOL_MATRIX */
+  (function () {
+    var rows = ['mx-c1', 'mx-c2', 'mx-c3', 'mx-c4', 'mx-c5', 'mx-c6'];
+    var caps = [
+      'Substrate: three artifacts vs one database vs a git-native bundle.',
+      'Sync: hooks/manual vs watchers-with-flags vs watch-plus-content-hash.',
+      'Provenance: who labels facts vs guesses?',
+      'Locality: all three keep code on your machine.',
+      'Query surface: CLI, slash-commands, MCP — in different mixes.',
+      'Reach: only Graphify ingests docs, PDFs, and images (via its LLM pass).'
+    ];
+    function reset() { fadeSetup(rows); caption('anim-matrix-caption', 'Same problem, three coherent designs — the axes are where they diverge.'); }
+    reset();
+    var steps = rows.map(function (id, i) {
+      return { at: 300 + i * 800, fn: function () { show(id, 1); caption('anim-matrix-caption', caps[i]); } };
+    });
+    var tl = timeline(steps);
+    anims.matrix = { play: tl.play.bind(tl), pause: tl.pause.bind(tl), restart: function () { tl.restart(reset); } };
+  })();
+
+  document.querySelectorAll('.animation-controls button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var a = anims[btn.getAttribute('data-anim')], act = btn.getAttribute('data-act');
+      if (a && a[act]) a[act]();
+    });
+  });
+})();
+</script>
+</body>
+</html>
