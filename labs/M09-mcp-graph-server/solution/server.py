@@ -112,10 +112,17 @@ def selftest() -> int:
 
 
 def serve(graph_path: Path | None = None) -> None:
-    from mcp.server.fastmcp import FastMCP
+    # MCP SDK 2.x renamed FastMCP; support both generations so the lab
+    # doesn't silently break on a fresh `pip install mcp` (ask us how we know:
+    # a crashed server under an MCP client looks like "tools not available",
+    # not like an error — the M11 silent-failure lesson, again).
+    try:
+        from mcp.server import MCPServer as ServerClass  # SDK 2.x
+    except ImportError:
+        from mcp.server.fastmcp import FastMCP as ServerClass  # SDK 1.x
 
     name = "orderflow-graph" if graph_path is None else f"graph:{graph_path.stem}"
-    mcp = FastMCP(name)
+    mcp = ServerClass(name)
     mcp.tool()(graph_callers)
     mcp.tool()(graph_callees)
     mcp.tool()(explore)
