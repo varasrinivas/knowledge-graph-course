@@ -1,0 +1,10 @@
+[
+  {"id": "S1", "kind": "structural",
+   "text": "Who calls registerBeanDefinition in this codebase? List up to 15 distinct calling classes/methods."},
+  {"id": "S2", "kind": "structural",
+   "text": "Which methods call ResolvableType.forClass? List up to 15 distinct callers."},
+  {"id": "L1", "kind": "logic",
+   "text": "Why can registerBeanDefinition throw BeanDefinitionOverrideException? Under what configuration does that happen, and how do applications commonly avoid it? Cite the relevant code."},
+  {"id": "L2", "kind": "logic",
+   "text": "During AbstractApplicationContext.refresh(), if a BeanFactoryPostProcessor registers additional bean definitions, are those picked up by subsequently-run post-processors? Explain the mechanism, citing code."}
+]

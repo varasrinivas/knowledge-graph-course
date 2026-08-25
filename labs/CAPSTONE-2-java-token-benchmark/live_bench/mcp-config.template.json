@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "springgraph": {
+      "command": "python",
+      "args": [
+        "REPLACE/WITH/ABSOLUTE/PATH/TO/labs/M09-mcp-graph-server/solution/server.py",
+        "--graph",
+        "REPLACE/WITH/ABSOLUTE/PATH/TO/graph.json"
+      ]
+    }
+  }
+}

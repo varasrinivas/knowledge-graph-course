@@ -142,6 +142,7 @@ tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
   <a href="#phase6">Phase 6 — Live (Optional)</a>
   <a href="#results">Measured Reference Results</a>
   <a href="#live-run">What a Real Live Run Looks Like</a>
+  <a href="#run-it-yourself">Run These Benchmarks Yourself</a>
   <a href="#testcases">Test Cases</a>
   <a href="#further">Going Further</a>
   <a href="#quiz">Knowledge Check</a>
@@ -487,22 +488,22 @@ AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code><
 <!-- ============ TEST CASES ============ -->
 <section class="section" id="live-run">
 <h2>What a Real Live Run Looks Like</h2>
-<p>Everything above is the <strong>mechanical</strong> benchmark — no model in the loop. We also ran the Phase&nbsp;6 live experiment: the same questions asked via <code>claude -p</code> against this spring-framework snapshot, Sonnet on every arm, <strong>medians of 3 independent fresh sessions per cell</strong>. Three arms this time: <strong>baseline</strong> (Read/Glob/Grep only), <strong>graph-available</strong> (graph MCP tools <em>plus</em> file tools, prompt says "prefer the graph"), and <strong>graph-forced</strong> (MCP tools are the ONLY tools — the Graphify-style forced integration; structural questions only, since forced-graph cannot read code bodies).</p>
+<p>Everything above is the <strong>mechanical</strong> benchmark — no model in the loop. We also ran the Phase&nbsp;6 live experiment: the same questions asked via <code>claude -p</code> against this spring-framework snapshot, Sonnet on every arm, <strong>medians of 3 independent fresh sessions per cell</strong>. Four arms: <strong>baseline</strong> (Read/Glob/Grep only, clean repo), <strong>init</strong> (identical tools, but every spring-* module first got a headless-generated CLAUDE.md — M12's layered-context pattern, i.e. the <em>add</em> lever, as a measured arm; one-time generation cost ~$3.40 for 22 modules), <strong>graph-available</strong> (graph MCP tools <em>plus</em> file tools, prompt says "prefer the graph"), and <strong>graph-forced</strong> (MCP tools ONLY — the Graphify-style forced integration).</p>
 
 <div class="analogy-box">
 <p><strong>The three arms, in plain language.</strong> Answering questions about a 9,000-book library: <em>baseline</em> = an assistant with a photocopier that returns just the sentences mentioning your query. <em>Catalog-available</em> = same assistant, plus a card catalog it may consult — but our homemade catalog's cards are fat (every same-named entry merged in), so the assistant reads the card <em>and then</em> double-checks the shelves, paying for both. <em>Catalog-forced</em> = the catalog is the only thing on the desk: one card lookup, one answer, done — provided you can live with the card's known sloppiness, which the assistant is told to disclose.</p>
 </div>
 
 <div style="overflow-x:auto"><table>
-<thead><tr><th>Question</th><th>Baseline</th><th>Graph-available</th><th>Graph-forced</th></tr></thead>
+<thead><tr><th>Question</th><th>Baseline</th><th>Init (CLAUDE.mds)</th><th>Graph-available</th><th>Graph-forced</th></tr></thead>
 <tbody>
-<tr><td>who calls <code>registerBeanDefinition</code></td><td>3 turns · 116K (113&ndash;168K)</td><td>4 turns · 154K (40&ndash;275K)</td><td><strong>1 turn · 42K (41&ndash;159K)</strong></td></tr>
-<tr><td>who calls <code>ResolvableType.forClass</code></td><td>3 turns · 125K (120&ndash;236K)</td><td>10 turns · 415K (317&ndash;533K)</td><td>3 turns · 136K (45&ndash;698K)</td></tr>
-<tr><td>why <code>BeanDefinitionOverrideException</code> (logic)</td><td>6 turns · 231K</td><td>8 turns · 276K</td><td>12 turns · 524K (341&ndash;588K)</td></tr>
-<tr><td><code>refresh()</code> + late bean definitions (logic)</td><td>3 turns · 114K</td><td>3 turns · 113K</td><td>8 turns · 234K (199&ndash;239K)</td></tr>
-<tr><td><strong>Structural totals</strong></td><td><strong>240K</strong></td><td><strong>570K (+137%)</strong></td><td><strong>178K (&minus;26%)</strong></td></tr>
-<tr><td><strong>Logic totals</strong></td><td><strong>345K</strong></td><td><strong>389K (+13%)</strong></td><td><strong>758K (+120%)</strong></td></tr>
-<tr><td><strong>All four questions</strong></td><td><strong>585K</strong></td><td><strong>959K</strong></td><td><strong>936K</strong></td></tr>
+<tr><td>who calls <code>registerBeanDefinition</code></td><td>116K · 3t</td><td><strong>81K · 2t</strong></td><td>154K · 4t</td><td><strong>42K · 1t</strong></td></tr>
+<tr><td>who calls <code>ResolvableType.forClass</code></td><td>125K · 3t</td><td>197K · 4t</td><td>415K · 10t</td><td>136K · 3t</td></tr>
+<tr><td>why <code>BeanDefinitionOverrideException</code> (logic)</td><td>231K · 6t</td><td>203K · 5t</td><td>276K · 8t</td><td>524K · 12t</td></tr>
+<tr><td><code>refresh()</code> + late bean definitions (logic)</td><td>114K · 3t</td><td>118K · 4t</td><td>113K · 3t</td><td>234K · 8t</td></tr>
+<tr><td><strong>Structural totals</strong></td><td><strong>240K</strong></td><td><strong>278K (+16%)</strong></td><td><strong>570K (+137%)</strong></td><td><strong>178K (&minus;26%)</strong></td></tr>
+<tr><td><strong>Logic totals</strong></td><td><strong>345K</strong></td><td><strong>321K (&minus;7%)</strong></td><td><strong>389K (+13%)</strong></td><td><strong>758K (+120%)</strong></td></tr>
+<tr><td><strong>All four questions</strong></td><td><strong>585K</strong></td><td><strong>600K (+2%)</strong></td><td><strong>959K</strong></td><td><strong>936K</strong></td></tr>
 </tbody></table></div>
 
 <p>Read the three arms as one story:</p>
@@ -511,6 +512,7 @@ AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code><
 <li><strong>Fan-out is the graph's poison.</strong> Bare-name resolution merges overloads into 1,000+-caller answers; even forced, <code>forClass</code> only tied the baseline, with wild spread (45K&ndash;698K). A type-resolved graph with compact answers is what earns both trust and savings.</li>
 <li><strong>Logic questions invert the verdict.</strong> The graph-only agent DID answer both "why" questions correctly &mdash; it walked callee edges to reconstruct the override-guard chain and the post-processor re-scan &mdash; but at roughly DOUBLE the baseline's cost (L1: 524K vs 231K, 12 turns of edge-triangulation vs 6 turns with one file read). The graph can substitute for reading code, expensively; it cannot beat reading code at comprehension. Caveat: Spring is in the model's training data, so edge-walking "confirmed" logic it partly already knew &mdash; on a private codebase, graph-shaped confidence over unread code is a hallucination risk, not a capability.</li>
 <li><strong>The line-granular baseline is strong.</strong> A real agent's Grep returns matching lines, never whole files, so the mechanical whole-file floor (the 33.7x above) vastly overstates what live exploration costs.</li>
+<li><strong>The add lever is a per-session wash that hides texture.</strong> The init arm landed at +2% overall — but that average conceals a 30% WIN on one navigation question (the CLAUDE.md map sent the agent straight to the right module: 2 turns) and a 58% LOSS on another (module CLAUDE.mds load into context when the agent works in those directories, and on that question the added context never paid for itself). CLAUDE.mds are conventions-and-orientation context, not a lookup index — M12's "facts every session needs" rule, measured. The one-time $3.40 generation cost amortizes only if many future sessions hit the winning pattern.</li>
 <li><strong>The synthesis is M10's router.</strong> Neither arm wins everywhere: forced-graph is best for structural lookups (&minus;26%), files are best for comprehension (forced-graph +120% there). A router sending each question class to its cheap arm would have spent ~523K on these four questions vs 585K all-baseline &mdash; the hybrid-stack lesson, measured.</li>
 <li><strong>Measurement anomaly, reported not hidden:</strong> the forced arm's dollar cost read high relative to its token counts (the CLI's cost field didn't reconcile with its usage fields on those runs); tokens and turns are the trustworthy columns there.</li>
 </ol>
@@ -520,6 +522,60 @@ AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code><
 
 <div class="callout-why"><span class="box-label">&#127891; The Three Quantities, final form</span>
 <p>The <strong>mechanical per-question floor</strong> (33.7x) measures worst-case exploration vs answer size, no model involved. The <strong>replicated session ranges</strong> (6.8x&ndash;49x) measure other stacks on other tasks. The <strong>live measurement on this stack</strong> depends on integration mode: graph-available <em>lost</em> (+137% structural), graph-forced <em>won</em> (&minus;26%) &mdash; same graph, same model, same questions. All of these are correct answers to different questions. Only a measurement on your stack, in your integration mode, with a verified-working server, describes your setup &mdash; which is why this capstone makes you run it, and why the first thing to verify is that the graph is actually being served.</p></div>
+</section>
+
+<section class="section" id="run-it-yourself">
+<h2>Run These Benchmarks Yourself</h2>
+<p>Everything in the previous section is reproducible with the tooling that ships in <code>labs/CAPSTONE-2-java-token-benchmark/live_bench/</code>. The workflow below is the distilled version of what actually happened when we ran it — including the guardrails added after each thing that went wrong.</p>
+
+<h3 id="riy-tooling">The tooling</h3>
+<div style="overflow-x:auto"><table>
+<thead><tr><th>Script</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><code>run_live_bench.py</code></td><td>Runs the question set through <code>claude -p</code>, one fresh session per run, for any combination of the four arms. Resumable; records tokens, turns, cost, and the repo's CLAUDE.md count per run.</td></tr>
+<tr><td><code>init_claude_mds.py</code></td><td>Prepares the <em>init</em> arm: writes a CLAUDE.md into every module subfolder headlessly (~$0.05&ndash;0.15/module); <code>--remove</code> cleans them all back out.</td></tr>
+<tr><td><code>aggregate.py</code></td><td>Builds the median (min&ndash;max) table from the run files, with per-kind and per-arm totals, and flags errors and contamination.</td></tr>
+<tr><td><code>questions.json</code></td><td>The question set — edit it for your repo; keep a structural/logic split so the router lesson stays measurable.</td></tr>
+<tr><td><code>mcp-config.template.json</code></td><td>Point it at the M09 server and your graph.json (absolute paths).</td></tr>
+</tbody></table></div>
+
+<h3 id="riy-arms">The four arms</h3>
+<ul>
+<li><strong>baseline</strong> — Read/Glob/Grep only. The control. Run it FIRST, before any CLAUDE.md exists in the repo.</li>
+<li><strong>init</strong> — identical tool config to baseline, run AFTER <code>init_claude_mds.py</code>. The only variable is the curated per-module context on disk — this is M12's layered-CLAUDE.md pattern (the <em>add</em> lever) as a measured arm.</li>
+<li><strong>available</strong> — file tools plus the graph MCP tools, prompt says "prefer the graph". Measures what optional graph access does to a normal agent.</li>
+<li><strong>forced</strong> — MCP tools only, the Graphify-style integration. Structural questions by default; <code>--forced-logic</code> includes the "why" questions if you want to see edge-walking comprehension (expensive, and mind the prior-knowledge confound on famous codebases).</li>
+</ul>
+
+<h3 id="riy-steps">The run, step by step</h3>
+<div class="code-block"><pre><code>cd labs/CAPSTONE-2-java-token-benchmark/live_bench
+
+# 0. Prereqs: graph built (Phase 1) and the M09 server smoke-tested (Phase 3).
+#    DO NOT SKIP THE SMOKE TEST — see the canary box below.
+
+# 1. Control first, clean repo:
+python run_live_bench.py D:/tmp/spring-framework --arms baseline --reps 3
+
+# 2. The graph arms (fill in mcp-config from the template first):
+python run_live_bench.py D:/tmp/spring-framework --arms available,forced --reps 3 --mcp-config mcp.json
+
+# 3. The init arm — write the CLAUDE.mds, run, then clean up:
+python init_claude_mds.py D:/tmp/spring-framework --prefix spring-
+python run_live_bench.py D:/tmp/spring-framework --arms init --reps 3
+python init_claude_mds.py D:/tmp/spring-framework --remove
+
+# 4. The table:
+python aggregate.py runs</code></pre></div>
+
+<h3 id="riy-rules">Methodology rules (each one bought with a mistake)</h3>
+<ol>
+<li><strong>Fresh sessions, medians of &ge;3.</strong> Identical sessions varied up to 2x in our runs; a single run is a coin flip. Every <code>claude -p</code> call is a fresh session — repetition is the whole methodology.</li>
+<li><strong>Arm order matters.</strong> Baseline before init (the runner records the repo's CLAUDE.md count in every run and warns when a "baseline" run is contaminated).</li>
+<li><strong>The forced arm is your canary.</strong> Our first two campaigns measured a graph arm whose MCP server was silently crashing — invisible because file tools gave it something to fall back on. The forced arm has no fallback: if the server is broken, forced sessions say so instead of producing plausible garbage.</li>
+<li><strong>Same model everywhere, one variable per arm.</strong> The runner pins the model; the only thing that changes between arms is tools/context.</li>
+<li><strong>Windows gotcha:</strong> prompts must be single-line — the <code>.cmd</code> shim truncates argv at embedded newlines (the runner handles this; keep it in mind if you edit it).</li>
+<li><strong>Budget before you start:</strong> at Sonnet, expect roughly $0.10&ndash;0.40 per session, ~$2.50 per 3-rep arm campaign on a repo this size, plus ~$3 for a 22-module init pass.</li>
+</ol>
 </section>
 
 <section class="section" id="testcases">
