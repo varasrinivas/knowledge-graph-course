@@ -134,3 +134,19 @@ python run_live_bench.py D:/tmp/spring-framework --arms forced --reps 3 --mcp-co
 4. **One variable per scenario** — same model, same questions, same repo snapshot everywhere.
 5. **Windows: single-line prompts** — the `.cmd` shim truncates argv at newlines.
 6. **Budget up front** — ~$0.10–0.40/session at Sonnet; a full 4-arm campaign on this repo ran ≈ $10 including the init pass.
+
+---
+
+## Worked example 2 — the small-repo counterpoint (priorauth-api-boot3, 36 files)
+
+Same four scenarios, same methodology, questions adapted to the domain (a Spring Boot 3 prior-authorization API). Mechanical harness: 15.2x per-question. Live grid (medians of 3, 48 sessions, raw data in `../expected_output/live-run-priorauth.json`):
+
+| Question | Baseline | Init (root CLAUDE.md) | Available | Forced |
+|---|---|---|---|---|
+| who calls `setStatus` | 160K · 4t | **118K · 3t** | 228K · 7t | 188K · 6t |
+| who calls `findByMemberNumber` | **74K · 2t** | 77K · 2t | 149K · 4t | 149K · 4t |
+| when does MANUAL_REVIEW happen | 196K · 7t | **120K · 3t** | 195K · 7t | 468K · 17t |
+| eligibility exception semantics | **199K · 7t** | 250K · 9t | 283K · 10t | 352K · 18t |
+| **All four** | **629K** | **565K (−10%)** | 855K (+36%) | 1,156K (+84%) |
+
+**The verdict flipped vs spring-framework.** One 55-line root CLAUDE.md (init arm, single-file variant — for a single-module app, init the root instead of per-module) is the best arm overall and −38% on the orientation-heavy logic question; the graph loses in every configuration, even forced: at 36 files grep costs 2 turns, the graph is half-AMBIGUOUS, and forced edge-walking burned 17–18 turns on logic. This is the ~500-file payoff floor measured live: **which lever wins is a property of the repo and question mix, not of the tool.**

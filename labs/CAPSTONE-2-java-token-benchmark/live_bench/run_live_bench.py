@@ -35,7 +35,10 @@ import subprocess
 import time
 from pathlib import Path
 
-CLAUDE = shutil.which("claude") or "claude"
+# Windows: which("claude") can resolve to the extension-less bash shim, which
+# CreateProcess cannot execute — prefer the .cmd/.exe launchers explicitly.
+CLAUDE = (shutil.which("claude.cmd") or shutil.which("claude.exe")
+          or shutil.which("claude") or "claude")
 
 HINT_AVAILABLE = ("You have MCP tools (springgraph: graph_callers, graph_callees, explore) over a "
                   "pre-built structural graph of this codebase. Prefer them over file exploration "

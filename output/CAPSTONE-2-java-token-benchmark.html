@@ -571,6 +571,21 @@ AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code><
 </tbody></table></div>
 <p><strong>Insight (two):</strong> forcing is what unlocks the structural win &mdash; remove the option to double-check and one-call answers finally beat grep. And the forced arm is a <strong>canary</strong>: our first two campaigns measured a &ldquo;graph arm&rdquo; whose server was silently crashing; with file tools as fallback the failure was invisible. The forced arm, with no fallback, reported &ldquo;tools unavailable&rdquo; and exposed it. Smoke-test a forced session before trusting any graph-arm number. On logic questions it answered correctly by edge-walking &mdash; at 2x the cost, with the training-data confound (on private code, graph-shaped confidence over unread code is a hallucination risk).</p>
 
+
+<h3 id="sc-smallrepo">The small-repo counterpoint: the same four scenarios on 36 files</h3>
+<p>We reran the identical four-scenario campaign (same runner, same methodology, questions adapted to the domain) on <code>priorauth-api-boot3</code> &mdash; a 36-file Spring Boot 3 prior-authorization API. The mechanical harness said 15.2x per-question. The live grid said something else entirely:</p>
+<div style="overflow-x:auto"><table>
+<thead><tr><th>Question</th><th>Baseline</th><th>Init (root CLAUDE.md)</th><th>Graph-available</th><th>Graph-forced</th></tr></thead>
+<tbody>
+<tr><td>who calls <code>setStatus</code></td><td>160K &middot; 4t</td><td><strong>118K &middot; 3t</strong></td><td>228K &middot; 7t</td><td>188K &middot; 6t</td></tr>
+<tr><td>who calls <code>findByMemberNumber</code></td><td><strong>74K &middot; 2t</strong></td><td>77K &middot; 2t</td><td>149K &middot; 4t</td><td>149K &middot; 4t</td></tr>
+<tr><td>when does MANUAL_REVIEW happen (logic)</td><td>196K &middot; 7t</td><td><strong>120K &middot; 3t</strong></td><td>195K &middot; 7t</td><td>468K &middot; 17t</td></tr>
+<tr><td>eligibility exception semantics (logic)</td><td><strong>199K &middot; 7t</strong></td><td>250K &middot; 9t</td><td>283K &middot; 10t</td><td>352K &middot; 18t</td></tr>
+<tr><td><strong>All four</strong></td><td><strong>629K</strong></td><td><strong>565K (&minus;10%)</strong></td><td>855K (+36%)</td><td>1,156K (+84%)</td></tr>
+</tbody></table></div>
+<p><strong>The verdict flipped.</strong> On spring-framework, forced-graph won structural and init was a wash. Here, one 55-line root CLAUDE.md describing the submission&rarr;determination flow is the best arm overall (&minus;10%, and &minus;38% on the MANUAL_REVIEW question &mdash; the map pointed straight at <code>CriteriaScoringService</code>), while the graph loses in every configuration &mdash; even forced (+84%): at 36 files grep costs 2 turns, the graph is tiny and half-AMBIGUOUS, and forced edge-walking on logic questions burned 17&ndash;18 turns.</p>
+<p>This is the ~500-file payoff floor (M04, M11) measured live instead of asserted, and the sharpest form of the course&rsquo;s closing lesson: <strong>which context lever wins is a property of the repo and the question mix, not of the tool.</strong> Big haystack + structural questions &rarr; forced graph. Small repo one person can hold in their head &rarr; one good CLAUDE.md beats everything. The only way to know which world you are in is the measurement you just learned to run. (Raw 48-session dataset: <code>expected_output/live-run-priorauth.json</code>.)</p>
+
 <div class="callout-why"><span class="box-label">&#129517; No scenario wins everywhere &mdash; that IS the finding</span>
 <p>Forced-graph owns structural lookups; plain files own comprehension; CLAUDE.mds help orientation and tax everything else; an optional graph is the worst of both worlds. The synthesis is M10&rsquo;s router, derived here from data: route structural questions to the forced graph and everything else to files &asymp; <strong>523K</strong> for this question set vs 585K all-baseline &mdash; each context layer serving only the question class it is good at.</p></div>
 </section>
