@@ -142,6 +142,7 @@ tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
   <a href="#phase6">Phase 6 — Live (Optional)</a>
   <a href="#results">Measured Reference Results</a>
   <a href="#live-run">What a Real Live Run Looks Like</a>
+  <a href="#scenarios">The Four Scenarios, In Depth</a>
   <a href="#run-it-yourself">Run These Benchmarks Yourself</a>
   <a href="#testcases">Test Cases</a>
   <a href="#further">Going Further</a>
@@ -524,6 +525,56 @@ AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code><
 <p>The <strong>mechanical per-question floor</strong> (33.7x) measures worst-case exploration vs answer size, no model involved. The <strong>replicated session ranges</strong> (6.8x&ndash;49x) measure other stacks on other tasks. The <strong>live measurement on this stack</strong> depends on integration mode: graph-available <em>lost</em> (+137% structural), graph-forced <em>won</em> (&minus;26%) &mdash; same graph, same model, same questions. All of these are correct answers to different questions. Only a measurement on your stack, in your integration mode, with a verified-working server, describes your setup &mdash; which is why this capstone makes you run it, and why the first thing to verify is that the graph is actually being served.</p></div>
 </section>
 
+<section class="section" id="scenarios">
+<h2>The Four Scenarios, In Depth</h2>
+<p>Each arm of the live benchmark is a deliberate integration scenario you might actually ship. This is the full reference for each: what it simulates, its exact configuration, how to run it, what it measured, and the insight it bought. (Same content ships as <code>live_bench/SCENARIOS.md</code> next to the tooling.)</p>
+
+<h3 id="sc-baseline">Scenario 1 &mdash; <code>baseline</code>: a normal agent, nothing added</h3>
+<p><strong>Simulates:</strong> the out-of-the-box experience &mdash; file tools, no curated context. The control every other scenario is measured against.</p>
+<div style="overflow-x:auto"><table><tbody>
+<tr><td>Tools</td><td><code>Read</code>, <code>Glob</code>, <code>Grep</code></td></tr>
+<tr><td>Prompt extras</td><td>none (question + effort cap only)</td></tr>
+<tr><td>Repo state</td><td>clean &mdash; zero CLAUDE.md files (the runner records the count per run and warns if nonzero)</td></tr>
+<tr><td>Run</td><td><code>python run_live_bench.py &lt;repo&gt; --arms baseline --reps 3</code> &mdash; FIRST, before Scenario 2 ever touches the repo</td></tr>
+<tr><td>Measured</td><td>structural 240K &middot; logic 345K &middot; all-four <strong>585K</strong></td></tr>
+</tbody></table></div>
+<p><strong>Insight:</strong> far stronger than the mechanical benchmark predicts, because a real agent&rsquo;s Grep returns matching <em>lines</em>, not whole files &mdash; 3 turns on the callers question without wholesale file reads. Anything that wants to win has to beat line-granular grep, not the whole-file strawman.</p>
+
+<h3 id="sc-init">Scenario 2 &mdash; <code>init</code>: curated CLAUDE.md context (the ADD lever)</h3>
+<p><strong>Simulates:</strong> a team that invested in per-module context files &mdash; M12&rsquo;s layered-CLAUDE.md pattern. Claude Code auto-loads a module&rsquo;s CLAUDE.md when the agent works in that directory; the orientation rides along, and so does its token cost.</p>
+<div style="overflow-x:auto"><table><tbody>
+<tr><td>Tools</td><td>identical to baseline &mdash; the ONLY variable is the repo state</td></tr>
+<tr><td>Repo state</td><td>a generated CLAUDE.md in every <code>spring-*</code> module (22 files, ~$3.40 one-time)</td></tr>
+<tr><td>Run</td><td><code>python init_claude_mds.py &lt;repo&gt; --prefix spring-</code> &rarr; <code>run_live_bench.py &lt;repo&gt; --arms init --reps 3</code> &rarr; <code>init_claude_mds.py &lt;repo&gt; --remove</code></td></tr>
+<tr><td>Gotcha</td><td><code>/init</code> does NOT fire in <code>claude -p</code> mode &mdash; the script uses an explicit &ldquo;analyze and Write CLAUDE.md&rdquo; instruction</td></tr>
+<tr><td>Measured</td><td>structural 278K (+16%) &middot; logic 321K (&minus;7%) &middot; all-four <strong>600K (+2%)</strong></td></tr>
+</tbody></table></div>
+<p><strong>Insight:</strong> the +2% wash hides the story &mdash; a 30% WIN where the CLAUDE.md map sent the agent straight to the right module (81K, 2 turns), a 58% LOSS where the auto-loaded context never paid off. CLAUDE.mds are orientation-and-conventions context, not a lookup index; the generation cost amortizes only across sessions that hit the winning pattern.</p>
+
+<h3 id="sc-available">Scenario 3 &mdash; <code>available</code>: graph offered, not imposed</h3>
+<p><strong>Simulates:</strong> the most common real integration &mdash; a graph MCP server registered alongside normal tools, with guidance to prefer it. The agent chooses.</p>
+<div style="overflow-x:auto"><table><tbody>
+<tr><td>Tools</td><td>file tools <strong>plus</strong> <code>graph_callers</code> / <code>graph_callees</code> / <code>explore</code></td></tr>
+<tr><td>Prompt extras</td><td>&ldquo;Prefer the graph tools for caller/callee questions; fall back to Read/Grep only when the graph cannot answer&rdquo;</td></tr>
+<tr><td>Run</td><td><code>python run_live_bench.py &lt;repo&gt; --arms available --reps 3 --mcp-config mcp.json</code></td></tr>
+<tr><td>Measured</td><td>structural <strong>570K (+137% &mdash; the worst arm)</strong> &middot; logic 389K (+13%) &middot; all-four 959K</td></tr>
+</tbody></table></div>
+<p><strong>Insight:</strong> optionality actively hurts with a fan-out-heavy graph. The model queries the graph, receives a 1,000+-candidate bare-name answer, rationally distrusts it, and re-verifies against files &mdash; paying for BOTH retrieval paths (10 turns, 415K on <code>forClass</code>). &ldquo;We registered a graph and told the model to prefer it&rdquo; is not an integration strategy.</p>
+
+<h3 id="sc-forced">Scenario 4 &mdash; <code>forced</code>: graph as the only tool</h3>
+<p><strong>Simulates:</strong> a Graphify-style forced integration &mdash; the graph is the single search surface, no file access.</p>
+<div style="overflow-x:auto"><table><tbody>
+<tr><td>Tools</td><td><code>graph_callers</code> / <code>graph_callees</code> / <code>explore</code> &mdash; nothing else</td></tr>
+<tr><td>Prompt extras</td><td>&ldquo;They are your ONLY tools&hellip; note honestly if AMBIGUOUS provenance makes parts uncertain&rdquo;</td></tr>
+<tr><td>Run</td><td><code>python run_live_bench.py &lt;repo&gt; --arms forced --reps 3 --mcp-config mcp.json</code> (add <code>--forced-logic</code> for the &ldquo;why&rdquo; questions)</td></tr>
+<tr><td>Measured</td><td>structural <strong>178K (&minus;26% &mdash; the only arm to beat baseline)</strong>, S1 in 1 turn at 42K &middot; logic 758K (+120%)</td></tr>
+</tbody></table></div>
+<p><strong>Insight (two):</strong> forcing is what unlocks the structural win &mdash; remove the option to double-check and one-call answers finally beat grep. And the forced arm is a <strong>canary</strong>: our first two campaigns measured a &ldquo;graph arm&rdquo; whose server was silently crashing; with file tools as fallback the failure was invisible. The forced arm, with no fallback, reported &ldquo;tools unavailable&rdquo; and exposed it. Smoke-test a forced session before trusting any graph-arm number. On logic questions it answered correctly by edge-walking &mdash; at 2x the cost, with the training-data confound (on private code, graph-shaped confidence over unread code is a hallucination risk).</p>
+
+<div class="callout-why"><span class="box-label">&#129517; No scenario wins everywhere &mdash; that IS the finding</span>
+<p>Forced-graph owns structural lookups; plain files own comprehension; CLAUDE.mds help orientation and tax everything else; an optional graph is the worst of both worlds. The synthesis is M10&rsquo;s router, derived here from data: route structural questions to the forced graph and everything else to files &asymp; <strong>523K</strong> for this question set vs 585K all-baseline &mdash; each context layer serving only the question class it is good at.</p></div>
+</section>
+
 <section class="section" id="run-it-yourself">
 <h2>Run These Benchmarks Yourself</h2>
 <p>Everything in the previous section is reproducible with the tooling that ships in <code>labs/CAPSTONE-2-java-token-benchmark/live_bench/</code>. The complete scenario reference — what each of the four arms simulates, its exact configuration, step-by-step commands, measured findings, and pitfalls — lives alongside the tooling in <code>live_bench/SCENARIOS.md</code>. The workflow below is the distilled version of what actually happened when we ran it — including the guardrails added after each thing that went wrong.</p>
@@ -540,12 +591,7 @@ AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code><
 </tbody></table></div>
 
 <h3 id="riy-arms">The four arms</h3>
-<ul>
-<li><strong>baseline</strong> — Read/Glob/Grep only. The control. Run it FIRST, before any CLAUDE.md exists in the repo.</li>
-<li><strong>init</strong> — identical tool config to baseline, run AFTER <code>init_claude_mds.py</code>. The only variable is the curated per-module context on disk — this is M12's layered-CLAUDE.md pattern (the <em>add</em> lever) as a measured arm.</li>
-<li><strong>available</strong> — file tools plus the graph MCP tools, prompt says "prefer the graph". Measures what optional graph access does to a normal agent.</li>
-<li><strong>forced</strong> — MCP tools only, the Graphify-style integration. Structural questions by default; <code>--forced-logic</code> includes the "why" questions if you want to see edge-walking comprehension (expensive, and mind the prior-knowledge confound on famous codebases).</li>
-</ul>
+<p>Documented in depth in <a href="#scenarios">The Four Scenarios, In Depth</a> above &mdash; simulation intent, exact configuration, per-arm steps, measured results, and pitfalls. The short version: run <strong>baseline</strong> first on a clean repo, <strong>init</strong> only after generating CLAUDE.mds (and clean up after), <strong>available</strong>/<strong>forced</strong> need <code>--mcp-config</code>, and forced doubles as your server canary.</p>
 
 <h3 id="riy-steps">The run, step by step</h3>
 <div class="code-block"><pre><code>cd labs/CAPSTONE-2-java-token-benchmark/live_bench
