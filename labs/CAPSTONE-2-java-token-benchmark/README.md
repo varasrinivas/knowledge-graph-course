@@ -70,7 +70,7 @@ python solution/measure_tokens.py <repo> <repo>-graph.json --questions 8 --json 
 14. ✅ The M11 question, again: your spring graph took ~2.5 min to build. How would you detect it going stale within 24 hours? (Your Capstone-1 freshness gate works unchanged here.)
 
 ## Phase 6 — OPTIONAL live measurement (step 15)
-15. Run the shipped harness in `live_bench/` — four arms (baseline / init / available / forced), fresh sessions, medians of 3. Full instructions in the module's "Run These Benchmarks Yourself" section; short version:
+15. Run the shipped harness in `live_bench/` — four arms (baseline / init / available / forced), fresh sessions, medians of 3. **Full scenario documentation — what each arm simulates, exact config, steps, findings, pitfalls — is in [`live_bench/SCENARIOS.md`](live_bench/SCENARIOS.md).** Full instructions in the module's "Run These Benchmarks Yourself" section; short version:
 ```bash
 cd live_bench
 python run_live_bench.py <repo> --arms baseline --reps 3          # control FIRST, clean repo
