@@ -498,17 +498,20 @@ AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code><
 <tbody>
 <tr><td>who calls <code>registerBeanDefinition</code></td><td>3 turns · 116K (113&ndash;168K)</td><td>4 turns · 154K (40&ndash;275K)</td><td><strong>1 turn · 42K (41&ndash;159K)</strong></td></tr>
 <tr><td>who calls <code>ResolvableType.forClass</code></td><td>3 turns · 125K (120&ndash;236K)</td><td>10 turns · 415K (317&ndash;533K)</td><td>3 turns · 136K (45&ndash;698K)</td></tr>
-<tr><td>why <code>BeanDefinitionOverrideException</code> (logic)</td><td>6 turns · 231K</td><td>8 turns · 276K</td><td>&mdash; (needs code bodies)</td></tr>
-<tr><td><code>refresh()</code> + late bean definitions (logic)</td><td>3 turns · 114K</td><td>3 turns · 113K</td><td>&mdash;</td></tr>
-<tr><td><strong>Structural totals (sums of medians)</strong></td><td><strong>240K tok</strong></td><td><strong>570K tok</strong></td><td><strong>178K tok (&minus;26%)</strong></td></tr>
+<tr><td>why <code>BeanDefinitionOverrideException</code> (logic)</td><td>6 turns · 231K</td><td>8 turns · 276K</td><td>12 turns · 524K (341&ndash;588K)</td></tr>
+<tr><td><code>refresh()</code> + late bean definitions (logic)</td><td>3 turns · 114K</td><td>3 turns · 113K</td><td>8 turns · 234K (199&ndash;239K)</td></tr>
+<tr><td><strong>Structural totals</strong></td><td><strong>240K</strong></td><td><strong>570K (+137%)</strong></td><td><strong>178K (&minus;26%)</strong></td></tr>
+<tr><td><strong>Logic totals</strong></td><td><strong>345K</strong></td><td><strong>389K (+13%)</strong></td><td><strong>758K (+120%)</strong></td></tr>
+<tr><td><strong>All four questions</strong></td><td><strong>585K</strong></td><td><strong>959K</strong></td><td><strong>936K</strong></td></tr>
 </tbody></table></div>
 
 <p>Read the three arms as one story:</p>
 <ol>
 <li><strong>Forcing is what unlocks the win.</strong> With the graph as the only tool, the callers question was answered in ONE turn at 42K tokens &mdash; 64% under baseline. When the graph was merely <em>available</em>, the model queried it, distrusted the fan-out, and re-verified against files &mdash; paying for both paths. On <code>forClass</code> that made graph-available WORSE than having no graph at all (10 turns, 415K).</li>
 <li><strong>Fan-out is the graph's poison.</strong> Bare-name resolution merges overloads into 1,000+-caller answers; even forced, <code>forClass</code> only tied the baseline, with wild spread (45K&ndash;698K). A type-resolved graph with compact answers is what earns both trust and savings.</li>
-<li><strong>Logic questions don't move.</strong> Reasoning dominates, no graph removes reasoning tokens, and forced-graph cannot answer them at all &mdash; the graph is a lookup layer, not a comprehension layer.</li>
+<li><strong>Logic questions invert the verdict.</strong> The graph-only agent DID answer both "why" questions correctly &mdash; it walked callee edges to reconstruct the override-guard chain and the post-processor re-scan &mdash; but at roughly DOUBLE the baseline's cost (L1: 524K vs 231K, 12 turns of edge-triangulation vs 6 turns with one file read). The graph can substitute for reading code, expensively; it cannot beat reading code at comprehension. Caveat: Spring is in the model's training data, so edge-walking "confirmed" logic it partly already knew &mdash; on a private codebase, graph-shaped confidence over unread code is a hallucination risk, not a capability.</li>
 <li><strong>The line-granular baseline is strong.</strong> A real agent's Grep returns matching lines, never whole files, so the mechanical whole-file floor (the 33.7x above) vastly overstates what live exploration costs.</li>
+<li><strong>The synthesis is M10's router.</strong> Neither arm wins everywhere: forced-graph is best for structural lookups (&minus;26%), files are best for comprehension (forced-graph +120% there). A router sending each question class to its cheap arm would have spent ~523K on these four questions vs 585K all-baseline &mdash; the hybrid-stack lesson, measured.</li>
 <li><strong>Measurement anomaly, reported not hidden:</strong> the forced arm's dollar cost read high relative to its token counts (the CLI's cost field didn't reconcile with its usage fields on those runs); tokens and turns are the trustworthy columns there.</li>
 </ol>
 
