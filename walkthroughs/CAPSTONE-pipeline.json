@@ -1,0 +1,239 @@
+{
+  "id": "kg-capstone-pipeline",
+  "badge": "WALKTHROUGH",
+  "color": "#10B981",
+  "time": "~5 min",
+  "title": "Five stages, five proofs",
+  "spec": "Capstone · the pipeline end to end",
+  "intro": "A map of the build, not a tutorial. One stage per step: the artifact it produces, and the check that proves the artifact is real. The lab packet has the eighteen steps; this is the shape they add up to.",
+  "provenance": {
+    "kind": "illustrative",
+    "source": "a walk of labs/CAPSTONE-knowledge-pipeline/README.md over labs/sample-project; every command and output is taken from the lab solutions, cited per step"
+  },
+  "foot": "Build it for real: <code>labs/CAPSTONE-knowledge-pipeline/README.md</code> — seven phases, eighteen steps, two deliberate sabotages.",
+  "steps": [
+    {
+      "title": "Stage 1 — extract the structural graph",
+      "narrative": [
+        "The structural layer is deterministic extraction: identical source in, identical graph out, zero LLM calls and therefore zero hallucination risk on extracted edges. That is what lets the provenance tag on an edge honestly say <code>EXTRACTED</code>.",
+        "<b>Artifact:</b> <code>graphify-out/graph.json</code>. <b>Check:</b> orderflow is small enough to verify by hand — that is why the course uses it. Every ground-truth relationship listed in <code>sample-project/README.md</code> must appear, and an in-degree tally must put the <code>shared/</code> modules at the top: that cluster is the god node the architecture doc warned about, and its centrality is what makes a change there a wide-blast-radius change."
+      ],
+      "youDo": "<code>graphify update .</code> if it is installed, or the offline fallback: <code>python ../shared_tools/kg_extract.py . --out graphify-out/graph.json</code>",
+      "source": "labs/shared_tools/kg_extract.py, labs/sample-project/README.md",
+      "terminal": [
+        { "kind": "prompt", "text": "python ../shared_tools/kg_extract.py . --out graphify-out/graph.json" },
+        { "kind": "out-pass", "text": "Rebuilt: 36 nodes, 22 edges -> graphify-out/graph.json\n  nodes: {'class': 4, 'function': 18, 'module': 14}\n  edges: {'EXTRACTED': 9, 'INFERRED': 13}" },
+        { "kind": "prompt", "text": "python -c \"…Counter over graph['edges']…\"   # in-degree by module" },
+        { "kind": "out-pass", "text": "[('shared.auth', 6), ('shared.db', 5), ('services.billing.webhooks', 4)]" }
+      ],
+      "state": {
+        "label": "graph.json vs the README's ground truth",
+        "before": {
+          "title": "CHECK — every declared edge present",
+          "view": {
+            "type": "rows",
+            "columns": ["ground-truth relationship", "in the graph?", "provenance"],
+            "rows": [
+              { "cells": ["<code>verify_token → decode_jwt</code> (same file)", "yes", "EXTRACTED"], "tone": "win" },
+              { "cells": ["<code>webhooks → invoice.mark_paid</code>", "yes", "INFERRED"], "tone": "win" },
+              { "cells": ["<code>webhooks → shared.events.publish</code>", "yes", "INFERRED"], "tone": "win" },
+              { "cells": ["<code>worker → subscribe</code> (payment.settled)", "yes", "INFERRED"], "tone": "win" },
+              { "cells": ["<code>orders → DatabasePool.execute</code>", "yes", "INFERRED"], "tone": "win" },
+              { "cells": ["god node = the <code>shared/</code> cluster", "yes — <code>shared.auth</code> and <code>shared.db</code> top in-degree", "—"], "tone": "win" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Stage 2 — author the OKF bundle",
+      "narrative": [
+        "The graph knows what the code <em>is</em>. It cannot know that WAU excludes testers on purpose, or that ADR-001 chose an in-process bus over a broker. That intent is the narrative layer: three Service concepts, two analytics concepts, an <code>index.md</code> the agent reads pre-flight, and a <code>log.md</code> recording what the bundle knows changed.",
+        "<b>Artifact:</b> <code>knowledge/</code>. <b>Check:</b> lint returns zero errors, and the WAU concept is an <b>attested computation</b> — it names <code>services/orders/metrics.py::weekly_active_users</code> as the source of truth rather than restating the rule in prose that can drift away from the code."
+      ],
+      "youDo": "<code>python ../M06-okf-authoring/solution/validate.py knowledge</code> — and keep the body structure identical across Service concepts, because consistency is what agents parse.",
+      "source": "labs/M06-okf-authoring/solution/validate.py, labs/M06-okf-authoring/solution/knowledge/analytics/metrics/weekly_active_users.md",
+      "terminal": [
+        { "kind": "prompt", "text": "python ../M06-okf-authoring/solution/validate.py knowledge" },
+        { "kind": "out-pass", "text": "5 concepts valid, 0 errors" }
+      ],
+      "state": {
+        "label": "the concept that closes the incident from the brief",
+        "before": {
+          "title": "BEFORE — the definition lives in prose",
+          "view": {
+            "type": "note",
+            "text": "<code>docs/architecture.md</code> carries a retired paragraph: \"unique users with any API call in 7 days\", no tester exclusion. Nothing links it to code, so nothing can tell you it stopped being true."
+          }
+        },
+        "after": {
+          "title": "AFTER — the definition points at the code",
+          "view": {
+            "type": "spec",
+            "id": "knowledge/analytics/metrics/weekly_active_users.md",
+            "status": "LINT CLEAN",
+            "rows": [
+              ["type", "metric"],
+              ["resource", "services/orders/metrics.py"],
+              ["source of truth", "metrics.py::weekly_active_users"],
+              ["window", "rolling 7 days"],
+              ["activity", "≥ 1 completed order"],
+              ["excludes", "cust_qa_1, cust_qa_2, cust_loadtest"]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Stage 3 — install the enrichment hook",
+      "narrative": [
+        "A bundle nobody maintains is a wiki nobody reads. The post-commit hook scopes its scan to the git diff — touch <code>webhooks.py</code> and only <code>billing-service.md</code> is rescanned. Diff-scoping is the entire cost model: full-repo rescans per commit are what make teams switch pipelines off.",
+        "<b>Artifact:</b> <code>.git/hooks/post-commit</code>. <b>Check:</b> two behaviours, not one. A real change refreshes exactly one concept and appends <code>log.md</code>; a broken concept makes the hook <b>fail loudly, non-zero</b>. Note what this hook deliberately does not have: no <code>nohup</code>, no backgrounding, no silent resource-gated skips — the three mechanisms M11 catalogued."
+      ],
+      "youDo": "Sabotage #1: delete the <code>type:</code> line from a concept, commit any code change, and confirm the hook exits non-zero naming the file. Then restore it.",
+      "source": "labs/M08-enrichment-hook/solution/post-commit, labs/M08-enrichment-hook/solution/refresh_concepts.py",
+      "terminal": [
+        { "kind": "prompt", "text": "git commit -qm \"billing: add fraud_check call to webhooks\"" },
+        { "kind": "out-pass", "text": "[enrich] changed: services/billing/webhooks.py -> concept billing-service\n[enrich] refreshed Dependencies (4 edges) in billing-service.md\n[enrich] log.md updated\n[enrich] lint: 5 concepts valid, 0 errors" },
+        { "kind": "gate", "text": "⏸  SABOTAGE #1 — `type:` removed from billing-service.md" },
+        { "kind": "prompt", "text": "git commit -qm \"billing: another change\"" },
+        { "kind": "out-fail", "text": "ERROR knowledge/services/billing-service.md: missing required field 'type'\n4 concepts valid, 1 errors\n[enrich] FAILED — bundle NOT published (lint rejected it). Fix before trusting or committing the bundle." }
+      ],
+      "state": {
+        "label": "one commit, one concept",
+        "before": {
+          "title": "CHECK — did diff-scoping hold?",
+          "view": {
+            "type": "rows",
+            "columns": ["concept file", "touched by the commit?", "expected"],
+            "rows": [
+              { "cells": ["<code>services/billing-service.md</code>", "yes — Dependencies refreshed", "yes"], "tone": "win" },
+              { "cells": ["<code>services/orders-service.md</code>", "no", "no"], "tone": "win" },
+              { "cells": ["<code>services/notifications-service.md</code>", "no", "no"], "tone": "win" },
+              { "cells": ["<code>knowledge/log.md</code>", "yes — dated entry appended", "yes"], "tone": "win" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Stage 4 — serve both layers over MCP",
+      "narrative": [
+        "Two artifacts on disk help nobody until an agent can reach them in one round trip. The MCP server exposes <code>graph_callers</code>, <code>graph_callees</code> and the composite <code>explore</code> over stdio, and <code>index.md</code> routes canonical questions to the right concept file.",
+        "<b>Artifact:</b> a registered server. <b>Check:</b> <code>--selftest</code> before you trust anything — a silently broken server plus graceful fallback produces confident garbage that looks like a successful run. Then the three baseline questions come back in one tool call each, and an unknown symbol returns an honest miss instead of a plausible guess."
+      ],
+      "youDo": "<code>python server.py --selftest</code> must print <code>SELFTEST PASSED</code> before you run <code>claude mcp add orderflow-graph -- python /abs/path/to/server.py</code>.",
+      "source": "labs/M09-mcp-graph-server/solution/server.py",
+      "terminal": [
+        { "kind": "prompt", "text": "python server.py --selftest" },
+        { "kind": "out-pass", "text": "SELFTEST PASSED" },
+        { "kind": "prompt", "text": "who calls decode_jwt, directly and transitively?" },
+        { "kind": "tool", "text": "graph_callers(symbol=\"decode_jwt\")" },
+        { "kind": "out-pass", "text": "{\"callers\": [\"shared.auth.verify_token\"]}     ← 1 call, 0 file reads" },
+        { "kind": "tool", "text": "graph_callers(symbol=\"stripe_sdk_call\")" },
+        { "kind": "out", "text": "{\"error\": \"symbol 'stripe_sdk_call' not in graph — it may be external; try grep\"}" },
+        { "kind": "claude", "text": "External symbol — falling back to grep rather than guessing. A graph\nthat pretends to know external symbols is worse than one that says\n\"not mine\"." }
+      ],
+      "state": {
+        "label": "the three baseline questions, re-asked",
+        "before": {
+          "title": "BEFORE — cold repo, Phase 1",
+          "view": {
+            "type": "rows",
+            "columns": ["question", "how it was answered", "correct?"],
+            "rows": [
+              { "cells": ["Q1 · who calls <code>decode_jwt</code>", "grep + open several files", "yes, expensively"] },
+              { "cells": ["Q2 · what breaks if <code>orders_fact</code> gains a column", "multi-file trace", "partly"], "tone": "bad" },
+              { "cells": ["Q3 · canonical WAU definition", "retrieved <code>docs/architecture.md</code>", "<b>no — the stale one</b>"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — graph + bundle served",
+          "view": {
+            "type": "rows",
+            "columns": ["question", "how it was answered", "correct?"],
+            "rows": [
+              { "cells": ["Q1 · who calls <code>decode_jwt</code>", "<code>graph_callers</code> — one tool call", "yes"], "tone": "win" },
+              { "cells": ["Q2 · what breaks if <code>orders_fact</code> gains a column", "<code>explore</code> — callers, callees, blast radius in one call", "yes"], "tone": "win" },
+              { "cells": ["Q3 · canonical WAU definition", "one concept file via <code>index.md</code>", "yes — the stale doc never entered context"], "tone": "win" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Stage 5 — wire the CI freshness gate",
+      "narrative": [
+        "Every stage so far works on the day you built it. The gate is about every day after. It compares <code>graph.json</code>'s mtime against <code>git log -1 --format=%ct</code>, cross-checks stored node and edge counts against a fresh extraction, and blocks — exit 1 — before any pipeline step that would trust the map.",
+        "<b>Artifacts:</b> <code>ci/freshness_gate.py</code> and a four-line <code>ci/ci.sh</code> that runs the gate and the bundle lint under <code>set -e</code>. <b>Check:</b> green on a healthy repo, then sabotage #2 — commit with <code>--no-verify</code> so the hook never fires — and watch it exit 1 with an actionable message.",
+        "Read the last line of that message. It names the <b>MCP restart</b>, because regeneration alone does not fix a running server that loaded the old graph at startup and has no hot-reload."
+      ],
+      "youDo": "Sabotage #2: <code>git commit --allow-empty -qm \"commit without rebuilding the graph\" --no-verify</code>, then run the gate.",
+      "source": "labs/M11-freshness-gate/solution/freshness_gate.py",
+      "terminal": [
+        { "kind": "prompt", "text": "python ci/freshness_gate.py . --max-age-commits 0 --cross-check" },
+        { "kind": "out-pass", "text": "FRESH: graph.json generated at/after HEAD commit\nCROSS-CHECK OK: stored counts match a fresh extraction" },
+        { "kind": "gate", "text": "⏸  SABOTAGE #2 — commit with --no-verify, hook bypassed" },
+        { "kind": "prompt", "text": "sh ci/ci.sh" },
+        { "kind": "out-fail", "text": "STALE: graph.json predates HEAD by 1 commit(s)\n  fix: python ../shared_tools/kg_extract.py . --out graphify-out/graph.json  (then restart any MCP server holding the old graph)" },
+        { "kind": "out-fail", "text": "$? = 1   → agent-consuming steps never run" }
+      ],
+      "state": {
+        "label": "ci/ci.sh — the whole defence",
+        "before": {
+          "title": "TWO GATES, EITHER ONE BLOCKS",
+          "view": {
+            "type": "rows",
+            "columns": ["gate", "guards", "fails when"],
+            "rows": [
+              { "cells": ["<code>freshness_gate.py</code>", "the structural layer", "artifact older than HEAD, or counts disagree with a fresh extraction"] },
+              { "cells": ["<code>validate.py knowledge</code>", "the narrative layer", "any concept missing its required field, or unparseable frontmatter"] },
+              { "cells": ["<code>set -e</code>", "the pipeline", "either of the above returns non-zero"], "tone": "win" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "What you can honestly claim at the end",
+      "narrative": [
+        "Phase 7 is the part most builds skip. Divide your Phase-1 token counts by Phase-5's and expect a <b>single-digit multiple</b> — then write down in <code>NOTES.md</code> why that is the correct result rather than a disappointment. orderflow is roughly fifteen files, far below the <b>~500-file floor</b> where graph tooling pays for itself; the exploration a graph eliminates barely exists at this scale.",
+        "The comparison is the lesson. The 71.5× headline was a ceiling case on a favourable 52-file corpus; independent replications landed at <b>6.8×–49×</b>, and 7.3× on a from-scratch Python codebase. Savings scale with the size of the haystack — VS Code's 10,000 files saved 78%, OkHttp's 645 files saved 13%. Your small number on a tiny repo is benchmark literacy acquired first-hand.",
+        "And then the one question that decides whether any of this is production: <em>how would I detect a stale graph within 24 hours?</em> Name the script, what it compares, where it runs, what it does on failure, and the MCP restart. If you can write that paragraph about your own system, it is airworthy. If you cannot, it is a demo that has not failed yet."
+      ],
+      "youDo": "Write both paragraphs in <code>NOTES.md</code> — the honest multiple, and the mechanical staleness answer — before you call the capstone done.",
+      "source": "labs/CAPSTONE-knowledge-pipeline/README.md",
+      "state": {
+        "label": "the five test cases that close the build",
+        "before": {
+          "title": "RUN ALL FIVE",
+          "view": {
+            "type": "rows",
+            "columns": ["#", "type", "input", "expected"],
+            "rows": [
+              { "cells": ["1", "happy", "<code>graph_callers(\"decode_jwt\")</code>", "<code>[\"shared.auth.verify_token\"]</code> — one call, no file reads"], "tone": "win" },
+              { "cells": ["2", "happy", "<code>explore(\"execute\")</code>", "callers across billing AND orders; blast radius &gt; 3"], "tone": "win" },
+              { "cells": ["3", "happy", "canonical WAU via the bundle", "7-day window, completed orders, tester exclusion — citing metrics.py"], "tone": "win" },
+              { "cells": ["4", "edge", "<code>graph_callers(\"stripe_sdk_call\")</code>", "graceful <code>error: … try grep</code>; the agent falls back, no crash"] },
+              { "cells": ["5", "failure", "commit with <code>--no-verify</code>, then <code>sh ci/ci.sh</code>", "exit 1 naming the lagging artifact and the fix"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "THE HONEST MULTIPLE",
+          "view": {
+            "type": "bars",
+            "unit": "× token reduction",
+            "max": 72,
+            "items": [
+              { "label": "vendor headline", "value": 71.5, "tone": "bad", "note": "ceiling case, 52-file corpus" },
+              { "label": "independent replications", "value": 49, "note": "top of the replicated range; 6.8× at the bottom, 7.3× from scratch" },
+              { "label": "your orderflow run", "value": 3, "tone": "win", "note": "~15 files — far below the ~500-file payoff floor. Correct, not disappointing." }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

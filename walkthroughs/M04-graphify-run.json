@@ -136,7 +136,7 @@
       "title": "It rediscovers the architecture doc",
       "narrative": [
         "Leiden clustering runs on every build. On orderflow the 36 nodes fall into three communities that line up with <code>billing</code>, <code>orders</code> and <code>notifications</code> — the exact subsystem split <code>docs/architecture.md</code> claims, recovered from call edges alone with no doc in sight.",
-        "It also flags one <b>god node</b>: <code>shared/db.py</code>. Every service imports it, so it bridges all three clusters. That is not a bug report. It is a blast-radius warning — a change there touches more of the repo than a change anywhere else."
+        "It also flags one <b>god node</b>: <code>shared/db.py</code>. Billing and orders both depend on it, and it carries the highest betweenness of any shared module. That is not a bug report. It is a blast-radius warning — a change there touches more of the repo than a change anywhere else."
       ],
       "youDo": "Open <code>graphify-out/graph.html</code>, find the three colored clusters, then read <code>GRAPH_REPORT.md</code> and check it names the same three. If the two disagree, you have found M11's desync problem four modules early.",
       "source": "labs/sample-project/README.md#ground-truth",

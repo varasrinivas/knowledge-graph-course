@@ -1,0 +1,261 @@
+{
+  "id": "kg-tree-sitter",
+  "badge": "WALKTHROUGH",
+  "color": "#F97316",
+  "time": "~6 min",
+  "title": "Twenty-one calls, five edges",
+  "spec": "M03 · source → tree → query → graded edges, and the ones the parser refuses to guess",
+  "intro": "Parse one real orderflow file, run an extraction query over the tree, grade every capture, and finish on the honest part: the call edges a static parser can never resolve, and why refusing to emit them is the feature.",
+  "provenance": {
+    "kind": "illustrative",
+    "source": "a replayed extraction session over labs/sample-project/shared/auth.py. The S-expression in step 2 is trimmed for reading; the grep hits, definition lines, call-site counts and edge grades in steps 1, 3, 4 and 6 are reproducible with labs/shared_tools/kg_extract.py and are cited per step."
+  },
+  "foot": "Do it for real in <code>labs/M03-tree-sitter-extraction/README.md</code> — including the fault-tolerance step, which is the one that changes how you think about \"the code doesn't compile\"",
+  "steps": [
+    {
+      "title": "One symbol, three different things",
+      "narrative": [
+        "Start with what the alternatives see. Search orderflow for <code>decode_jwt</code> and five lines come back across three files.",
+        "One is a definition. One is a call. Three are prose — a runbook sentence, an ASCII diagram, a README bullet. Grep found the <em>string</em> <code>decode_jwt</code> and has no vocabulary for the difference; an embedding search (M02) finds text that <em>talks like</em> <code>decode_jwt</code>, which is worse.",
+        "Only a parse tree distinguishes them, because defining, calling and mentioning are three different node types in the grammar. That is the entire reason extractors start with a parser instead of a regex."
+      ],
+      "youDo": "<code>grep -rn decode_jwt labs/sample-project</code> and classify each of the five hits before reading on.",
+      "source": "labs/sample-project/shared/auth.py, labs/sample-project/docs/runbook-key-rotation.md",
+      "terminal": [
+        { "kind": "prompt", "text": "grep -rn decode_jwt labs/sample-project" },
+        { "kind": "out", "text": "README.md:18                       auth.py   # verify_token -> decode_jwt\nREADME.md:29                     - `verify_token` calls `decode_jwt` (same file)\ndocs/runbook-key-rotation.md:13  - During the dual-key window, `decode_jwt` tries…\nshared/auth.py:16                def decode_jwt(token: str) -> dict:\nshared/auth.py:45                    return decode_jwt(token.removeprefix(\"Bearer \")…" },
+        { "kind": "out-fail", "text": "5 lines, 3 files — and the tool that printed them cannot tell you which is which" }
+      ],
+      "state": {
+        "label": "the same eight characters, five times",
+        "before": {
+          "title": "WHAT GREP RETURNS vs WHAT IT IS",
+          "view": {
+            "type": "rows",
+            "columns": ["hit", "grammar node it sits in", "graph meaning"],
+            "rows": [
+              { "cells": ["<code>auth.py:16</code>", "<code>function_definition → name</code>", "a <b>node</b>"], "tone": "win" },
+              { "cells": ["<code>auth.py:45</code>", "<code>call → function</code>", "an <b>edge</b>"], "tone": "win" },
+              { "cells": ["<code>runbook-key-rotation.md:13</code>", "not code — Markdown prose", "nothing"], "tone": "bad" },
+              { "cells": ["<code>README.md:18</code>", "not code — an ASCII diagram", "nothing"], "tone": "bad" },
+              { "cells": ["<code>README.md:29</code>", "not code — prose that is coincidentally correct", "nothing, and you can't tell"], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Parse it — the tree, not the text",
+      "narrative": [
+        "Load the Python grammar, hand tree-sitter the file as <b>bytes</b> (its offsets are byte offsets — the moment a file has a non-ASCII character, <code>str</code> will quietly misalign your names), and take the tree.",
+        "What comes back is the same 45 lines reorganised as labeled structure: a <code>module</code> root, a <code>class_definition</code>, two <code>function_definition</code> children, and inside them <code>if_statement</code>, <code>raise_statement</code>, <code>return_statement</code> and <code>call</code> nodes. \"Abstract\" means it dropped the whitespace and most punctuation and kept the grammar.",
+        "Two properties matter more than the tree itself. It parses <b>incrementally</b> — edit one function and only that subtree rebuilds, which is what makes watch mode affordable. And it is <b>fault-tolerant</b>: delete a closing parenthesis and you get an <code>ERROR</code> node island, not a failed file, so a half-written branch costs you one node instead of a whole file's worth of nodes and edges."
+      ],
+      "youDo": "<code>pip install tree-sitter tree-sitter-python</code>, then parse <code>shared/auth.py</code> and print <code>tree.root_node</code>. Then do the lab's step 2: break the syntax on a copy and re-parse.",
+      "terminal": [
+        { "kind": "prompt", "text": "python -c \"import tree_sitter_python; from tree_sitter import Language,Parser; p=Parser(Language(tree_sitter_python.language())); print(p.parse(open('shared/auth.py','rb').read()).root_node)\"" },
+        { "kind": "out", "text": "(module\n  (expression_statement (string))\n  (import_statement (dotted_name (identifier))) …\n  (class_definition name: (identifier) superclasses: (argument_list (identifier))\n    body: (block (expression_statement (string))))\n  (function_definition name: (identifier)\n    parameters: (parameters (typed_parameter (identifier) type: (type (identifier))))\n    return_type: (type (identifier))\n    body: (block …))\n  (function_definition name: (identifier)\n    body: (block\n      (if_statement condition: (not_operator argument: (identifier))\n        consequence: (block (raise_statement (call function: (identifier)\n          arguments: (argument_list (string))))))\n      (return_statement (call function: (identifier) arguments: (argument_list …))))))" },
+        { "kind": "out", "text": "(trimmed for reading — the real S-expression runs to several hundred nodes)" }
+      ],
+      "state": {
+        "label": "shared/auth.py → one tree",
+        "before": {
+          "title": "BEFORE — 45 lines of text",
+          "view": {
+            "type": "diff",
+            "file": "shared/auth.py (excerpt)",
+            "lines": [
+              ["p", "16  def decode_jwt(token: str) -> dict:"],
+              ["p", "25          raise AuthError(\"malformed token: expected three dot-separated parts\")"],
+              ["p", "41  def verify_token(token: str | None) -> dict:"],
+              ["p", "44          raise AuthError(\"missing bearer token\")"],
+              ["p", "45      return decode_jwt(token.removeprefix(\"Bearer \").strip())"]
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — labeled nodes, each with a graph meaning",
+          "view": {
+            "type": "rows",
+            "columns": ["tree node type", "found in auth.py", "becomes"],
+            "rows": [
+              { "cells": ["<code>function_definition</code>", "2", "graph nodes"], "tone": "win" },
+              { "cells": ["<code>class_definition</code>", "1 — <code>AuthError</code>", "a graph node"], "tone": "win" },
+              { "cells": ["<code>call</code>", "21", "candidate edges — see the next step"] },
+              { "cells": ["<code>import_statement</code>", "6", "<code>imports</code> edges in a richer extractor"] },
+              { "cells": ["<code>string</code>, <code>comment</code>", "many", "nothing — and that is why grep's three prose hits vanish here"] }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "The query — patterns, not regexes",
+      "narrative": [
+        "A tree is not yet a graph. The second half of every extractor is a set of <b>extraction queries</b>: S-expression patterns matched against the tree, with <code>@captures</code> naming the parts you want out.",
+        "Three patterns cover the whole of this file. One captures every function's name. The other two capture call targets — and the split between them is the gotcha that silently costs people every method call in a repo: a <code>call</code> node's <code>function</code> field holds a bare <code>identifier</code> for <code>decode_jwt(…)</code> but an <code>attribute</code> for <code>hmac.new(…)</code>. Match only the first and every <code>obj.method()</code> in your codebase disappears.",
+        "Run them over <code>auth.py</code>: 2 definition captures and <b>21</b> call-site captures, 17 of them distinct names. \"Language-specific\" is doing real work in the phrase <em>extraction query</em> — a Python <code>function_definition</code> is a Go <code>function_declaration</code>, and Ruby lets you drop the parentheses entirely. The grammar gives you the tree; the queries decide what in it becomes knowledge."
+      ],
+      "youDo": "Add a fourth pattern for <code>(class_definition name: (identifier) @class.name)</code> and confirm it captures exactly one thing in this file.",
+      "source": "labs/sample-project/shared/auth.py",
+      "terminal": [
+        { "kind": "prompt", "text": "cat queries/python-calls.scm" },
+        { "kind": "out", "text": "(function_definition\n  name: (identifier) @def.name) @def\n\n(call\n  function: (identifier) @call.name)\n\n(call\n  function: (attribute\n    attribute: (identifier) @call.name))" },
+        { "kind": "prompt", "text": "python extract.py --query queries/python-calls.scm shared/auth.py" },
+        { "kind": "out-pass", "text": "@def.name   x2   decode_jwt (line 16) · verify_token (line 41)" },
+        { "kind": "out-pass", "text": "@call.name  x21  17 distinct names" }
+      ],
+      "state": {
+        "label": "21 call captures in one file",
+        "before": {
+          "title": "WHAT THE QUERY CAPTURED",
+          "view": {
+            "type": "rows",
+            "columns": ["pattern", "captures", "note"],
+            "rows": [
+              { "cells": ["<code>function_definition → name</code>", "<code>decode_jwt</code>:16, <code>verify_token</code>:41", "the definition table every grade is resolved against"] },
+              { "cells": ["<code>call → function: (identifier)</code>", "<code>AuthError</code> ×4, <code>decode_jwt</code>, <code>len</code>, <code>time</code>, <code>split</code>…", "bare-name calls"] },
+              { "cells": ["<code>call → function: (attribute)</code>", "<code>new</code>, <code>digest</code>, <code>encode</code> ×2, <code>rstrip</code>, <code>decode</code>, <code>strip</code>…", "<code>obj.method()</code> — drop this pattern and you lose all of them"], "tone": "bad" },
+              { "cells": ["total", "21 call sites, 17 distinct names", "not one of them is graded yet"] }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Grade every capture — the ladder's bottom rung",
+      "narrative": [
+        "The tree tells you with certainty that <em>something named <code>decode_jwt</code></em> is called on line 45. It does not tell you <em>which</em> <code>decode_jwt</code>. Binding a name at a use site to the declaration it refers to is <b>name resolution</b>, and it is where structural extraction stops being trivially exact.",
+        "The bottom rung of the ladder is a table lookup. Target defined in this module and unambiguous → <code>EXTRACTED</code>, a parse-tree fact. Exactly one definition of that name elsewhere in the repo → <code>INFERRED</code>, a heuristic that is usually right. Two or more candidates → <code>AMBIGUOUS</code>, all of them emitted and none confirmed.",
+        "Twenty-one captures collapse to <b>five edges</b>. Sixteen — <code>hmac.new</code>, <code>json.loads</code>, <code>len</code>, <code>time.time</code> and the rest — resolve to nothing in this project and are <b>skipped, not guessed</b>. That skip is the discipline: an extractor that invented edges for stdlib names would produce a bigger graph and a worse one."
+      ],
+      "claudeSays": "Each edge is written with its grade attached, so a consumer downstream can set a confidence floor instead of trusting everything equally.",
+      "source": "labs/shared_tools/kg_extract.py, labs/sample-project/shared/auth.py",
+      "terminal": [
+        { "kind": "prompt", "text": "python extract.py --grade shared/auth.py" },
+        { "kind": "out-pass", "text": "decode_jwt   -> AuthError   [EXTRACTED]   line 25" },
+        { "kind": "out-pass", "text": "decode_jwt   -> AuthError   [EXTRACTED]   line 32" },
+        { "kind": "out-pass", "text": "decode_jwt   -> AuthError   [EXTRACTED]   line 37" },
+        { "kind": "out-pass", "text": "verify_token -> AuthError   [EXTRACTED]   line 44" },
+        { "kind": "out-pass", "text": "verify_token -> decode_jwt  [EXTRACTED]   line 45" },
+        { "kind": "out", "text": "16 call sites skipped: external (stdlib / third-party)" }
+      ],
+      "state": {
+        "label": "21 captures → 5 graded edges",
+        "before": {
+          "title": "BEFORE — the grading rule",
+          "view": {
+            "type": "rows",
+            "columns": ["candidates for the name", "grade", "why"],
+            "rows": [
+              { "cells": ["one, in this module", "<code>EXTRACTED</code>", "the binding is explicit in source — 100% confidence"], "tone": "win" },
+              { "cells": ["one, elsewhere in the repo", "<code>INFERRED</code>", "bare-name matching with no import following — a guess by construction"] },
+              { "cells": ["two or more", "<code>AMBIGUOUS</code>", "emit all candidates labeled; it is a question, not an answer"] },
+              { "cells": ["none", "skipped", "external — the extractor declines to invent an edge"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — one edge, in the shape graph.json stores",
+          "view": {
+            "type": "json",
+            "data": {
+              "source": "function:shared.auth.verify_token",
+              "target": "function:shared.auth.decode_jwt",
+              "type": "calls",
+              "provenance": "EXTRACTED"
+            },
+            "highlight": ["provenance"]
+          }
+        }
+      }
+    },
+    {
+      "title": "What the parser refuses to guess",
+      "narrative": [
+        "Now the limit, because a walkthrough that stopped at the happy path would be teaching you to over-trust the graph.",
+        "orderflow's <code>worker.py</code> registers <code>subscribe(\"payment.settled\", send_receipt)</code>, and billing later calls <code>publish(\"payment.settled\", …)</code>. The parser sees both calls perfectly and sees <b>nothing</b> of the relationship between them: the actual invocation of <code>send_receipt</code> happens at runtime, through a dict of handlers. Check the graph and <code>send_receipt</code> has zero callers. It is called on every settled payment.",
+        "Same story with <code>POOL.execute(…)</code>. The tree hands you the attribute name <code>execute</code> and says nothing about what <code>POOL</code> is — in Python, types are suggestions. On orderflow exactly one <code>execute</code> is defined, so the heuristic resolves it <code>INFERRED</code> and happens to be right. Define a second <code>execute</code> anywhere in the repo and the same call site must drop to <code>AMBIGUOUS</code> — nothing about the call changed, only the number of candidates.",
+        "And <code>getattr(module, name)()</code> is worse than ambiguous: the callee's name does not exist in the tree at all. No edge is the correct output. The middle rung of the ladder — <code>okf-rs generate --lsp</code>, asking pyright or rust-analyzer via <code>textDocument/definition</code> — buys back the name-collision cases at the cost of startup time and project configuration. It buys back none of the dynamic dispatch."
+      ],
+      "youDo": "Run the extractor over orderflow and look up <code>send_receipt</code>'s callers. Then read <code>services/notifications/worker.py</code> and satisfy yourself the graph is wrong-by-omission — and that this is the honest answer, not a bug.",
+      "source": "labs/sample-project/services/notifications/worker.py, labs/sample-project/shared/events.py",
+      "terminal": [
+        { "kind": "prompt", "text": "graph_callers(symbol=\"send_receipt\")" },
+        { "kind": "out", "text": "[]" },
+        { "kind": "prompt", "text": "grep -n 'send_receipt' labs/sample-project/services/notifications/worker.py" },
+        { "kind": "out", "text": "7:def send_receipt(payload: dict) -> None:\n26:    subscribe(\"payment.settled\", send_receipt)" },
+        { "kind": "gate", "text": "the registration is visible · the dispatch is not · no static tool escapes this" }
+      ],
+      "state": {
+        "label": "three things a static parser cannot resolve",
+        "before": {
+          "title": "THE BLIND SPOTS, WITH ORDERFLOW EXAMPLES",
+          "view": {
+            "type": "rows",
+            "columns": ["situation", "orderflow example", "honest output"],
+            "rows": [
+              { "cells": ["dynamic dispatch through a handler table", "<code>subscribe(\"payment.settled\", send_receipt)</code>", "the <code>subscribe</code> call, and <b>no edge</b> to <code>send_receipt</code>"], "tone": "bad" },
+              { "cells": ["untyped receiver", "<code>POOL.execute(\"invoices\", …)</code>", "<code>INFERRED</code> today; <code>AMBIGUOUS</code> the day a second <code>execute</code> exists"] },
+              { "cells": ["reflection", "<code>getattr(mod, name)()</code>", "no edge — the callee's name is not in the tree"], "tone": "bad" },
+              { "cells": ["a name-resolution ladder rung above the heuristic", "<code>okf-rs generate --lsp</code>", "resolves collisions via <code>textDocument/definition</code>; dispatch stays invisible"] }
+            ]
+          }
+        },
+        "after": {
+          "title": "WHY REFUSING IS THE FEATURE",
+          "view": {
+            "type": "note",
+            "text": "A tool that guessed at these would produce more edges, more wrong edges, and no way to tell them apart — the graph-world version of M02's confidently-plausible retrieval. The value of the structural layer is not that it knows everything; it is that <b>it labels what it knows</b>. Ask any code-context tool which of its answers are facts and which are guesses. Most of them cannot say."
+          }
+        }
+      }
+    },
+    {
+      "title": "The honest tally",
+      "narrative": [
+        "Scale the same two passes to the whole repo and the numbers come out where you can check them: 36 nodes, 22 edges, <b>9 EXTRACTED, 13 INFERRED, 0 AMBIGUOUS</b> — plus two runtime dispatches that produce no edge at all, which is the row nobody puts in a benchmark table.",
+        "No LLM was involved in any of it. No API key exists in these files, the structural pass costs $0 in tokens, and running it twice produces identical output — which is what makes a graph diff in a pull request mean something.",
+        "The number to carry out of this module is not 22. It is the split. Every one of the thirteen guesses happens to be correct on a repo this clean, and \"happens to be\" is only sayable out loud because the extractor graded itself. That grading is the front half of Graphify, and M04 hands you the production version of it."
+      ],
+      "youDo": "<code>python labs/shared_tools/kg_extract.py labs/sample-project</code>, then diff its <code>shared.auth</code> edges against the five you graded by hand. They must agree on <code>verify_token → decode_jwt (EXTRACTED)</code>.",
+      "source": "labs/shared_tools/kg_extract.py, labs/sample-project",
+      "terminal": [
+        { "kind": "prompt", "text": "python labs/shared_tools/kg_extract.py labs/sample-project --out graph.json" },
+        { "kind": "out-pass", "text": "Rebuilt: 36 nodes, 22 edges -> graph.json" },
+        { "kind": "out", "text": "  nodes: {'class': 4, 'function': 18, 'module': 14}" },
+        { "kind": "out", "text": "  edges: {'EXTRACTED': 9, 'INFERRED': 13}" },
+        { "kind": "out-pass", "text": "no LLM calls · no API key · identical output on re-run" }
+      ],
+      "state": {
+        "label": "orderflow · the whole repo",
+        "before": {
+          "title": "WHAT THE EXTRACTOR CLAIMS, GRADED",
+          "view": {
+            "type": "rows",
+            "columns": ["grade", "count", "how much to trust it"],
+            "rows": [
+              { "cells": ["<code>EXTRACTED</code>", "9", "parse-tree facts — act on them"], "tone": "win" },
+              { "cells": ["<code>INFERRED</code>", "13", "all correct here; verify before anything destructive"] },
+              { "cells": ["<code>AMBIGUOUS</code>", "0", "no name in orderflow is defined twice — enjoy it while it lasts"] },
+              { "cells": ["<i>no edge emitted</i>", "2 event-bus dispatches", "<code>send_receipt</code> and <code>send_completion_note</code> have zero callers in the graph and are called in production"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "WHAT YOU BOUGHT WITH DETERMINISM",
+          "view": {
+            "type": "rows",
+            "columns": ["property", "the structural pass", "an LLM reading your files"],
+            "rows": [
+              { "cells": ["API cost", "$0 — no model is called", "tokens for every file, on every pass"], "tone": "win" },
+              { "cells": ["hallucination rate in EXTRACTED edges", "zero — a node existed in a tree", "nonzero, and unlabeled"], "tone": "win" },
+              { "cells": ["re-run on unchanged source", "identical output, so a graph diff is readable", "shuffles"], "tone": "win" },
+              { "cells": ["dynamic dispatch", "invisible — 2 edges missing here", "an LLM might actually guess these right"], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

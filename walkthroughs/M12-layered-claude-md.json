@@ -1,0 +1,246 @@
+{
+  "id": "kg-layered-claude-md",
+  "badge": "WALKTHROUGH",
+  "color": "#6366F1",
+  "time": "~5 min",
+  "title": "Where do I even start?",
+  "spec": "M12 · the layered CLAUDE.md, and what it actually cost",
+  "intro": "Split the root instruction file into a root file plus per-module files, watch what the agent does differently — then read our own measurement of the pattern, which is a +2% wash on a 9,195-file repo and a −10% win on a 36-file one. The pattern is real. The free lunch is not.",
+  "provenance": {
+    "kind": "illustrative",
+    "source": "the orderflow setup is narrated over labs/sample-project; steps 4 and 5 carry the course's own measured grids, cited per step"
+  },
+  "foot": "Run it for real: M12's Hands-On builds the pair on <code>labs/sample-project/</code>; the measurement lives in <code>labs/CAPSTONE-2-java-token-benchmark/live_bench/</code>.",
+  "steps": [
+    {
+      "title": "One file, 340 lines, loaded every session",
+      "narrative": [
+        "orderflow's instructions started the way most repos' do: one root <code>CLAUDE.md</code> that grew every time somebody got burned. Commit format, FastAPI conventions, the event-bus rule, the deploy checklist, the metric definitions, a paragraph about the old Terraform layout nobody has touched since March.",
+        "That file is loaded at session start whether the task needs it or not — about <b>1,200 tokens</b> before the agent has read a single line of code. And the cost is not only the budget: instructions compete for attention, so 340 lines of everything means nothing stands out. The agent obeys the parts it happens to weight."
+      ],
+      "youDo": "Count your own: <code>wc -l CLAUDE.md</code>. If you scroll past irrelevant sections when you edit it, the agent is reading those sections in full, every session.",
+      "terminal": [
+        { "kind": "prompt", "text": "wc -l CLAUDE.md" },
+        { "kind": "out", "text": "340 CLAUDE.md" },
+        { "kind": "prompt", "text": "sessions are timing out early — find and fix it in the billing auth path" },
+        { "kind": "claude", "text": "Loading repository instructions… I'll start by orienting in the\nrepo, then locate the session-timeout logic." },
+        { "kind": "out-fail", "text": "340 lines of instructions loaded · none of them mention the billing service's error mapping" }
+      ],
+      "state": {
+        "label": "startup load, before any work",
+        "before": {
+          "title": "WHAT'S IN THE ROOT FILE",
+          "view": {
+            "type": "rows",
+            "columns": ["section", "lines", "relevant to a billing auth bug?"],
+            "rows": [
+              { "cells": ["repo layout + commit conventions", "40", "yes"], "tone": "win" },
+              { "cells": ["billing service specifics", "50", "yes"], "tone": "win" },
+              { "cells": ["orders + notifications specifics", "95", "no"], "tone": "bad" },
+              { "cells": ["deploy checklist", "60", "no — and it's a procedure, not a fact"], "tone": "bad" },
+              { "cells": ["metric definitions", "45", "no — the bundle owns these"], "tone": "bad" },
+              { "cells": ["legacy Terraform notes", "50", "no"], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Split it along the lookup path",
+      "narrative": [
+        "The mechanism the pattern rides on is simple and worth stating exactly: the agent loads <code>CLAUDE.md</code> files <b>from your current working directory up to the repository root</b>. Start it inside <code>services/billing/</code> and it loads that file plus every parent's — and <em>nothing</em> from sibling directories.",
+        "So the split writes itself. Repo-wide facts stay at the root and stay short: what the services are, where shared code lives, how commits are named, which directories are generated. Everything a single service owns moves into that service's own file, where it costs zero tokens in every session that works elsewhere."
+      ],
+      "youDo": "Create <code>labs/sample-project/CLAUDE.md</code> (repo-wide facts only) and <code>labs/sample-project/services/billing/CLAUDE.md</code> (stack specifics). Check: the root file under 25 lines, the billing file mentioning nothing about orders or notifications.",
+      "terminal": [
+        { "kind": "tool", "text": "Write  labs/sample-project/CLAUDE.md" },
+        { "kind": "out", "text": "# Repository Structure\nThree services under services/: billing, orders, notifications.\nShared code in shared/ (auth, db pool, event bus). Tests: `pytest`.\n\n# Commit Conventions\n- Prefix commits with the service name: \"billing: fix webhook idempotency\"\n- knowledge/ is refreshed by the post-commit hook — never hand-edit\n  generated Dependencies sections" },
+        { "kind": "tool", "text": "Write  labs/sample-project/services/billing/CLAUDE.md" },
+        { "kind": "out", "text": "# Billing Service\nFastAPI app in app.py. Domain logic in invoice.py, webhooks in webhooks.py.\n## Code Patterns\n- Every route verifies auth via shared.auth.verify_token — never inline JWT\n- State changes publish via shared.events.publish; consumers stay isolated\n- Raise WebhookError for bad payloads; app.py maps it to HTTP 400" }
+      ],
+      "state": {
+        "label": "one binder → two station guides",
+        "before": {
+          "title": "BEFORE — everything at the root",
+          "view": {
+            "type": "note",
+            "text": "<code>CLAUDE.md</code> · 340 lines · loaded in full from every directory, for every task. The billing rule and the Terraform note carry identical weight."
+          }
+        },
+        "after": {
+          "title": "AFTER — split along the load path",
+          "view": {
+            "type": "rows",
+            "columns": ["file", "lines", "loaded when"],
+            "rows": [
+              { "cells": ["<code>CLAUDE.md</code> (root)", "~20", "always — it is on every path"], "tone": "win" },
+              { "cells": ["<code>services/billing/CLAUDE.md</code>", "~12", "only from inside <code>services/billing/</code>"], "tone": "win" },
+              { "cells": ["<code>.claude/skills/bundle-maintenance/</code>", "—", "only when the task matches the description"], "tone": "win" },
+              { "cells": ["deploy checklist, metric definitions", "—", "moved out: a skill and the OKF bundle own them"] }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "What the agent does differently",
+      "narrative": [
+        "Start the agent from <code>services/billing/</code> and ask something that spans both files. It answers the commit convention from the root file and the <code>WebhookError → HTTP 400</code> mapping from the service file — <b>without opening a single source file</b>, because both facts were already in context before the question arrived.",
+        "The second difference is where it goes when the answer <em>isn't</em> pre-loaded. Told that every route verifies auth via <code>shared.auth.verify_token</code>, it opens that path first instead of fanning out through the repo looking for something auth-shaped. The originating case study for this pattern reports 147 file reads dropping to about 12 on that split alone, and 340 startup lines dropping to roughly 90.",
+        "Hold that reported number loosely — it is someone else's before/after, on someone else's repo. The next two steps are ours."
+      ],
+      "youDo": "<code>cd labs/sample-project/services/billing</code>, start the agent there, and ask: \"what are this repo's commit conventions and this service's error-handling pattern?\"",
+      "claudeSays": "Both answers came from loaded instruction files. No Read, no Grep — the orientation was already paid for at startup, and it was small.",
+      "terminal": [
+        { "kind": "prompt", "text": "what are this repo's commit conventions and this service's error-handling pattern?" },
+        { "kind": "out", "text": "loaded: services/billing/CLAUDE.md → services/../CLAUDE.md  (2 files, ~32 lines)" },
+        { "kind": "claude", "text": "Commits are prefixed with the service name (\"billing: …\").\nBilling raises WebhookError for bad payloads; app.py maps it to a\n400. Routes must verify auth through shared.auth.verify_token." },
+        { "kind": "out-pass", "text": "0 file reads · both facts already in context" }
+      ],
+      "state": {
+        "label": "the reported before/after — not our measurement",
+        "before": {
+          "title": "REPORTED BY THE ORIGINATING CASE STUDY",
+          "view": {
+            "type": "rows",
+            "columns": ["", "one root file", "layered + the other five patterns"],
+            "rows": [
+              { "cells": ["startup instruction load", "340 lines every session", "~90 lines, task-relevant"] },
+              { "cells": ["file reads in main context", "147", "~4"] },
+              { "cells": ["attempts", "3 failed, then success", "1"] },
+              { "cells": ["wall clock", "35 minutes", "6 minutes"] }
+            ]
+          }
+        },
+        "after": {
+          "title": "WHAT THAT TABLE IS AND ISN'T",
+          "view": {
+            "type": "note",
+            "text": "A single reported session, on a repo we cannot inspect, with all six patterns applied at once — so it cannot tell you what the layered files alone are worth. We ran that experiment separately, on two repos, with three fresh sessions per cell. It is less flattering."
+          }
+        }
+      }
+    },
+    {
+      "title": "Measured: 22 CLAUDE.mds on spring-framework",
+      "narrative": [
+        "The <code>init</code> arm of Capstone 2 is this pattern and nothing else: a generated <code>CLAUDE.md</code> in <b>every</b> <code>spring-*</code> module — 22 files across 9,195 Java files — with the same tools, same questions and same model as the baseline. The only variable is the repo state. Every figure below is a median of three independent fresh sessions.",
+        "The headline is a wash: <b>600K vs 585K all-in, +2%</b>. But the average hides the actual finding. On S1 the map sent the agent straight to the right module and won <b>30%</b> in two turns instead of three. On S2 the auto-loaded context never paid for itself and cost <b>+58%</b>. Structural questions overall got <em>worse</em> by 16%; logic questions got 7% better.",
+        "And it is not free to create. Generating those 22 files ran ~$0.15 and ~35 seconds per module, about <b>$3.40 once</b> — which amortizes only across sessions that land on the winning pattern."
+      ],
+      "source": "labs/CAPSTONE-2-java-token-benchmark/live_bench/SCENARIOS.md, labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-multi.json",
+      "terminal": [
+        { "kind": "prompt", "text": "python init_claude_mds.py D:/tmp/spring-framework --prefix spring-" },
+        { "kind": "out", "text": "wrote 22 CLAUDE.md files · ~35s and ~$0.15 per module · $3.40 total" },
+        { "kind": "prompt", "text": "python run_live_bench.py D:/tmp/spring-framework --arms init --reps 3" },
+        { "kind": "out", "text": "S1  81,352 tok ·  2 turns        S2  196,892 tok ·  4 turns\nL1 202,820 tok ·  5 turns        L2  118,449 tok ·  4 turns" },
+        { "kind": "gate", "text": "⏸  compared against the baseline arm (same tools, clean repo)" },
+        { "kind": "out-fail", "text": "structural 278K (+16%) · logic 321K (−7%) · all four 600K (+2%)" },
+        { "kind": "prompt", "text": "python init_claude_mds.py D:/tmp/spring-framework --remove" }
+      ],
+      "state": {
+        "label": "spring-framework · 9,195 files · medians of 3",
+        "before": {
+          "title": "PER QUESTION — the +2% average splits in two",
+          "view": {
+            "type": "rows",
+            "columns": ["question", "baseline", "init (22 CLAUDE.mds)", "delta"],
+            "rows": [
+              { "cells": ["S1 · who calls <code>registerBeanDefinition</code>", "116,039 · 3t", "<b>81,352 · 2t</b>", "−30%"], "tone": "win" },
+              { "cells": ["S2 · which methods call <code>ResolvableType.forClass</code>", "124,583 · 3t", "196,892 · 4t", "+58%"], "tone": "bad" },
+              { "cells": ["L1 · why can <code>BeanDefinitionOverrideException</code> throw", "231,012 · 6t", "202,820 · 5t", "−12%"], "tone": "win" },
+              { "cells": ["L2 · post-processor registration during <code>refresh()</code>", "113,808 · 3t", "118,449 · 4t", "+4%"] }
+            ]
+          }
+        },
+        "after": {
+          "title": "ROLLED UP — the honest headline",
+          "view": {
+            "type": "bars",
+            "unit": "tokens (all four questions)",
+            "max": 620000,
+            "items": [
+              { "label": "baseline", "value": 585000, "note": "clean repo, zero CLAUDE.md files — the control" },
+              { "label": "init", "value": 600000, "tone": "bad", "note": "+2%, plus ~$3.40 one-time generation" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "36 files, and a single root file is the best arm",
+      "narrative": [
+        "Run the same four scenarios on a small repo and the verdict flips. On <b>priorauth-api-boot3</b> — 36 Java files, a Spring Boot 3 prior-authorization API — the init arm is a <em>single 55-line root</em> <code>CLAUDE.md</code> (for a single-module app you init the root, not each package), and it is the best arm overall: <b>565K vs 629K, −10%</b>.",
+        "The biggest win is on the orientation-heavy logic question — <em>when does MANUAL_REVIEW happen</em> — where 196K over 7 turns became 120K over 3, a <b>−38%</b> swing. The pure-lookup question barely moved: 74K → 77K. And it still loses somewhere: the eligibility-exception question went 199K → 250K.",
+        "Two repos, opposite verdicts, same pattern. Which lever wins is a property of the repo and the question mix, not of the tool — which is the same conclusion the ~500-file payoff floor delivered for graphs in M04."
+      ],
+      "source": "labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-priorauth.json, labs/CAPSTONE-2-java-token-benchmark/live_bench/SCENARIOS.md",
+      "terminal": [
+        { "kind": "prompt", "text": "python run_live_bench.py D:/tmp/priorauth-api-boot3 --arms baseline init --reps 3" },
+        { "kind": "out", "text": "36 files · 4 questions · 3 reps · repo_claude_md_count: baseline 0, init 1" },
+        { "kind": "out-pass", "text": "baseline 629K   →   init 565K   (−10%, one 55-line root CLAUDE.md)" }
+      ],
+      "state": {
+        "label": "priorauth-api-boot3 · 36 files · medians of 3",
+        "before": {
+          "title": "PER QUESTION — where the −10% comes from",
+          "view": {
+            "type": "rows",
+            "columns": ["question", "baseline", "init (root CLAUDE.md)", "delta"],
+            "rows": [
+              { "cells": ["who calls <code>setStatus</code>", "160,469 · 4t", "<b>117,730 · 3t</b>", "−27%"], "tone": "win" },
+              { "cells": ["who calls <code>findByMemberNumber</code>", "<b>73,648 · 2t</b>", "76,745 · 2t", "+4%"] },
+              { "cells": ["when does MANUAL_REVIEW happen", "195,754 · 7t", "<b>120,445 · 3t</b>", "−38%"], "tone": "win" },
+              { "cells": ["eligibility exception semantics", "<b>198,857 · 7t</b>", "250,473 · 9t", "+26%"], "tone": "bad" },
+              { "cells": ["<b>all four</b>", "<b>629K</b>", "<b>565K</b>", "<b>−10%</b>"], "tone": "win" }
+            ]
+          }
+        },
+        "after": {
+          "title": "THE TWO GRIDS SIDE BY SIDE",
+          "view": {
+            "type": "rows",
+            "columns": ["repo", "files", "CLAUDE.md shape", "all-questions delta"],
+            "rows": [
+              { "cells": ["spring-framework", "9,195", "one per module (22 files)", "+2% — a wash"], "tone": "bad" },
+              { "cells": ["priorauth-api-boot3", "36", "one 55-line root file", "−10% — best arm"], "tone": "win" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Orientation, not an index",
+      "narrative": [
+        "The two grids explain each other once you stop treating <code>CLAUDE.md</code> as a lookup table. It is <b>orientation and conventions</b> context. It pays off when a session's first problem is <em>where do I even start?</em> — the S1 win, the MANUAL_REVIEW win — and it is pure overhead when the agent already knows where to look, which is why the pure-lookup questions moved by single digits or went backwards.",
+        "So the placement rule is doing real work, not tidiness. Facts the agent needs every session belong in <code>CLAUDE.md</code>. Procedures and reference material become skills, which cost <b>zero tokens</b> in sessions that do not match their description. Anything canonical — a metric definition, an SLA — belongs in the OKF bundle where a freshness gate can watch it, not duplicated into an instruction file where it will quietly rot.",
+        "And keep the scale in view. The layered pattern is the whole of this course's discipline done by hand: a manual <code>index.md</code> hierarchy, a hand-written <code>.graphifyignore</code>, progressive disclosure without any tooling. On a repo small enough that everything fits, the manual version can beat the machinery outright — as 36 files just did."
+      ],
+      "youDo": "Before writing per-module files across a large repo, run the cheap version of our experiment: one root file, three fresh sessions, your own questions. Expand only if the numbers move.",
+      "state": {
+        "label": "symptom → what to write, and where",
+        "before": {
+          "title": "THE PLACEMENT RULE",
+          "view": {
+            "type": "rows",
+            "columns": ["what it is", "where it goes", "cost when unused"],
+            "rows": [
+              { "cells": ["repo-wide fact (layout, commit format)", "root <code>CLAUDE.md</code>", "loaded every session — keep it ~20 lines"] },
+              { "cells": ["module-owned convention", "<code>&lt;module&gt;/CLAUDE.md</code>", "zero outside that directory"], "tone": "win" },
+              { "cells": ["a procedure or checklist", "<code>.claude/skills/&lt;name&gt;/SKILL.md</code>", "zero until the description matches"], "tone": "win" },
+              { "cells": ["a canonical definition or SLA", "the OKF bundle", "zero — routed to on demand, and gated for freshness"], "tone": "win" },
+              { "cells": ["a caller list, a dependency map", "the graph — never a hand-written file", "it would be stale by the next merge"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "WHAT WE ACTUALLY MEASURED",
+          "view": {
+            "type": "note",
+            "text": "Per-module <code>CLAUDE.md</code> files on a 9,195-file repo: <b>+16% on structural questions, −7% on logic, +2% overall</b>, plus ~$3.40 to generate. One root file on a 36-file repo: <b>−10%, the best arm in the grid</b>. Neither number licenses \"always add CLAUDE.md files\". Both license the habit underneath it: write down orientation, measure whether it helped, and delete it if it did not."
+          }
+        }
+      }
+    }
+  ]
+}

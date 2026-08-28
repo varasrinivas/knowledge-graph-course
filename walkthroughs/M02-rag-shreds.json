@@ -1,0 +1,242 @@
+{
+  "id": "kg-rag-shreds",
+  "badge": "WALKTHROUGH",
+  "color": "#06B6D4",
+  "time": "~5 min",
+  "title": "Three leads, no answer",
+  "spec": "M02 · a chunker cuts a call chain, and nothing warns you",
+  "intro": "Index orderflow, ask a structural question, and read what comes back. The retrieval succeeds by its own definition and the answer is still wrong — that is the whole lesson, and no better embedding model touches it.",
+  "provenance": {
+    "kind": "illustrative",
+    "source": "a replayed retrieval session over labs/sample-project. The chunk boundaries in steps 1–2 are reproducible from the module's own chunker; the similarity scores and token counts in steps 3–5 are the module's LEADS_VS_ANSWERS figures. Steps 1, 2 and 6 carry their own citations."
+  },
+  "foot": "Make it fail on your machine: <code>labs/M02-rag-shreds-context/README.md</code> · the canonical-lookup half is <code>labs/M06-okf-authoring/</code>",
+  "steps": [
+    {
+      "title": "Index the repo the standard way",
+      "narrative": [
+        "Nothing exotic here — this is the pipeline everyone builds. Walk every <code>.py</code> and <code>.md</code> file, split on paragraph boundaries into pieces of at most 400 characters, keep <code>{text, source, chunk_index}</code>, embed each piece, store the vectors.",
+        "Forty-six chunks out of fourteen Python modules and four Markdown files. Phase 1 is done. Notice what the pipeline never asked and never recorded: how any chunk relates to any other chunk. It stores distances, and distance is all it will ever know."
+      ],
+      "youDo": "<code>cd labs/M02-rag-shreds-context</code> and write the chunker — paragraph-aligned, 400 characters. Run it over <code>../sample-project/</code> and print the count.",
+      "source": "labs/M02-rag-shreds-context/README.md, labs/sample-project",
+      "terminal": [
+        { "kind": "prompt", "text": "python chunker.py ../sample-project" },
+        { "kind": "out", "text": "46 chunks indexed (14 .py + 4 .md, max 400 chars, paragraph-aligned)" },
+        { "kind": "out", "text": "  #11  services/billing/app.py     380 chars" },
+        { "kind": "out", "text": "  #12  services/billing/app.py     290 chars" },
+        { "kind": "out", "text": "  #39  shared/auth.py              262 chars" },
+        { "kind": "out-pass", "text": "index built · 0 errors" }
+      ],
+      "state": {
+        "label": "labs/sample-project → 46 chunks",
+        "before": {
+          "title": "WHAT THE INDEX STORES",
+          "view": {
+            "type": "rows",
+            "columns": ["per chunk", "stored?"],
+            "rows": [
+              { "cells": ["the text", "yes"], "tone": "win" },
+              { "cells": ["which file and which chunk index", "yes"], "tone": "win" },
+              { "cells": ["a vector standing in for its meaning", "yes"], "tone": "win" },
+              { "cells": ["which chunk this chunk <b>calls</b>", "no — the pipeline has no concept of it"], "tone": "bad" },
+              { "cells": ["whether this chunk is current or superseded", "no"], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Where the chunker cut the call chain",
+      "narrative": [
+        "orderflow's auth chain is three links long: <code>post_invoice</code> calls <code>verify_token</code>, which calls <code>decode_jwt</code>. Now look at where the 400-character boundaries landed.",
+        "The import <code>from shared.auth import AuthError, verify_token</code> is the last line of chunk #11. The call site <code>claims = verify_token(authorization)</code> is in chunk #12. The chunker cut between a symbol's import and its use — the two halves of the same fact, in two different vectors.",
+        "And <code>verify_token</code>'s definition isn't in either of them; it is chunk #39, in a different file. As the module puts it: if cause and effect aren't co-located in the same chunk, your system has no idea they're connected. Here they are three chunks apart, and one of the cuts fell between adjacent lines of the same function."
+      ],
+      "youDo": "Open <code>services/billing/app.py</code> at lines 11 and 19, then <code>shared/auth.py</code> at line 41. Three links, two files, and your chunker put all three in separate pieces.",
+      "source": "labs/sample-project/services/billing/app.py, labs/sample-project/shared/auth.py",
+      "state": {
+        "label": "one call chain, three chunks",
+        "before": {
+          "title": "BEFORE — the chain as it exists in source",
+          "view": {
+            "type": "diff",
+            "file": "the auth chain across two files",
+            "lines": [
+              ["p", "services/billing/app.py:11   from shared.auth import AuthError, verify_token"],
+              ["p", "services/billing/app.py:19       claims = verify_token(authorization)"],
+              ["p", "shared/auth.py:41            def verify_token(token: str | None) -> dict:"],
+              ["p", "shared/auth.py:45                return decode_jwt(token.removeprefix(\"Bearer \").strip())"]
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — the chain as the index stores it",
+          "view": {
+            "type": "rows",
+            "columns": ["chunk", "holds", "knows about the others?"],
+            "rows": [
+              { "cells": ["#11 <code>app.py</code>", "the module docstring and the imports — ending on <code>verify_token</code>", "no"], "tone": "bad" },
+              { "cells": ["#12 <code>app.py</code>", "<code>post_invoice</code> and the actual call — but not the import", "no"], "tone": "bad" },
+              { "cells": ["#39 <code>auth.py</code>", "<code>def verify_token</code> and the call to <code>decode_jwt</code>", "no"], "tone": "bad" },
+              { "cells": ["the relationship itself", "nowhere — it was never a chunk", "there is nothing to retrieve"], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Ask it a structural question",
+      "narrative": [
+        "Phase 2. The question is the one an agent asks constantly before it dares change anything: <b>who calls <code>verify_token</code>?</b>",
+        "The query gets embedded, the index returns its three nearest neighbours, and every one of them scores high. Read the scores and then read what they mean: 0.89 says <em>this chunk's language resembles your question's language</em>. Not one of the three claims to contain a call."
+      ],
+      "youDo": "Run the same query against your own index and write down the top three sources before you look at them.",
+      "terminal": [
+        { "kind": "prompt", "text": "who calls verify_token?" },
+        { "kind": "tool", "text": "vector_search(query=\"who calls verify_token\", k=3)" },
+        { "kind": "out", "text": "  0.89  shared/auth.py     \"contains verify, token…\"" },
+        { "kind": "out", "text": "  0.84  billing/webhooks.py \"token-adjacent language\"" },
+        { "kind": "out", "text": "  0.81  billing/app.py      \"auth-flavored words\"" },
+        { "kind": "out-pass", "text": "retrieval complete · 3 chunks · 0 errors · 0 warnings" }
+      ],
+      "state": {
+        "label": "top-3 by cosine similarity",
+        "before": {
+          "title": "THREE HIGH-CONFIDENCE LEADS",
+          "view": {
+            "type": "rows",
+            "columns": ["score", "source", "what the score is actually claiming"],
+            "rows": [
+              { "cells": ["0.89", "<code>shared/auth.py</code>", "similar wording"] },
+              { "cells": ["0.84", "<code>billing/webhooks.py</code>", "similar wording"] },
+              { "cells": ["0.81", "<code>billing/app.py</code>", "similar wording"] },
+              { "cells": ["—", "—", "none of the three claims \"this file <b>calls</b> it\""], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Read the shreds",
+      "narrative": [
+        "Open them. Lead 1 is the top hit and it is the <b>definition</b> — <code>def verify_token</code>, the callee, structurally the opposite of what was asked. It scored highest precisely because it repeats the query's words most densely.",
+        "Lead 2 is <code>webhooks.py</code>, which handles tokens of a different kind entirely and never touches auth. Lead 3 is <code>app.py</code> — the right file — but the retrieved chunk is #11, the imports. It proves <code>verify_token</code> was <em>imported</em>; it does not contain the call.",
+        "The chunk that actually holds <code>claims = verify_token(authorization)</code> is #12, and it lost. Most of its 290 characters are a decorator, a signature and an exception handler; it says the query's words once. The one chunk with the answer ranked below three chunks without it — <b>because ranking by similarity is not ranking by truth</b>."
+      ],
+      "claudeSays": "Three chunks arrive with identical confidence tone and no structural claim attached. Nothing in the payload distinguishes the definition from a call site from an import.",
+      "state": {
+        "label": "what each lead really contains",
+        "before": {
+          "title": "LEAD BY LEAD",
+          "view": {
+            "type": "rows",
+            "columns": ["lead", "what it contains", "answers \"who calls it?\""],
+            "rows": [
+              { "cells": ["0.89 <code>auth.py</code>", "the <b>definition</b> of <code>verify_token</code>", "no — that is the callee"], "tone": "bad" },
+              { "cells": ["0.84 <code>webhooks.py</code>", "payment-webhook handling; no auth at all", "no"], "tone": "bad" },
+              { "cells": ["0.81 <code>app.py</code> #11", "the <b>import</b> line, and the module docstring", "no — importing is not calling"], "tone": "bad" },
+              { "cells": ["<i>not retrieved</i> <code>app.py</code> #12", "<code>claims = verify_token(authorization)</code> — the answer", "yes, and it ranked fourth or worse"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "WHY A BETTER EMBEDDER MAKES THIS WORSE",
+          "view": {
+            "type": "note",
+            "text": "A perfect embedding model would represent each shred's meaning perfectly — and chunk #11 genuinely <em>is</em> about <code>verify_token</code>, so a better model ranks it <b>higher</b>, not lower. The information you need is the relationship between chunks, and it was destroyed at chunking time, before any vector was computed. There is no model upgrade that restores it, which is why the fix in this course is architectural rather than a shopping decision."
+          }
+        }
+      }
+    },
+    {
+      "title": "The answer is confidently incomplete",
+      "narrative": [
+        "The model receives three high-similarity chunks about authentication and does the reasonable thing: it answers. \"<code>verify_token</code> is used by the billing service's request path and by webhook handling.\" Half true, unsourced, and unfalsifiable from what it was given.",
+        "Nothing crashed. No score dipped below a threshold. No log line said \"the relevant chunk did not make the cut.\" This is the module's signature failure mode — <b>silent wrongness</b> — and it is the reason this walkthrough stops at the failure instead of rushing to the fix.",
+        "The agent's only recourse is the M00 tax: open each lead and read enough code to judge it. Three files, roughly 7,900 tokens, and at the end of it you have verified three leads and still cannot prove there is no fourth caller somewhere you never retrieved."
+      ],
+      "terminal": [
+        { "kind": "claude", "text": "verify_token is used by the billing service's request path and\nby webhook handling. Both call it before processing the payload." },
+        { "kind": "tool", "text": "Read  shared/auth.py        → the definition. not a caller." },
+        { "kind": "tool", "text": "Read  billing/webhooks.py   → no call. false lead." },
+        { "kind": "tool", "text": "Read  billing/app.py        → one real call, line 19." },
+        { "kind": "out-fail", "text": "3 files opened · ~7,900 tokens · 1 of 3 leads real · completeness: unprovable" }
+      ],
+      "state": {
+        "label": "the bill for one structural question",
+        "before": {
+          "title": "WHAT THE PIPELINE REPORTED",
+          "view": {
+            "type": "rows",
+            "columns": ["signal", "value"],
+            "rows": [
+              { "cells": ["errors", "0"] },
+              { "cells": ["warnings", "0"] },
+              { "cells": ["lowest similarity returned", "0.81 — comfortably above any sane threshold"] },
+              { "cells": ["chunks containing the answer", "0 of 3"], "tone": "bad" },
+              { "cells": ["anything that told you so", "nothing"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "WHAT IT ACTUALLY COST",
+          "view": {
+            "type": "bars",
+            "unit": "tokens",
+            "max": 8000,
+            "items": [
+              { "label": "retrieved chunks", "value": 1200, "note": "three shreds, none of them the answer" },
+              { "label": "verification reads", "value": 7900, "tone": "bad", "note": "opening each lead to tell a call from a mention — M00's exploration tax, returning" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "The contrast — and the part where RAG still wins",
+      "narrative": [
+        "Same question, different machine. A structural graph was asked to store this relationship at extraction time, so answering is a lookup: one call, one caller, a provenance tag attached. Fifteen tokens against 7,900, and only one of the two answers can tell you whether it is a fact or a guess.",
+        "Now the honest half, because deleting your vector database would be trading one over-correction for another. RAG was built to find relevant passages in a huge pile of unstructured text nobody will ever curate — years of Slack, a lake of one-off design docs, millions of tickets. On that corpus, with exploratory questions, similarity is exactly the right criterion and a graph has nothing to offer.",
+        "The professional default is <b>RAG first, graph when depth becomes a bottleneck</b>. Roughly 72% of enterprise RAG deployments underdelivered in year one — and the dominant causes were bad chunking, stale indexes and mismatched embedding models, not the absence of a graph. Adding a graph to a broken pipeline gives you a broken pipeline with higher operational overhead."
+      ],
+      "youDo": "Write down the two failure signatures that justify adding a layer: multi-hop structural questions failing, and canonical facts coming back stale or conflicting. Add nothing until you have observed one.",
+      "source": "labs/shared_tools/kg_extract.py, labs/sample-project/services/billing/app.py",
+      "terminal": [
+        { "kind": "prompt", "text": "who calls verify_token?" },
+        { "kind": "tool", "text": "graph_callers(symbol=\"verify_token\")" },
+        { "kind": "out-pass", "text": "[\"post_invoice\"]   · 1 tool call · ~15 tokens · provenance tag attached to the edge" },
+        { "kind": "claude", "text": "One caller: post_invoice, billing/app.py:19. This is the complete\nlist rather than a sample — the edge index was built by walking\nevery call site in the repo, not by ranking three of them." }
+      ],
+      "state": {
+        "label": "leads vs answers, and where each belongs",
+        "before": {
+          "title": "SAME QUESTION, TWO MACHINES",
+          "view": {
+            "type": "rows",
+            "columns": ["", "vector retrieval", "structural graph"],
+            "rows": [
+              { "cells": ["what comes back", "leads — text that resembles the question", "answers — stored structural facts"] },
+              { "cells": ["cost here", "~7,900 tokens after verification", "~15 tokens, one call"], "tone": "win" },
+              { "cells": ["completeness", "unprovable", "the full caller set, by construction"] },
+              { "cells": ["fact or guess?", "a similarity score is not a truth label", "every edge carries a provenance tag"] }
+            ]
+          }
+        },
+        "after": {
+          "title": "AND WHERE THAT REVERSES",
+          "view": {
+            "type": "rows",
+            "columns": ["corpus and question", "right tool", "why"],
+            "rows": [
+              { "cells": ["\"what themes come up in churn interviews?\" over years of Slack", "vector RAG", "exploratory, uncuratable, similarity is the correct criterion"], "tone": "win" },
+              { "cells": ["\"who calls X?\" over a codebase", "structural graph", "the relationship is extractable and exact"], "tone": "win" },
+              { "cells": ["\"what IS our WAU definition?\"", "neither — a curated concept file", "a canonical fact deserves a lookup, not a search (Track 3)"] },
+              { "cells": ["a pipeline with bad chunking and a stale index", "fix the pipeline", "72% of RAG failures are RAG done badly, not RAG missing a graph"], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,248 @@
+{
+  "id": "kg-okf-spec",
+  "badge": "WALKTHROUGH",
+  "color": "#EC4899",
+  "time": "~5 min",
+  "title": "The concept lint rejected",
+  "spec": "M06 · one required field, and the gate that enforces it",
+  "intro": "Author an OKF concept from scratch, watch a thirty-line validator throw it out, and fix it. The spec asks for exactly one field — and it is the one everybody forgets, because the five optional ones look more important.",
+  "provenance": {
+    "kind": "illustrative",
+    "source": "a replayed authoring session in labs/M06-okf-authoring/. Every terminal line matches the output format of labs/M06-okf-authoring/solution/validate.py; the final pass in step 6 carries its own citation."
+  },
+  "foot": "Do it for real in <code>labs/M06-okf-authoring/</code> — two concepts and the validator, 25–35 minutes.",
+  "steps": [
+    {
+      "title": "Choose the path — you have just named the concept",
+      "narrative": [
+        "Before a single character of the file exists, you make the decision that matters most: where it goes. In OKF <b>the file's path is its identity</b>. <code>analytics/metrics/weekly_active_users.md</code> <em>is</em> the concept's ID. There is no UUID, no catalog registry, no page number to keep in sync.",
+        "That sounds like a small choice and it kills an entire class of maintenance bug. Every system that mints synthetic IDs eventually drifts from reality — the page moved, the record was cloned, the pointer dangles. When the path is the ID, moving a file is renaming a concept: visible in Git, reviewable in a PR, greppable everywhere it is referenced.",
+        "You are documenting orderflow's Weekly Active Users metric — the definition whose absence caused M02's churn-rate disaster. Put it where a person would look for it."
+      ],
+      "youDo": "<code>cd labs/M06-okf-authoring/starter</code>, then <code>mkdir -p knowledge/analytics/metrics</code> and open <code>knowledge/analytics/metrics/weekly_active_users.md</code>.",
+      "terminal": [
+        { "kind": "prompt", "text": "cd labs/M06-okf-authoring/starter" },
+        { "kind": "prompt", "text": "mkdir -p knowledge/analytics/metrics && $EDITOR knowledge/analytics/metrics/weekly_active_users.md" }
+      ],
+      "state": {
+        "label": "path = identity",
+        "before": {
+          "title": "THE SAME CONCEPT, FOUR PLACES YOU COULD PUT IT",
+          "view": {
+            "type": "rows",
+            "columns": ["path", "the ID it creates", "verdict"],
+            "rows": [
+              { "cells": ["<code>analytics/metrics/weekly_active_users.md</code>", "analytics/metrics/weekly_active_users", "where a human looks for a metric definition"], "tone": "win" },
+              { "cells": ["<code>docs/notes/metrics.md</code>", "docs/notes/metrics", "a dumping ground — one file, many concepts, no granularity to disclose progressively"], "tone": "bad" },
+              { "cells": ["<code>wau.md</code> at the bundle root", "wau", "conformant, and unfindable the moment the bundle has forty files"], "tone": "bad" },
+              { "cells": ["<code>analytics/metrics/wau_v2_FINAL.md</code>", "analytics/metrics/wau_v2_FINAL", "the ID now encodes a revision. Renaming it later renames the concept"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "AND THE FIELD THAT LOOKS REQUIRED BUT IS NOT",
+          "view": {
+            "type": "note",
+            "text": "Google's own reference concept carries an <code>id:</code> field in its frontmatter. It is <b>redundant with the path by design</b> — a convenience mirror some producers write, not the identity. If you add one and then move the file, you now have two sources of truth for one fact, which is precisely the drift OKF's path rule was invented to avoid. Write it only if a downstream consumer demands it."
+          }
+        }
+      }
+    },
+    {
+      "title": "Write the frontmatter you think you need",
+      "narrative": [
+        "Here is the draft almost everybody writes first. It is careful work: a real title, an honest description, the owning team, the date it was last touched. It reads like good documentation because it <em>is</em> good documentation.",
+        "It is also invalid, and you will not spot why by looking at it — which is the whole point of the next step. Note what the author reached for instinctively: the human-legible fields. The one field the spec actually demands is the least interesting one on the page."
+      ],
+      "youDo": "Fill the stubbed frontmatter in the starter file, then write the body: the rolling 7-day window, completed orders only, and the tester exclusions from <code>services/orders/metrics.py</code>.",
+      "state": {
+        "label": "knowledge/analytics/metrics/weekly_active_users.md · draft 1",
+        "before": {
+          "title": "AS AUTHORED — reads fine, fails the spec",
+          "view": {
+            "type": "diff",
+            "file": "knowledge/analytics/metrics/weekly_active_users.md",
+            "lines": [
+              ["a", "---"],
+              ["a", "title: Weekly Active Users (WAU)"],
+              ["a", "description: Unique customers with at least one completed order in a rolling 7-day window, excluding internal test accounts."],
+              ["a", "owner: data-eng@orderflow.internal"],
+              ["a", "updated_at: 2026-08-24"],
+              ["a", "---"],
+              ["a", ""],
+              ["a", "# Weekly Active Users (WAU)"],
+              ["a", ""],
+              ["a", "The total unique count of `customer_id` values with at least one completed"],
+              ["a", "order whose `completed_at` falls inside a rolling 7-day window."],
+              ["a", ""],
+              ["a", "## Computation Rules"],
+              ["a", "- Excludes internal test accounts: `cust_qa_1`, `cust_qa_2`, `cust_loadtest`."]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Lint throws it out",
+      "narrative": [
+        "Thirty lines of Python, one hard rule. It walks every <code>.md</code> under <code>knowledge/</code>, skips the two reserved filenames, and refuses anything without a <code>type</code>.",
+        "Read the summary line carefully: <b>zero</b> concepts valid. Not \"one concept with a warning\" — the file does not count as a concept at all, because <code>type</code> is what tells a consumer what kind of thing it is holding. Everything else in that frontmatter is colour.",
+        "The exit code is the part that matters operationally. A lint that prints a red line and returns 0 is decoration; this one stops a pipeline."
+      ],
+      "youDo": "<code>python validate.py knowledge</code>, then <code>echo $?</code> to confirm you actually got a non-zero exit and not just a scary-looking log line.",
+      "terminal": [
+        { "kind": "prompt", "text": "python validate.py knowledge" },
+        { "kind": "out-fail", "text": "ERROR knowledge/analytics/metrics/weekly_active_users.md: missing required field 'type'" },
+        { "kind": "out", "text": "0 concepts valid, 1 errors" },
+        { "kind": "gate", "text": "exit 1 — nothing downstream runs. No agent is allowed to read this bundle." }
+      ],
+      "state": {
+        "label": "what the spec asks for vs what you wrote",
+        "before": {
+          "title": "THE OKF v0.1 FRONTMATTER CONTRACT",
+          "view": {
+            "type": "rows",
+            "columns": ["field", "status", "in your draft?"],
+            "rows": [
+              { "cells": ["<code>type</code>", "<b>REQUIRED</b> — the only one", "missing"], "tone": "bad" },
+              { "cells": ["<code>title</code>", "recommended", "yes"] },
+              { "cells": ["<code>description</code>", "recommended", "yes"] },
+              { "cells": ["<code>resource</code>", "recommended", "missing"] },
+              { "cells": ["<code>tags</code>", "recommended", "missing"] },
+              { "cells": ["<code>timestamp</code>", "recommended", "missing"] },
+              { "cells": ["<code>owner</code>, <code>updated_at</code>", "unknown keys — perfectly legal", "yes, both"], "tone": "win" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "One line fixes it — and reveals what the spec never asked for",
+      "narrative": [
+        "Add <code>type: metric</code>. That is the fix. The validator now counts a concept, and immediately starts telling you about things the spec does not care about at all.",
+        "Those <code>warn</code> lines are <b>your lint being stricter than the format</b>. OKF would happily accept a file whose entire frontmatter is <code>type: metric</code> — no title, no description, nothing. Your pipeline refuses to be that relaxed, and it says so without failing the build.",
+        "Learn to read the two levels apart. Errors are the spec's floor. Warnings are your team's standard. Confusing them is how teams end up either shipping garbage or arguing about a linter."
+      ],
+      "youDo": "Add the required field, then close the three warnings by adding <code>resource: ../../sample-project/services/orders/metrics.py</code>, <code>tags: [analytics, orders, canonical]</code> and a <code>timestamp</code>.",
+      "terminal": [
+        { "kind": "prompt", "text": "python validate.py knowledge" },
+        { "kind": "out", "text": "warn  knowledge/analytics/metrics/weekly_active_users.md: missing recommended field 'resource'" },
+        { "kind": "out", "text": "warn  knowledge/analytics/metrics/weekly_active_users.md: missing recommended field 'tags'" },
+        { "kind": "out", "text": "warn  knowledge/analytics/metrics/weekly_active_users.md: missing recommended field 'timestamp'" },
+        { "kind": "out-pass", "text": "1 concepts valid, 0 errors" }
+      ],
+      "state": {
+        "label": "draft 1 → draft 2",
+        "before": {
+          "title": "THE FIX — one required line, three recommended ones",
+          "view": {
+            "type": "diff",
+            "file": "knowledge/analytics/metrics/weekly_active_users.md",
+            "lines": [
+              ["p", "---"],
+              ["a", "type: metric"],
+              ["p", "title: Weekly Active Users (WAU)"],
+              ["p", "description: Unique customers with at least one completed order in a rolling 7-day window, excluding internal test accounts."],
+              ["a", "resource: ../../sample-project/services/orders/metrics.py"],
+              ["a", "tags: [analytics, orders, canonical]"],
+              ["a", "timestamp: 2026-08-24T00:00:00Z"],
+              ["m", "owner: data-eng@orderflow.internal"],
+              ["m", "updated_at: 2026-08-24"],
+              ["p", "---"]
+            ]
+          }
+        },
+        "after": {
+          "title": "WHY THE LAST TWO LINES CAME OUT",
+          "view": {
+            "type": "note",
+            "text": "<code>owner</code> and <code>updated_at</code> were legal — consumers must tolerate unknown keys — but <code>timestamp</code> now says the same thing as <code>updated_at</code>, and two fields carrying one fact is the drift you are here to prevent. <b>Keep unknown keys when they add information your team needs; delete them when they duplicate a recommended field.</b>"
+          }
+        }
+      }
+    },
+    {
+      "title": "The link is an edge — and nothing will ever check it for you",
+      "narrative": [
+        "A metric is not knowledge on its own. WAU reads the <code>orders_fact</code> table, and that relationship is what turns a folder of Markdown into a graph. You write it as an ordinary relative link and the folder becomes traversable.",
+        "OKF links are <b>untyped</b>: the link is just a link, and the relationship's meaning lives in the prose around it — \"reads\", \"joined with\", \"see also\". That is a deliberate ceiling. Track 2's AST edges are typed and verified; these are curated. You want both.",
+        "Now the trap. The spec says a conformant consumer <b>must not reject a bundle for broken links</b>. So write a link to a file that does not exist yet, and the format is perfectly happy. Only a check you wrote yourself will ever say a word."
+      ],
+      "youDo": "Add <code>- See [orders_fact](../tables/orders_fact.md) for the fact table this metric reads.</code> under a <code>## Related Components</code> heading — before you have written <code>orders_fact.md</code>.",
+      "terminal": [
+        { "kind": "prompt", "text": "python validate.py knowledge" },
+        { "kind": "out-pass", "text": "1 concepts valid, 0 errors" },
+        { "kind": "gate", "text": "clean — and the only link in the bundle points at a file that does not exist" },
+        { "kind": "prompt", "text": "okf lint" },
+        { "kind": "out", "text": "knowledge/analytics/metrics/weekly_active_users.md" },
+        { "kind": "out-fail", "text": "  x link-resolves   dangling link -> ../tables/orders_fact.md" },
+        { "kind": "out", "text": "13 rules run, 1 error" }
+      ],
+      "state": {
+        "label": "conformant vs trustworthy",
+        "before": {
+          "title": "WHAT THE SPEC TOLERATES BY DESIGN",
+          "view": {
+            "type": "rows",
+            "columns": ["the bundle contains", "conformant?", "who catches it"],
+            "rows": [
+              { "cells": ["a missing optional field", "yes — must not reject", "your lint, as a warning"] },
+              { "cells": ["<code>type: Whatever-I-Invented</code>", "yes — there is no type registry", "your own canonical type list"], "tone": "bad" },
+              { "cells": ["frontmatter keys nobody recognises", "yes — must not reject", "review, if anyone is looking"] },
+              { "cells": ["a link to a file that does not exist", "yes — must not reject", "<b>nobody</b>, unless you write the check"], "tone": "bad" },
+              { "cells": ["no <code>type</code> at all", "NO — the one hard rule", "the spec itself"], "tone": "win" }
+            ]
+          }
+        },
+        "after": {
+          "title": "THE ASYMMETRY TO MEMORISE",
+          "view": {
+            "type": "note",
+            "text": "The spec is lenient <b>so that adoption is easy</b> — a team can start with one file today and be conformant, which is why OKF spread in weeks while schema-registry predecessors stalled for years. Your pipeline must be strict <b>so that trust is possible</b>. A bundle of dangling links, drifted type names and year-old timestamps is still technically conformant, and nothing anywhere will error. That gap is M11's entire subject."
+          }
+        }
+      }
+    },
+    {
+      "title": "What a valid concept looks like when it passes",
+      "narrative": [
+        "Write the other side of the link — <code>orders_fact.md</code>, with its schema table, a Joins section and a link back to the metric — and run the gate on the whole bundle.",
+        "Two concepts, zero errors, both directions of the edge present. Read the finished WAU file once more as an agent would: forty tokens of frontmatter answer <em>is this relevant?</em>, the body carries the <b>audited exclusion rule itself</b> rather than a pointer to where the rule lives, and the link hands over the next hop. An agent computing WAU generates the right query on the first attempt and can cite the file, its timestamp and its owner.",
+        "That is the whole consumption stack. No SDK, no schema registry, no service — <code>cat</code> to read it, <code>git clone</code> to ship it, thirty lines to gate it."
+      ],
+      "youDo": "<code>python validate.py knowledge</code> — you should see the exact line in <code>expected_output/sample_output.txt</code>. Then break it on purpose: delete <code>type:</code> from one file and confirm you get a non-zero exit and the offending path.",
+      "source": "labs/M06-okf-authoring/expected_output/sample_output.txt",
+      "terminal": [
+        { "kind": "prompt", "text": "python validate.py knowledge" },
+        { "kind": "out-pass", "text": "2 concepts valid, 0 errors" },
+        { "kind": "prompt", "text": "okf lint" },
+        { "kind": "out-pass", "text": "13 rules run, 0 errors" }
+      ],
+      "state": {
+        "label": "labs/M06-okf-authoring/solution/knowledge/",
+        "before": {
+          "title": "BEFORE — one file, one dangling link",
+          "view": {
+            "type": "rows",
+            "columns": ["concept", "type", "links out", "resolves?"],
+            "rows": [
+              { "cells": ["analytics/metrics/weekly_active_users", "metric", "../tables/orders_fact.md", "no"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — a two-node graph that lints clean",
+          "view": {
+            "type": "rows",
+            "columns": ["concept", "type", "links out", "resolves?"],
+            "rows": [
+              { "cells": ["analytics/metrics/weekly_active_users", "metric", "→ orders_fact (\"the fact table this metric reads\")", "yes"], "tone": "win" },
+              { "cells": ["analytics/tables/orders_fact", "table", "→ weekly_active_users (\"Consumed By\")", "yes"], "tone": "win", "new": true },
+              { "cells": ["<em>the edge</em>", "untyped", "meaning carried by the prose beside the link", "curated, not verified"] }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,264 @@
+{
+  "id": "kg-enrichment-hook",
+  "badge": "WALKTHROUGH",
+  "color": "#10B981",
+  "time": "~6 min",
+  "title": "The hook that fires, and the one that doesn't",
+  "spec": "M08 · commit → diff scope → refresh → lint → publish",
+  "intro": "Install the post-commit hook, watch one file change refresh exactly one concept, then meet the version that exits 0 and does nothing at all. The second one is the reason this module exists.",
+  "provenance": {
+    "kind": "illustrative",
+    "source": "a replayed session over labs/sample-project with labs/M08-enrichment-hook/solution/ installed. The dependency lines and edge counts in step 2 are reproduced from a real run of labs/shared_tools/kg_extract.py; the gate output in step 5 is the exact output format of labs/M11-freshness-gate/solution/freshness_gate.py. Steps 2, 3 and 5 carry their own citations."
+  },
+  "foot": "Install it, then break it twice, in <code>labs/M08-enrichment-hook/</code> — and keep the freshness gate from <code>labs/M11-freshness-gate/</code> next to it.",
+  "steps": [
+    {
+      "title": "Install the loop",
+      "narrative": [
+        "Three commands: make orderflow a git repo, drop the hook in, make it executable. There is nothing clever in the hook — twelve lines of <code>sh</code> — and the interesting part is everything it deliberately refuses to do.",
+        "No <code>nohup</code>. No backgrounding. No <code>|| true</code>. No \"skip if the machine is busy\". Every one of those is a reasonable-looking line that converts a failed refresh into silent drift, and every one of them appears in real setups. Loud and synchronous beats quiet and detached.",
+        "One line does deserve attention: <code>PYTHON=\"${ORDERFLOW_PYTHON:-python}\"</code>. Hooks run with a minimal environment, <b>outside any activated virtualenv</b>, where <code>python</code> and <code>python3</code> can be different installs with different packages. Pinning the interpreter is not fussiness; it is the difference between a hook that works on your machine and a hook that works."
+      ],
+      "youDo": "<code>cd labs/sample-project</code> · <code>git init -q &amp;&amp; git add -A &amp;&amp; git commit -qm \"baseline\"</code> · <code>cp ../M08-enrichment-hook/solution/post-commit .git/hooks/post-commit</code> (then <code>chmod +x</code> on macOS or Linux).",
+      "terminal": [
+        { "kind": "prompt", "text": "cd labs/sample-project && git init -q && git add -A && git commit -qm \"baseline\"" },
+        { "kind": "prompt", "text": "cp ../M08-enrichment-hook/solution/post-commit .git/hooks/post-commit && chmod +x .git/hooks/post-commit" },
+        { "kind": "prompt", "text": "export ORDERFLOW_PYTHON=$(which python)" },
+        { "kind": "out-pass", "text": "hook installed · post-commit · synchronous, set -e, exits non-zero on failure" }
+      ],
+      "state": {
+        "label": "what this hook refuses to do",
+        "before": {
+          "title": "THE LINES THAT ARE NOT IN IT",
+          "view": {
+            "type": "rows",
+            "columns": ["the tempting line", "why it looks sensible", "what it actually does"],
+            "rows": [
+              { "cells": ["<code>nohup ... &amp;</code>", "keeps the commit fast", "Git for Windows has no <code>nohup</code>. The rebuild never happens and nothing says so"], "tone": "bad" },
+              { "cells": ["<code>|| true</code>", "a broken hook shouldn't block my commit", "converts every failure into a success. The bundle rots with a green light"], "tone": "bad" },
+              { "cells": ["<code>&gt; /dev/null 2&gt;&amp;1</code>", "keeps the terminal clean", "the one place the error would have been visible"], "tone": "bad" },
+              { "cells": ["\"skip if load is high\"", "don't fight CI for CPU", "a silent skip whose retry is \"the next commit\" — which on a quiet branch is days away"], "tone": "bad" },
+              { "cells": ["<code>set -e</code> + explicit <code>exit 1</code>", "—", "what the lab ships. A failed refresh is a failed hook, visibly"], "tone": "win" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "One file changes, one concept refreshes",
+      "narrative": [
+        "Touch <code>services/billing/webhooks.py</code> and commit. Read the four log lines as the four decisions they encode.",
+        "Line 1 is the whole cost model: the diff said <code>services/billing/</code>, the <code>SERVICE_MAP</code> table turned that into exactly one concept, and nothing else in the bundle was looked at. Line 2 is pass 1 done <b>deterministically</b> — the dependency facts come from the structural graph, not from a model, so that section cannot hallucinate. Line 3 records what the bundle learned. Line 4 is the gate.",
+        "Look closely at the refreshed block. All four edges are tagged <code>INFERRED</code> — bare-name resolution matched <code>publish</code> and <code>verify_token</code> to definitions by heuristic. The hook writes the provenance tag into the concept alongside the fact, so a reader can see which of these four the pipeline is confident about. It is confident about none of them, and it says so."
+      ],
+      "youDo": "Add a comment to <code>services/billing/webhooks.py</code>, <code>git commit -am \"billing: note retry intent\"</code>, and watch. If nothing appears: the file must be named exactly <code>post-commit</code>, live in <code>.git/hooks/</code>, and be executable.",
+      "source": "labs/M08-enrichment-hook/solution/refresh_concepts.py, labs/shared_tools/kg_extract.py",
+      "terminal": [
+        { "kind": "prompt", "text": "git commit -am \"billing: note retry intent in webhooks\"" },
+        { "kind": "out", "text": "[enrich] changed: services/billing/webhooks.py -> concept billing-service" },
+        { "kind": "out", "text": "[enrich] refreshed Dependencies (4 edges) in billing-service.md" },
+        { "kind": "out", "text": "[enrich] log.md updated" },
+        { "kind": "out-pass", "text": "[enrich] lint: 5 concepts valid, 0 errors" }
+      ],
+      "state": {
+        "label": "knowledge/services/billing-service.md",
+        "before": {
+          "title": "BEFORE — hand-written, last touched by a human",
+          "view": {
+            "type": "diff",
+            "file": "knowledge/services/billing-service.md",
+            "lines": [
+              ["p", "# Responsibilities"],
+              ["p", "Owns the Invoice domain model. Verifies every request via shared auth."],
+              ["p", ""],
+              ["p", "## Dependencies"],
+              ["p", "- calls `shared.auth.verify_token`"],
+              ["p", "- calls `shared.events.publish`"]
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — regenerated from the graph, provenance attached",
+          "view": {
+            "type": "diff",
+            "file": "knowledge/services/billing-service.md",
+            "lines": [
+              ["p", "# Responsibilities"],
+              ["p", "Owns the Invoice domain model. Verifies every request via shared auth."],
+              ["p", ""],
+              ["p", "## Dependencies"],
+              ["m", "- calls `shared.auth.verify_token`"],
+              ["m", "- calls `shared.events.publish`"],
+              ["a", "- calls `shared.auth.verify_token` (INFERRED)"],
+              ["a", "- calls `shared.db.execute` (INFERRED)"],
+              ["a", "- calls `shared.db.query` (INFERRED)"],
+              ["a", "- calls `shared.events.publish` (INFERRED)"]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Break the lint gate on purpose",
+      "narrative": [
+        "A gate you have never seen fire is a decoration. Delete <code>type:</code> from <code>billing-service.md</code>, commit any code change, and watch the pipeline stop before publish.",
+        "Read the last line word by word, because it is more careful than it looks. It says the bundle was <b>NOT published</b> — not \"not updated\". By the time lint ran, the draft pass had already rewritten concept files on disk. The bundle is dirty <em>and</em> unpublished, which means the files sitting in your working tree right now must not be trusted or committed as they are.",
+        "That distinction is what separates a real gate from a report. A lint that warns lets a malformed bundle reach an agent. This one exits non-zero, and the hook refuses to pretend otherwise."
+      ],
+      "youDo": "Delete the <code>type:</code> line from one concept, commit any code change, then run <code>echo $?</code>. If it prints 0, your gate is decorative and you have just reproduced the failure M11 is about.",
+      "source": "labs/M08-enrichment-hook/README.md, labs/M06-okf-authoring/solution/validate.py",
+      "terminal": [
+        { "kind": "prompt", "text": "sed -i '/^type: Service$/d' knowledge/services/billing-service.md" },
+        { "kind": "prompt", "text": "git commit -am \"billing: tidy webhook docstring\"" },
+        { "kind": "out", "text": "[enrich] changed: services/billing/webhooks.py -> concept billing-service" },
+        { "kind": "out", "text": "[enrich] refreshed Dependencies (4 edges) in billing-service.md" },
+        { "kind": "out", "text": "[enrich] log.md updated" },
+        { "kind": "out-fail", "text": "[enrich] lint: ERROR knowledge/services/billing-service.md: missing required field 'type'\n4 concepts valid, 1 errors" },
+        { "kind": "out-fail", "text": "[enrich] lint failed — refusing to publish the bundle" },
+        { "kind": "gate", "text": "[enrich] FAILED — bundle NOT published (lint rejected it; local concept files may hold unpublished drafts). Fix before trusting or committing the bundle." }
+      ],
+      "state": {
+        "label": "where the pipeline stopped",
+        "before": {
+          "title": "SIX STAGES, ONE HARD GATE",
+          "view": {
+            "type": "rows",
+            "columns": ["stage", "ran?", "state it left behind"],
+            "rows": [
+              { "cells": ["diff-scoped scan", "yes", "one concept selected out of five"], "tone": "win" },
+              { "cells": ["draft / update", "yes", "<b>billing-service.md rewritten on disk</b>"], "tone": "bad" },
+              { "cells": ["re-link", "yes", "Dependencies replaced, prose preserved"] },
+              { "cells": ["log.md", "yes", "a dated entry already appended"], "tone": "bad" },
+              { "cells": ["lint", "yes — and failed", "exit 1, naming the file"], "tone": "win" },
+              { "cells": ["publish", "<b>never reached</b>", "nothing shipped; the working tree holds an unpublished draft"], "tone": "win" }
+            ]
+          }
+        },
+        "after": {
+          "title": "WHAT \"NOT PUBLISHED\" OBLIGES YOU TO DO",
+          "view": {
+            "type": "note",
+            "text": "Restore the <code>type:</code> line and re-run before you commit the bundle. Do <b>not</b> reach for <code>--no-verify</code> or comment out the gate to get past it — the whole trust model of the bundle is the single sentence <em>what is published passed the gate</em>. The moment that stops being true, every agent downstream is reading text with no warranty on it, and nothing in the OKF spec will ever warn them."
+          }
+        }
+      }
+    },
+    {
+      "title": "Now the hook that does nothing",
+      "narrative": [
+        "Here is the same hook with three small improvements: it backgrounds the work so commits stay fast, it silences the output so the terminal stays clean, and it always exits 0 so a broken pipeline never blocks anyone. Every one of those was requested by a real teammate for a real reason.",
+        "Install it on Windows and commit. The commit succeeds. The hook exits 0. Git prints its usual summary. And nothing happens — Git for Windows' shell has no <code>nohup</code>, the error went to <code>/dev/null</code>, and <code>exit 0</code> swallowed the rest.",
+        "Compare the two terminals. The failure signature of a hook that is working perfectly and a hook that is doing nothing at all is <b>identical</b>: a clean commit. That is the entire problem. Your team commits daily for three weeks, believes the graph updates, and is wrong."
+      ],
+      "youDo": "Grep your own hooks for the four words that hide failures: <code>grep -nE 'nohup|\\|\\| true|/dev/null|&amp; *$' .git/hooks/*</code>. Every hit is a place a failure can go to die.",
+      "terminal": [
+        { "kind": "prompt", "text": "cat .git/hooks/post-commit" },
+        { "kind": "out", "text": "#!/bin/sh\nREPO_ROOT=\"$(git rev-parse --show-toplevel)\"\nnohup python \"$REPO_ROOT/tools/refresh_concepts.py\" \"$REPO_ROOT\" > /dev/null 2>&1 &\nexit 0" },
+        { "kind": "prompt", "text": "git commit -am \"billing: add fraud-check call\"" },
+        { "kind": "out", "text": "[main 7c41ab9] billing: add fraud-check call\n 1 file changed, 3 insertions(+)" },
+        { "kind": "gate", "text": "commit succeeded · hook exit code 0 · zero enrichment output · bundle unchanged" }
+      ],
+      "state": {
+        "label": "four documented ways a hook lies",
+        "before": {
+          "title": "GREEN LIGHTS OVER RED STATES",
+          "view": {
+            "type": "rows",
+            "columns": ["mechanism", "what breaks", "what you see"],
+            "rows": [
+              { "cells": ["missing <code>nohup</code> on Windows", "the rebuild process is never started", "a normal commit"], "tone": "bad" },
+              { "cells": ["extension allowlist drift", "the hook's <code>CODE_EXTS</code> list falls out of sync with the extractor's, so real code files stop triggering rebuilds", "a normal commit"], "tone": "bad" },
+              { "cells": ["silent resource gating", "the rebuild is skipped under load; the retry is \"next commit\", which on a quiet branch is days", "a normal commit"], "tone": "bad" },
+              { "cells": ["MCP server startup cache", "the graph rebuilt fine, but the server that serves it is still holding the version it loaded at boot", "a normal commit, and a correct file on disk"], "tone": "bad" },
+              { "cells": ["all four", "different causes, one symptom", "<b>the artifact predates HEAD</b> — which is measurable"], "tone": "win" }
+            ]
+          }
+        },
+        "after": {
+          "title": "THE ONLY DEFENCE",
+          "view": {
+            "type": "note",
+            "text": "Your defence cannot be \"fix these four bugs\" — new ones will ship, and the next one will also exit 0. <b>Never trust a hook's exit code.</b> All four of these mechanisms exit clean, which is why the check in the next step ignores the hook entirely and asks the artifact a question instead."
+          }
+        }
+      }
+    },
+    {
+      "title": "The check that catches all four",
+      "narrative": [
+        "Stop asking \"did the hook run?\" and start asking \"is the artifact newer than the code?\" That question has one mechanical answer: compare the graph's modification time against <code>git log -1</code>'s commit time.",
+        "It is one comparison, and it catches every silent failure above, because however the rebuild died the symptom is the same — the artifact predates HEAD. Note the detail that makes it correct: it compares against <b>commit time</b>, not wall-clock age. A repo nobody has touched for a month with a month-old graph is perfectly fresh.",
+        "Notice also what the gate does not do. It does not repair anything. It refuses to proceed and prints the exact command that fixes it — including the reminder to restart any MCP server still holding the old graph, which is failure mechanism four. Detection and repair stay separate, so a broken repair path can never silence detection."
+      ],
+      "youDo": "Run it right after an empty commit — <code>git commit --allow-empty -qm \"no rebuild\"</code> then <code>python ../M11-freshness-gate/solution/freshness_gate.py . --max-age-commits 0</code>. If your setup cannot fail this, it is a demo that has not failed yet.",
+      "source": "labs/M11-freshness-gate/solution/freshness_gate.py, labs/M11-freshness-gate/README.md",
+      "terminal": [
+        { "kind": "prompt", "text": "python ../M11-freshness-gate/solution/freshness_gate.py . --max-age-commits 0" },
+        { "kind": "out-fail", "text": "STALE: graph.json predates HEAD by 1 commit(s)" },
+        { "kind": "out", "text": "  fix: python labs/shared_tools/kg_extract.py labs/sample-project --out labs/sample-project/graphify-out/graph.json  (then restart any MCP server holding the old graph)" },
+        { "kind": "prompt", "text": "# fix the hook, re-commit, re-run" },
+        { "kind": "out-pass", "text": "FRESH: graph.json generated at/after HEAD commit" },
+        { "kind": "out-pass", "text": "CROSS-CHECK OK: stored counts match a fresh extraction" }
+      ],
+      "state": {
+        "label": "belief vs measurement",
+        "before": {
+          "title": "BEFORE — freshness as a belief",
+          "view": {
+            "type": "rows",
+            "columns": ["\"how do you know the graph is current?\"", "verdict"],
+            "rows": [
+              { "cells": ["\"the hooks handle it\"", "all four failure modes exit 0"], "tone": "bad" },
+              { "cells": ["\"we'd notice\"", "the symptom is a normal commit"], "tone": "bad" },
+              { "cells": ["\"it hasn't happened yet\"", "nothing here reports when it does"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — freshness as a query",
+          "view": {
+            "type": "rows",
+            "columns": ["check", "what it catches", "where it runs"],
+            "rows": [
+              { "cells": ["graph mtime vs HEAD commit time", "every silent hook death, whatever killed it", "CI, before any agent-consuming step"], "tone": "win" },
+              { "cells": ["<code>--cross-check</code> counts vs a fresh extraction", "artifacts that disagree with each other", "same job, one flag"], "tone": "win" },
+              { "cells": ["the enrichment lint gate (step 3)", "structurally invalid concepts", "the hook itself, on every commit"], "tone": "win" },
+              { "cells": ["restart MCP servers after regeneration", "the server still serving the graph it loaded at boot", "your deploy step, not your hope"], "tone": "win" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Why it survives past Friday",
+      "narrative": [
+        "One decision keeps this pipeline alive, and you already made it in step 2: <b>scope every pass to the diff, not the repository</b>. Everything else is style.",
+        "Run the arithmetic on a real repo. Four hundred services, forty commits a day. A full-repo pass drafts 400 concepts per commit at roughly 1.5K tokens each — around 600K tokens per commit, 24 million tokens a day. A diff-scoped pass on a typical commit touches one or two services: about 3K tokens per commit, 120K a day. Same freshness on the concepts that actually changed, for a two-hundredth of the cost.",
+        "The failure that follows from getting this wrong is not a big bill. It is that the pipeline gets switched off during its first expensive week — and a switched-off pipeline means confident staleness, which is the exact condition the whole system was built to prevent. A team that re-scans everything on every commit finds the pipeline too expensive well before their repo is large enough to need it."
+      ],
+      "youDo": "Before you commit to any of this, measure your own delta: run one real multi-agent task with and without the bundle and write down both token counts. That number is yours; every number below is somebody else's.",
+      "state": {
+        "label": "400 services · 40 commits/day",
+        "before": {
+          "title": "THE COST MODEL IN ONE DECISION",
+          "view": {
+            "type": "bars",
+            "unit": "tokens / day",
+            "max": 24000000,
+            "items": [
+              { "label": "full-repo pass", "value": 24000000, "tone": "bad", "note": "400 drafts × ~1.5K × 40 commits — a budget line that gets the pipeline killed" },
+              { "label": "diff-scoped pass", "value": 120000, "tone": "win", "note": "~2 drafts × ~1.5K × 40 commits — a rounding error, and identical freshness where it matters" }
+            ]
+          }
+        },
+        "after": {
+          "title": "AND THE NUMBER NOT TO QUOTE",
+          "view": {
+            "type": "note",
+            "text": "You will see \"up to 95% token reduction versus naive document loading\" attached to this pattern. Treat it the way this course treats every headline: it is <b>anecdotal and unvalidated at production scale</b>, and it comes from focused, stable knowledge domains that flatter it. It plausibly indicates the <em>direction</em> of savings for pre-compiled context. It is not a planning input. And the prior gate still applies: if nothing agentic is consuming your bundle, you are not building a knowledge pipeline — you are maintaining a wiki nobody reads."
+          }
+        }
+      }
+    }
+  ]
+}

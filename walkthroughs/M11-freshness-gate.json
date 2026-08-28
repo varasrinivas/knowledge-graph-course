@@ -1,0 +1,249 @@
+{
+  "id": "kg-freshness-gate",
+  "badge": "WALKTHROUGH",
+  "color": "#EF4444",
+  "time": "~5 min",
+  "title": "The map that lied",
+  "spec": "M11 · one commit, no rebuild, and the gate that caught it",
+  "intro": "The code moved. The graph did not. The agent answered anyway — instantly, authoritatively, and wrong. Watch the failure happen with every light green, then watch sixty lines of CI refuse to let it through.",
+  "provenance": {
+    "kind": "illustrative",
+    "source": "a narrated session over labs/sample-project; every command, message and exit code is copied from labs/M11-freshness-gate/solution/freshness_gate.py, cited per step"
+  },
+  "foot": "Run it for real: <code>labs/M11-freshness-gate/</code> — Step 2 is the one most \"production\" setups have never actually executed.",
+  "steps": [
+    {
+      "title": "A commit that changed the graph's shape — and did not rebuild it",
+      "narrative": [
+        "A developer adds a second caller for <code>decode_jwt</code>: the notifications worker now verifies its own webhook signatures instead of trusting the bus. Two lines. They commit and move on.",
+        "The post-commit hook does not fire. Pick your reason — the Windows shell has no <code>nohup</code>, the extension allowlist drifted, the resource gate skipped under load, or somebody typed <code>--no-verify</code>. It does not matter which, because <b>all four produce the same symptom and none of them print anything.</b> The commit succeeds. <code>graph.json</code> keeps the mtime it had this morning."
+      ],
+      "youDo": "Reproduce the state without waiting for a real bug: <code>git commit --allow-empty -qm \"commit without rebuilding the graph\"</code>",
+      "terminal": [
+        { "kind": "prompt", "text": "git commit -qm \"notifications: verify webhook signatures locally\"" },
+        { "kind": "out", "text": "(no [enrich] output — the hook never ran)" },
+        { "kind": "prompt", "text": "git log -1 --format=%ct  &amp;&amp;  stat -c %Y graphify-out/graph.json" },
+        { "kind": "out-fail", "text": "HEAD      1756377720\ngraph.json 1756349104        ← 7h 57m older than the commit" }
+      ],
+      "state": {
+        "label": "code vs map",
+        "before": {
+          "title": "BEFORE — the commit",
+          "view": {
+            "type": "diff",
+            "file": "services/notifications/worker.py",
+            "lines": [
+              ["p", "from shared.events import subscribe"],
+              ["p", ""],
+              ["p", "def handle_payment_settled(event):"],
+              ["p", "    invoice_id = event[\"invoice_id\"]"]
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — the commit, but not the rebuild",
+          "view": {
+            "type": "diff",
+            "file": "services/notifications/worker.py",
+            "lines": [
+              ["p", "from shared.events import subscribe"],
+              ["a", "from shared.auth import decode_jwt"],
+              ["p", ""],
+              ["p", "def handle_payment_settled(event):"],
+              ["a", "    claims = decode_jwt(event[\"signature\"])   # new edge, ungraphed"],
+              ["p", "    invoice_id = event[\"invoice_id\"]"]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "The agent answers from the old map, at full confidence",
+      "narrative": [
+        "Nobody knows the graph is behind, least of all the agent. Someone asks the standard pre-refactor question — <em>who calls <code>decode_jwt</code>?</em> — and the MCP server answers in one round trip, from the copy it holds.",
+        "Read the response closely: it is well-formed, deterministic, provenance-tagged, and <b>missing the caller added eight hours ago</b>. Nothing in its shape reveals its age. The agent concludes the blast radius is one module and proposes changing the signature.",
+        "This is why the module insists a stale graph is worse than no graph. With no graph the agent reads files — slow, expensive, <em>current</em>. With a stale one it gets a fast, confident, wrong answer and has no reason to distrust it."
+      ],
+      "claudeSays": "The server did not lie. It served exactly what was on disk, which had stopped describing the repository at 09:25 this morning.",
+      "source": "labs/M09-mcp-graph-server/solution/server.py#graph_callers",
+      "terminal": [
+        { "kind": "prompt", "text": "who calls decode_jwt? safe to change its signature?" },
+        { "kind": "tool", "text": "graph_callers(symbol=\"decode_jwt\")" },
+        { "kind": "out", "text": "{\"callers\": [\"shared.auth.verify_token\"]}" },
+        { "kind": "claude", "text": "One caller, inside the same module. Blast radius is contained —\nchanging the signature is safe with a single call-site update." },
+        { "kind": "out-fail", "text": "✕ the real answer is TWO callers · services.notifications.worker breaks on deploy" }
+      ],
+      "state": {
+        "label": "graph_callers(\"decode_jwt\")",
+        "before": {
+          "title": "WHAT THE AGENT SAW",
+          "view": {
+            "type": "json",
+            "data": {
+              "symbol": "decode_jwt",
+              "callers": ["shared.auth.verify_token"],
+              "provenance": "EXTRACTED",
+              "graph_built": "09:25",
+              "head_commit": "17:22"
+            },
+            "highlight": ["graph_built", "head_commit"]
+          }
+        },
+        "after": {
+          "title": "WHAT WAS TRUE",
+          "view": {
+            "type": "json",
+            "data": {
+              "symbol": "decode_jwt",
+              "callers": ["shared.auth.verify_token", "services.notifications.worker"],
+              "provenance": "EXTRACTED",
+              "graph_built": "—",
+              "head_commit": "17:22"
+            },
+            "highlight": ["callers"]
+          }
+        }
+      }
+    },
+    {
+      "title": "Why nothing warned you: four doors, all green",
+      "narrative": [
+        "The instinct is to go fix the hook. The module's point is that fixing this hook does not fix the class of problem, because a rebuild pipeline has <b>four independently documented ways to stop working while reporting success</b>, and new ones ship regularly.",
+        "The fourth is the nastiest and the least intuitive: a rebuild can succeed <em>completely</em> and the agent still gets the old answer, because the MCP server loaded <code>graph.json</code> at startup and has no hot-reload. Fresh graph on disk, stale graph in memory, simultaneously — and no artifact anywhere records that the two have diverged.",
+        "So the defence cannot be \"fix these four bugs\". It has to be refusing to <b>trust</b> a freshness you have not <b>measured</b>."
+      ],
+      "state": {
+        "label": "four silent failure mechanisms",
+        "before": {
+          "title": "EACH ONE EXITS CLEAN",
+          "view": {
+            "type": "rows",
+            "columns": ["mechanism", "what actually happens", "what you see"],
+            "rows": [
+              { "cells": ["missing <code>nohup</code>", "Git-for-Windows has no <code>nohup</code>; the detached rebuild never starts", "nothing"], "tone": "bad" },
+              { "cells": ["<code>CODE_EXTS</code> allowlist drift", "hook's extension list diverged from <code>graphify/detect.py</code>; valid commits skip the rebuild", "nothing"], "tone": "bad" },
+              { "cells": ["resource gate", "CPU &gt; 50% → skip, retry \"on the next commit\" — which may be days away", "nothing"], "tone": "bad" },
+              { "cells": ["MCP startup cache", "rebuild succeeds; the running server keeps its startup copy until bounced", "nothing"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "THE COMMON SYMPTOM — which is the opening",
+          "view": {
+            "type": "note",
+            "text": "However the rebuild died, the artifact ends up <b>older than HEAD</b>. Four causes, one observable. That is what makes a single timestamp comparison a complete detector rather than a partial one."
+          }
+        }
+      }
+    },
+    {
+      "title": "The gate: one clock against another",
+      "narrative": [
+        "<code>freshness_gate.py</code> compares <code>graph.json</code>'s mtime against <code>git log -1 --format=%ct</code>. Fresh means the artifact was generated at or after the last commit. Note it compares against <b>commit time, not wall-clock age</b> — a repo untouched for a month with a month-old graph is perfectly fresh.",
+        "Run it on a healthy repo and it says so and exits 0. Then make it stale on purpose — an empty commit is enough — and the same command turns into a stop sign: the lag in commits, an actionable fix, and <b>exit 1</b>.",
+        "Read the fix line all the way to the end. It does not stop at \"rerun the extractor\"; it names the MCP restart, because door 4 is not fixed by regeneration alone."
+      ],
+      "youDo": "<code>cd labs/sample-project</code> then <code>python ../M11-freshness-gate/solution/freshness_gate.py . --max-age-commits 0</code>",
+      "source": "labs/M11-freshness-gate/solution/freshness_gate.py",
+      "terminal": [
+        { "kind": "prompt", "text": "python ../M11-freshness-gate/solution/freshness_gate.py . --max-age-commits 0" },
+        { "kind": "out-pass", "text": "FRESH: graph.json generated at/after HEAD commit" },
+        { "kind": "prompt", "text": "git commit --allow-empty -qm \"commit without rebuilding the graph\"" },
+        { "kind": "prompt", "text": "python ../M11-freshness-gate/solution/freshness_gate.py . --max-age-commits 0" },
+        { "kind": "gate", "text": "⏸  FRESHNESS GATE — artifact clock vs git clock" },
+        { "kind": "out-fail", "text": "STALE: graph.json predates HEAD by 1 commit(s)\n  fix: python labs/shared_tools/kg_extract.py <repo> --out graphify-out/graph.json  (then restart any MCP server holding the old graph)" },
+        { "kind": "out-fail", "text": "$? = 1   → pipeline blocked" }
+      ],
+      "state": {
+        "label": "the comparison, both ways",
+        "before": {
+          "title": "PASS — exit 0, agents may trust the graph",
+          "view": {
+            "type": "rows",
+            "columns": ["input", "value", "verdict"],
+            "rows": [
+              { "cells": ["<code>git log -1 --format=%ct</code>", "HEAD at 14:02", ""] },
+              { "cells": ["<code>graph.json</code> mtime", "14:03", ""] },
+              { "cells": ["mtime ≥ HEAD time", "true", "<b>FRESH</b>"], "tone": "win" }
+            ]
+          }
+        },
+        "after": {
+          "title": "FAIL — exit 1, pipeline blocked",
+          "view": {
+            "type": "rows",
+            "columns": ["input", "value", "verdict"],
+            "rows": [
+              { "cells": ["<code>git log -1 --format=%ct</code>", "HEAD at 17:22", ""] },
+              { "cells": ["<code>graph.json</code> mtime", "09:25", ""] },
+              { "cells": ["<code>git rev-list --count --since=&lt;mtime&gt;</code>", "1 commit", ""] },
+              { "cells": ["lag &gt; <code>--max-age-commits=0</code>", "true", "<b>STALE</b>"], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "--cross-check: when the clock is fresh and the content is not",
+      "narrative": [
+        "A timestamp can be current while the contents are wrong — a partial rebuild, a refused overwrite, a report and a graph telling different stories. Clocks cannot see that; counts can.",
+        "<code>--cross-check</code> re-extracts into a throwaway file and compares node and edge counts against the stored graph. Agreement prints <code>CROSS-CHECK OK</code>; disagreement prints <code>DESYNC</code> with both pairs and exits 1. The <code>finally</code> block deletes the temporary file, and that matters more than it sounds: a leftover <code>.freshcheck.json</code> becomes tomorrow's confusing fourth artifact.",
+        "Below, the sabotage is a <code>fraud_check()</code> call added to <code>webhooks.py</code> and committed with the graph touched but not regenerated — clock says fine, counts say otherwise."
+      ],
+      "youDo": "Re-run the gate with <code>--cross-check</code> after any commit that adds a function.",
+      "source": "labs/M11-freshness-gate/solution/freshness_gate.py",
+      "terminal": [
+        { "kind": "prompt", "text": "python ../M11-freshness-gate/solution/freshness_gate.py . --max-age-commits 0 --cross-check" },
+        { "kind": "out-pass", "text": "FRESH: graph.json generated at/after HEAD commit" },
+        { "kind": "tool", "text": "re-extracting into graphify-out/graph.freshcheck.json …" },
+        { "kind": "out-fail", "text": "DESYNC: stored graph has 36n/22e, fresh extraction has 37n/23e" },
+        { "kind": "out", "text": "graph.freshcheck.json removed (finally: never leave a 4th artifact)" }
+      ],
+      "state": {
+        "label": "two checks, two failure classes",
+        "before": {
+          "title": "WHAT EACH CHECK CATCHES",
+          "view": {
+            "type": "rows",
+            "columns": ["check", "compares", "catches", "misses"],
+            "rows": [
+              { "cells": ["timestamp", "mtime vs <code>git log -1</code>", "all four silent hook deaths", "a rebuild that ran but wrote partial output"] },
+              { "cells": ["<code>--cross-check</code>", "stored counts vs a fresh extraction", "artifact desync, refused overwrites", "an artifact that is wrong <em>and</em> consistently wrong"] }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Where it runs, and what it deliberately will not do",
+      "narrative": [
+        "Placement is the whole point: the gate goes <b>before</b> any agent-consuming step. A freshness check that runs after an agent has already acted on a stale map is a postmortem, not a gate. And it must block — warning-only freshness checks are ignored by their second week.",
+        "Notice what these sixty lines do not do: they never repair anything. They refuse to proceed and name the fix. Keeping detection and repair separate means a broken repair path can never silence detection.",
+        "Stay honest in both directions. Above the ~500-file floor the gate is cheap insurance against a rebuild cost that is genuinely brutal — betweenness centrality is O(V×E), and one 450K-node / 690K-edge monorepo was killed on a 96-core Xeon after <b>114 minutes</b> without finishing. Below the floor, the whole pipeline is ceremony and the gate is guarding nothing. Measure which side you are on before you adopt any of it.",
+        "The module's exit exam is a single sentence you should now be able to answer mechanically: <em>how would you detect a stale graph within 24 hours?</em> \"CI runs the gate on every push and blocks on lag &gt; 0\" passes. \"The hooks handle it\" does not."
+      ],
+      "youDo": "Add the gate as the first step of your pipeline, ahead of every job that reads the graph.",
+      "terminal": [
+        { "kind": "tool", "text": "ci.yml" },
+        { "kind": "out", "text": "- name: Graph freshness gate\n  run: python ci/freshness_gate.py . --max-age-commits 0 --cross-check\n- name: OKF bundle lint\n  run: python ci/validate.py knowledge\n- name: Agent-consuming jobs\n  run: ...        # only reachable if both gates passed" }
+      ],
+      "state": {
+        "label": "belief vs measurement",
+        "before": {
+          "title": "ANSWERS TO THE 24-HOUR QUESTION",
+          "view": {
+            "type": "rows",
+            "columns": ["answer", "verdict"],
+            "rows": [
+              { "cells": ["\"CI runs the freshness gate on every push and blocks on lag &gt; 0\"", "passes — mechanical"], "tone": "win" },
+              { "cells": ["\"A nightly job compares artifact timestamps to HEAD and pages past 6 hours\"", "passes — mechanical"], "tone": "win" },
+              { "cells": ["\"The MCP server exposes a status tool; the orchestrator refuses older graphs\"", "passes — mechanical"], "tone": "win" },
+              { "cells": ["\"We installed the hooks, so we're covered\"", "fails — a belief"], "tone": "bad" },
+              { "cells": ["\"We'd notice\" / \"it hasn't happened yet\"", "fails — a demo that hasn't failed yet"], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -37,7 +37,7 @@ sample-project/                    # your working repo (git init'd in M08)
 ### Phase 2 — Structural layer (steps 3–5)
 3. Generate the graph (`graphify update .` or `python ../shared_tools/kg_extract.py . --out graphify-out/graph.json`).
 4. Verify the ground-truth edges from `sample-project/README.md` all appear.
-5. Identify communities and the god node; write one paragraph in `NOTES.md` on what the god node means for refactoring risk. ✅ `shared/db.py` should top the in-degree list.
+5. Identify communities and the god node; write one paragraph in `NOTES.md` on what the god node means for refactoring risk. ✅ `shared/auth.py` tops the in-degree list (6), with `shared/db.py` at 5 — in-degree and betweenness rank them differently, which is worth a sentence in your NOTES.md.
 
 ### Phase 3 — Narrative layer (steps 6–8)
 6. Complete the M07 bundle (5 concepts + index.md + log.md).

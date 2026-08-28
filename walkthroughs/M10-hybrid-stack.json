@@ -1,0 +1,218 @@
+{
+  "id": "kg-hybrid-stack",
+  "badge": "WALKTHROUGH",
+  "color": "#06B6D4",
+  "time": "~5 min",
+  "title": "One question, three layers",
+  "spec": "M10 · which layer owns which question class",
+  "intro": "Send the same question to all three layers of the stack. Two of them fail, in two completely different ways — and then the question flips and the winner loses. The routing rule falls out of both results.",
+  "provenance": {
+    "kind": "illustrative",
+    "source": "a narrated session over labs/sample-project; the concept file, the graph server behaviour and the deliberately stale doc are real lab artifacts, cited per step"
+  },
+  "foot": "Do it for real: M10's Hands-On routes ten orderflow queries, then the router skeleton in <code>router.py</code> automates the same calls.",
+  "steps": [
+    {
+      "title": "One question, three places to send it",
+      "narrative": [
+        "orderflow has all three layers wired: a <b>vector index</b> over docs, tickets and Slack; a <b>structural graph</b> extracted from the AST; and an <b>OKF bundle</b> of curated concept files. Three retrieval mechanisms, one agent.",
+        "The question is the one that already cost this team money — <em>what is the canonical definition of weekly active users?</em> Nothing in its wording tells you which layer owns it. That decision is the whole subject of this module, so before building a router, ask all three and watch what comes back."
+      ],
+      "youDo": "Ask each layer the same thing, separately, and keep the three answers side by side: <code>What is the canonical definition of weekly active users?</code>",
+      "terminal": [
+        { "kind": "prompt", "text": "what is the canonical definition of weekly active users?" },
+        { "kind": "claude", "text": "Three retrieval surfaces are registered. I'll query each one\nindependently so we can compare what they return." }
+      ],
+      "state": {
+        "label": "the stack, before anyone routes anything",
+        "before": {
+          "title": "WHAT EACH LAYER OWNS",
+          "view": {
+            "type": "rows",
+            "columns": ["layer", "owns", "retrieval", "ingest cost"],
+            "rows": [
+              { "cells": ["vector RAG", "the unstructured long tail", "probabilistic — nearest neighbour", "embedding + re-indexing"] },
+              { "cells": ["structural graph", "what the code <b>is</b>", "deterministic — edge traversal", "zero-LLM AST parse"] },
+              { "cells": ["OKF bundle", "what engineers <b>know</b>", "deterministic — exact file", "curation labour (M08's pipeline)"] }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Vector RAG: the confidently wrong answer",
+      "narrative": [
+        "The vector index does exactly what it was built to do — it returns the <em>most similar</em> passage. That passage is a paragraph in <code>docs/architecture.md</code> that is dense with the right keywords and carries a definition the team retired months ago: <em>\"unique users with any API call in 7 days\"</em>, no tester exclusion.",
+        "Look at what the retrieval response does <b>not</b> contain: any signal that this text is superseded. Similarity is not canonicity, and no amount of prompt engineering converts one into the other. This is the M02 failure mode reproduced on purpose — the sample repo ships that paragraph so you can watch it happen."
+      ],
+      "claudeSays": "The layer returned its top-ranked chunk with a similarity score. The score says the text is close to the question. It says nothing at all about whether the text is true today.",
+      "source": "labs/sample-project/docs/architecture.md",
+      "terminal": [
+        { "kind": "tool", "text": "vector_search(\"canonical definition weekly active users\")" },
+        { "kind": "out", "text": "top hit  docs/architecture.md  (score 0.89)\n\"...WAU as unique users with any API call in 7 days...\"" },
+        { "kind": "claude", "text": "WAU is the count of unique users making any API call within a\nrolling 7-day window." },
+        { "kind": "gate", "text": "⏸  checked against services/orders/metrics.py" },
+        { "kind": "out-fail", "text": "✕ WRONG — canonical rule is completed orders, and testers are excluded" }
+      ],
+      "state": {
+        "label": "similarity vs canonicity",
+        "before": {
+          "title": "WHAT CAME BACK vs WHAT IS TRUE",
+          "view": {
+            "type": "rows",
+            "columns": ["rule", "retrieved answer", "canonical (metrics.py)"],
+            "rows": [
+              { "cells": ["window", "7 days", "7 days"], "tone": "win" },
+              { "cells": ["activity signal", "any API call", "<b>≥ 1 completed order</b>"], "tone": "bad" },
+              { "cells": ["internal testers", "not mentioned", "<b>excluded by name</b>"], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "The structural graph: an address, never a meaning",
+      "narrative": [
+        "Send the same question to the graph server and it answers honestly, which is not the same as usefully. <code>explore(\"weekly_active_users\")</code> returns a node kind and a file and line — a precise <b>address</b> — and, for this particular symbol, an empty caller list and an empty callee list. It cannot return the tester-exclusion rule, because that rule is not an edge.",
+        "This is the layer's defining limit, and it is a feature: the graph never guesses at intent. Ask it about a symbol it has never seen and it says so — <code>not in graph — it may be external; try grep</code> — instead of returning the nearest plausible thing. A layer that fails loudly is a layer a router can safely fall back from."
+      ],
+      "source": "labs/M09-mcp-graph-server/solution/server.py#explore",
+      "terminal": [
+        { "kind": "tool", "text": "explore(symbol=\"weekly_active_users\")" },
+        { "kind": "out", "text": "kind: function · location: services/orders/metrics.py:16\ncallers: [] · callees: [] · blast_radius: 0" },
+        { "kind": "claude", "text": "The graph tells me where the computation lives, not what rule it\nencodes. To answer I'd still have to open and read metrics.py." }
+      ],
+      "state": {
+        "label": "what an edge can and cannot carry",
+        "before": {
+          "title": "THE GRAPH'S ANSWER",
+          "view": {
+            "type": "json",
+            "data": {
+              "symbol": "weekly_active_users",
+              "kind": "function",
+              "location": "services/orders/metrics.py:16",
+              "callers": [],
+              "callees": [],
+              "blast_radius": 0,
+              "why_excludes_testers": "not representable as an edge"
+            },
+            "highlight": ["why_excludes_testers"]
+          }
+        }
+      }
+    },
+    {
+      "title": "OKF: the exact file, in one read",
+      "narrative": [
+        "The bundle has no ranking step and no search. <code>knowledge/analytics/metrics/weekly_active_users.md</code> either exists or it does not, and when it exists you get all of it: the 7-day window, the completed-order requirement, the three named tester accounts, and a <code>resource:</code> pointer at the code that <em>is</em> the definition.",
+        "That last line is the piece the other two layers structurally cannot produce. The concept is an <b>attested computation</b> — it does not merely describe WAU, it names <code>services/orders/metrics.py::weekly_active_users</code> as the source of truth, so a reader can check the prose against the code instead of trusting it."
+      ],
+      "source": "labs/M06-okf-authoring/solution/knowledge/analytics/metrics/weekly_active_users.md",
+      "terminal": [
+        { "kind": "tool", "text": "read_concept(\"analytics/metrics/weekly_active_users\")" },
+        { "kind": "out-pass", "text": "type: metric · resource: services/orders/metrics.py" },
+        { "kind": "claude", "text": "WAU = unique customer_id values with at least one COMPLETED order\ncompleted inside a rolling 7-day window, excluding cust_qa_1,\ncust_qa_2 and cust_loadtest. Source of truth: metrics.py." }
+      ],
+      "state": {
+        "label": "same question, two layers",
+        "before": {
+          "title": "BEFORE — routed to vector search",
+          "view": {
+            "type": "note",
+            "text": "\"Unique users making any API call within a rolling 7-day window.\" Retrieved with a 0.89 similarity score from a paragraph the team retired. <b>Wrong, with no signal that it is wrong.</b>"
+          }
+        },
+        "after": {
+          "title": "AFTER — routed to the bundle",
+          "view": {
+            "type": "stack",
+            "views": [
+              {
+                "type": "note",
+                "text": "\"Unique customers with ≥1 completed order in a rolling 7-day window, excluding internal test accounts.\" One file read, no ranking, no score."
+              },
+              {
+                "type": "rows",
+                "columns": ["required fact", "present?"],
+                "rows": [
+                  { "cells": ["7-day rolling window", "yes"], "tone": "win" },
+                  { "cells": ["completed orders, not API calls", "yes"], "tone": "win" },
+                  { "cells": ["tester exclusion, named accounts", "yes"], "tone": "win" },
+                  { "cells": ["pointer to the attested computation", "yes"], "tone": "win" }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Flip the question and the winner loses",
+      "narrative": [
+        "Now ask <em>who calls <code>verify_token</code>, directly and transitively?</em> and the ranking inverts completely. The bundle has no concept for it — and if you wrote one, its caller list would be stale by the next merge, which is exactly the hand-maintained map this course exists to stop writing. Vector search returns prose that mentions authentication and answers nothing.",
+        "The graph answers in one call, deterministically, with provenance on every edge: <code>verify_token → decode_jwt</code>, EXTRACTED, same file. Two questions, two winners, two different losers. That is what \"complementary, not competing\" actually looks like in a terminal."
+      ],
+      "youDo": "Run both questions against all three layers yourself in the M10 Hands-On, and note which failures are loud and which are silent.",
+      "source": "labs/sample-project/README.md",
+      "terminal": [
+        { "kind": "prompt", "text": "who calls verify_token, directly and transitively?" },
+        { "kind": "tool", "text": "read_concept(\"security/verify-token\") → no such concept" },
+        { "kind": "tool", "text": "vector_search(\"who calls verify_token\") → 4 doc chunks about auth, 0 callers" },
+        { "kind": "tool", "text": "graph_callers(symbol=\"verify_token\")" },
+        { "kind": "out-pass", "text": "callers: [\"services.billing.app.post_invoice\"] · verify_token → decode_jwt (EXTRACTED)" }
+      ],
+      "state": {
+        "label": "two question classes, opposite verdicts",
+        "before": {
+          "title": "WHO WINS WHAT",
+          "view": {
+            "type": "rows",
+            "columns": ["question", "class", "right layer", "wrong layer fails how"],
+            "rows": [
+              { "cells": ["canonical WAU definition", "canonical", "<b>OKF bundle</b>", "RAG: confidently wrong, no signal"], "tone": "win" },
+              { "cells": ["who calls <code>verify_token</code>", "structural", "<b>graph</b>", "OKF: no concept; RAG: prose, no edges"], "tone": "win" },
+              { "cells": ["themes in last quarter's tickets", "exploratory", "<b>vector RAG</b>", "graph: not in graph; OKF: nobody curated it"], "tone": "win" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "The routing rule",
+      "narrative": [
+        "Three questions is enough to write the rule down: <b>structure → graph, canon → bundle, everything undocumented → search.</b> A router is forty lines of dispatch over layers you already built, and its only job is to keep each question inside the jurisdiction where it can be answered deterministically.",
+        "One asymmetry matters more than the classification: every fallback degrades <em>toward</em> vector search and <b>never</b> toward OKF. Search is honestly probabilistic and always available; a fuzzy answer wearing the bundle's authority is precisely the failure step 2 just showed you.",
+        "The sibling course measured the same shape on a different domain. Across ten standing questions, median input tokens ran naive <b>1,696</b> · graph <b>443</b> · okf <b>186</b> · notes <b>197</b> — with every arm correct <em>except</em> naive, which failed an abstention question, and compressed, which failed an aggregation question. Cheapest and correct were not the same column, and neither was any single arm."
+      ],
+      "claudeSays": "Classify, dispatch, log the decision. When a layer returns a graceful miss, catch it and fall through — do not retry the same layer with a reworded question.",
+      "state": {
+        "label": "the router, and what justifies it",
+        "before": {
+          "title": "THE DISPATCH TABLE",
+          "view": {
+            "type": "rows",
+            "columns": ["cue in the question", "route to", "on a miss"],
+            "rows": [
+              { "cells": ["who calls · depends on · blast radius · cycle", "graph server (M09)", "degrade to vector search"] },
+              { "cells": ["canonical · definition of · SLA · runbook", "OKF concept file (M06)", "say so — never guess"] },
+              { "cells": ["anything else", "vector search", "it <em>is</em> the fallback"] }
+            ]
+          }
+        },
+        "after": {
+          "title": "WHY BOTHER — the accuracy case, not the token case",
+          "view": {
+            "type": "bars",
+            "unit": "% key-fact coverage",
+            "max": 100,
+            "items": [
+              { "label": "baseline agent", "value": 70.8, "tone": "bad", "note": "vector RAG + grep exploration, ERPNext (1M+ LOC)" },
+              { "label": "graph + OKF hybrid", "value": 82.0, "tone": "win", "note": "+11.2 points · ~140K tokens per query session" }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
