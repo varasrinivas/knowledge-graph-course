@@ -1,0 +1,306 @@
+{
+  "id": "kg-four-arms",
+  "badge": "WALKTHROUGH",
+  "color": "#D4A843",
+  "time": "~7 min",
+  "title": "Four arms, one flip",
+  "spec": "Capstone 2 · the measured comparison",
+  "intro": "Same model, same questions, same repo snapshot. Change only how the context reaches the agent and run 48 fresh sessions. One arm cuts structural lookups by a quarter and then doubles the bill on comprehension — and on a small repo every graph arm loses outright.",
+  "provenance": {
+    "kind": "measured",
+    "source": "labs/CAPSTONE-2-java-token-benchmark/live_bench/SCENARIOS.md, labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-multi.json"
+  },
+  "foot": "Every figure is a median of 3 independent fresh <code>claude -p</code> sessions, Sonnet on all arms · raw datasets in <code>expected_output/live-run-multi.json</code> and <code>live-run-priorauth.json</code>",
+  "steps": [
+    {
+      "title": "One question set, four ways to answer it",
+      "narrative": [
+        "The repo is <b>spring-framework</b>: 9,195 Java files. The question set is four questions, split on purpose into two classes. <b>Structural</b> — \"who calls X?\" — is answerable from a call graph. <b>Logic</b> — \"why does X happen, and by what mechanism?\" — needs comprehension.",
+        "Four arms differ in exactly one variable each. Baseline is the control: a normal agent, file tools, clean repo. Init adds curated <code>CLAUDE.md</code> files and changes nothing else. Available registers the graph MCP server next to the file tools. Forced takes the file tools away entirely.",
+        "Three repetitions per cell, because identical sessions varied by up to 2x. One run is a coin flip; the medians below come from 48 sessions."
+      ],
+      "youDo": "Build the graph and smoke-test the server first: <code>python ../../shared_tools/kg_extract_java.py D:/tmp/spring-framework --out D:/tmp/spring-graph.json --quiet</code>, then run the server standalone and confirm it prints <code>serving over stdio</code>.",
+      "source": "labs/CAPSTONE-2-java-token-benchmark/live_bench/questions.json, labs/CAPSTONE-2-java-token-benchmark/live_bench/SCENARIOS.md#common-setup",
+      "terminal": [
+        { "kind": "prompt", "text": "cat live_bench/questions.json" },
+        { "kind": "out", "text": "S1 structural  Who calls registerBeanDefinition in this codebase?" },
+        { "kind": "out", "text": "S2 structural  Which methods call ResolvableType.forClass?" },
+        { "kind": "out", "text": "L1 logic       Why can registerBeanDefinition throw BeanDefinitionOverrideException?" },
+        { "kind": "out", "text": "L2 logic       During refresh(), are bean definitions added by a BeanFactoryPostProcessor\n               picked up by subsequently-run post-processors?" }
+      ],
+      "state": {
+        "label": "the four arms · one variable each",
+        "before": {
+          "title": "WHAT EACH ARM SIMULATES",
+          "view": {
+            "type": "rows",
+            "columns": ["arm", "tools allowed", "the one variable"],
+            "rows": [
+              { "cells": ["<code>baseline</code>", "Read, Glob, Grep", "nothing added — the control"] },
+              { "cells": ["<code>init</code>", "Read, Glob, Grep", "a CLAUDE.md in every <code>spring-*</code> module (22 files)"] },
+              { "cells": ["<code>available</code>", "files <b>+</b> graph_callers, graph_callees, explore", "\"prefer the graph; fall back only if it cannot answer\""] },
+              { "cells": ["<code>forced</code>", "graph tools only — nothing else", "no file access at all"] }
+            ]
+          }
+        },
+        "after": {
+          "title": "THE RULES THAT MAKE IT A MEASUREMENT",
+          "view": {
+            "type": "note",
+            "text": "Baseline runs <b>first</b>, before init ever writes a file into the repo, or the control is contaminated — the runner records <code>repo_claude_md_count</code> per run and warns. Same model, same questions, same snapshot on every arm. And run a forced smoke session before trusting any graph-arm number: it is the only arm with no fallback to hide a dead server behind."
+          }
+        }
+      }
+    },
+    {
+      "title": "Arm 1 — baseline, and it is not the strawman",
+      "narrative": [
+        "The control answered \"who calls <code>registerBeanDefinition</code>?\" in <b>3 turns</b> for <b>116,039 tokens</b>, without opening files wholesale. That is the number every other arm has to beat.",
+        "This matters more than it looks. The mechanical benchmark earlier in this capstone predicted a 33.7x advantage for the graph, because it modelled exploration as reading whole files. A real agent's Grep returns matching <em>lines</em>. Any tool that wants to win has to beat line-granular grep, not the whole-file strawman."
+      ],
+      "youDo": "<code>python run_live_bench.py D:/tmp/spring-framework --arms baseline --reps 3</code> — first, on a clean repo, before anything else touches it.",
+      "source": "labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-multi.json#baseline",
+      "terminal": [
+        { "kind": "prompt", "text": "python run_live_bench.py D:/tmp/spring-framework --arms baseline --reps 3" },
+        { "kind": "out", "text": "repo_claude_md_count: 0  ✓ clean control" },
+        { "kind": "tool", "text": "Grep  \"registerBeanDefinition\"  → matching lines, not files" },
+        { "kind": "out-pass", "text": "S1 baseline  rep0 5t 167,742  rep1 3t 116,039  rep2 3t 112,982   median 3t 116,039" },
+        { "kind": "out", "text": "structural 240K · logic 345K · all four 585K" }
+      ],
+      "state": {
+        "label": "measured · baseline · medians of 3",
+        "before": {
+          "title": "THE NUMBER TO BEAT",
+          "view": {
+            "type": "rows",
+            "columns": ["question", "class", "turns", "tokens"],
+            "rows": [
+              { "cells": ["S1 · calls registerBeanDefinition", "structural", "3", "116,039"] },
+              { "cells": ["S2 · calls ResolvableType.forClass", "structural", "3", "124,583"] },
+              { "cells": ["L1 · why BeanDefinitionOverrideException", "logic", "6", "231,012"] },
+              { "cells": ["L2 · post-processor re-scan", "logic", "3", "113,808"] },
+              { "cells": ["<b>all four</b>", "—", "—", "<b>585K</b>"], "tone": "win" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Arm 2 — init: a map, not an index",
+      "narrative": [
+        "Generate a <code>CLAUDE.md</code> for each of the 22 <code>spring-*</code> modules, change nothing else, and re-run. The average is a wash: <b>600K, +2%</b>, plus a one-time generation cost of about $3.40.",
+        "The average hides the story. On S1 the curated map sent the agent straight to the right module — <b>81,352 tokens in 2 turns, a 30% win</b>. On S2 the same auto-loaded context never paid for itself: <b>+58%</b>. It helps most on the logic side, where orientation is the bottleneck, at <b>321K, −7%</b>.",
+        "The read: a <code>CLAUDE.md</code> is orientation and conventions, not a lookup index. It pays when the session's first problem is \"where do I even start?\" and taxes you when it isn't."
+      ],
+      "youDo": "<code>python init_claude_mds.py D:/tmp/spring-framework --prefix spring-</code>, run the arm, then <code>--remove</code> to restore the clean repo. Note the gotcha: <code>/init</code> does not fire in <code>claude -p</code> mode, so the script issues an explicit \"analyze this module and Write CLAUDE.md\" instruction instead.",
+      "source": "labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-multi.json#init, labs/CAPSTONE-2-java-token-benchmark/live_bench/SCENARIOS.md#scenario-2",
+      "terminal": [
+        { "kind": "prompt", "text": "python init_claude_mds.py D:/tmp/spring-framework --prefix spring-" },
+        { "kind": "out", "text": "22 modules · ~35s each · resumable · ~$0.15/module" },
+        { "kind": "prompt", "text": "python run_live_bench.py D:/tmp/spring-framework --arms init --reps 3" },
+        { "kind": "out", "text": "repo_claude_md_count: 22" },
+        { "kind": "out-pass", "text": "S1 init  median 2t 81,352   (baseline 3t 116,039 → −30%)" },
+        { "kind": "out-fail", "text": "S2 init  median 4t 196,892  (baseline 3t 124,583 → +58%)" }
+      ],
+      "state": {
+        "label": "measured · init vs baseline",
+        "before": {
+          "title": "BEFORE — baseline",
+          "view": {
+            "type": "bars",
+            "unit": "tokens",
+            "max": 420000,
+            "items": [
+              { "label": "S1 structural", "value": 116039, "note": "3 turns" },
+              { "label": "S2 structural", "value": 124583, "note": "3 turns" }
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — with 22 CLAUDE.mds",
+          "view": {
+            "type": "bars",
+            "unit": "tokens",
+            "max": 420000,
+            "items": [
+              { "label": "S1 structural", "value": 81352, "tone": "win", "note": "2 turns · −30% · the map pointed at the right module" },
+              { "label": "S2 structural", "value": 196892, "tone": "bad", "note": "4 turns · +58% · the context rode along and never paid off" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Arm 3 — available: paying for both paths",
+      "narrative": [
+        "This is the integration almost everyone actually ships: register the graph MCP server alongside the normal tools and tell the model to prefer it. The model chooses.",
+        "It was the <b>worst arm in the campaign</b> on structural questions: <b>570K, +137%</b>. On S2 it burned <b>10 turns and 415,455 tokens</b> — worse than having no graph at all.",
+        "The mechanism is not stupidity. The model queried the graph, got back a bare-name answer with over a thousand candidates, correctly did not trust it, and re-verified against files. It paid for both retrieval paths. That distrust is <em>rational</em> given a teaching-grade graph's AMBIGUOUS fan-out; a type-resolved production graph earns trust by answering compactly."
+      ],
+      "youDo": "<code>python run_live_bench.py D:/tmp/spring-framework --arms available --reps 3 --mcp-config mcp.json</code>",
+      "source": "labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-multi.json#available",
+      "terminal": [
+        { "kind": "prompt", "text": "python run_live_bench.py D:/tmp/spring-framework --arms available --reps 3 --mcp-config mcp.json" },
+        { "kind": "tool", "text": "graph_callers(symbol=\"forClass\")" },
+        { "kind": "out", "text": "bare-name resolution: every overload merged into one candidate list · AMBIGUOUS" },
+        { "kind": "tool", "text": "Grep + Read  … re-verifying the graph's candidates against source" },
+        { "kind": "out-fail", "text": "S2 available  median 10t 415,455   (baseline 3t 124,583 → +233%)" },
+        { "kind": "out-fail", "text": "structural 570K (+137%) · logic 389K (+13%) · all four 959K" }
+      ],
+      "state": {
+        "label": "measured · S1 and S2, three arms so far",
+        "before": {
+          "title": "S1 — WHO CALLS registerBeanDefinition",
+          "view": {
+            "type": "rows",
+            "columns": ["arm", "turns", "tokens", "vs baseline"],
+            "rows": [
+              { "cells": ["baseline", "3", "116,039", "control"] },
+              { "cells": ["init", "2", "81,352", "−30%"], "tone": "win" },
+              { "cells": ["available", "4", "154,274", "+33%"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "S2 — WHO CALLS ResolvableType.forClass",
+          "view": {
+            "type": "rows",
+            "columns": ["arm", "turns", "tokens", "vs baseline"],
+            "rows": [
+              { "cells": ["baseline", "3", "124,583", "control"] },
+              { "cells": ["init", "4", "196,892", "+58%"], "tone": "bad" },
+              { "cells": ["available", "10", "415,455", "+233% — the worst cell in the grid"], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Arm 4 — forced: one turn, 41,824 tokens",
+      "narrative": [
+        "Take the file tools away. The graph is the only search surface, and the prompt tells the model to note honestly where AMBIGUOUS provenance leaves it uncertain.",
+        "S1 came back in <b>one turn for 41,824 tokens</b> — <b>64% under baseline</b>. Across both structural questions the arm landed at <b>178K, −26%</b>: the only arm in the campaign that beat the control on structural lookups.",
+        "The finding is not \"graphs are cheaper\". It is that <b>forcing is what unlocks the win</b>. Remove the option to double-check and the graph's one-call answers finally beat grep — which is precisely why the available arm, same graph and same model, lost by 137%."
+      ],
+      "youDo": "<code>python run_live_bench.py D:/tmp/spring-framework --arms forced --reps 3 --mcp-config mcp.json</code>. Run this arm before you trust any other graph-arm number — with no file tools to fall back on, a broken server says so out loud.",
+      "source": "labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-multi.json#forced",
+      "terminal": [
+        { "kind": "prompt", "text": "python run_live_bench.py D:/tmp/spring-framework --arms forced --reps 3 --mcp-config mcp.json" },
+        { "kind": "tool", "text": "graph_callers(symbol=\"registerBeanDefinition\")" },
+        { "kind": "out-pass", "text": "S1 forced  median 1t 41,824   (baseline 3t 116,039 → −64%)" },
+        { "kind": "out-pass", "text": "S2 forced  median 3t 136,492   (baseline 3t 124,583 → +10%)" },
+        { "kind": "out-pass", "text": "structural 178K (−26%)  ← the only arm to beat baseline" }
+      ],
+      "state": {
+        "label": "measured · structural totals · S1 + S2",
+        "before": {
+          "title": "BEFORE — everything that lost",
+          "view": {
+            "type": "bars",
+            "unit": "tokens",
+            "max": 580000,
+            "items": [
+              { "label": "baseline", "value": 240622, "note": "the control" },
+              { "label": "init", "value": 278244, "tone": "bad", "note": "+16%" },
+              { "label": "available", "value": 569729, "tone": "bad", "note": "+137% — worst arm" }
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — forced joins the chart",
+          "view": {
+            "type": "bars",
+            "unit": "tokens",
+            "max": 580000,
+            "items": [
+              { "label": "baseline", "value": 240622, "note": "the control" },
+              { "label": "init", "value": 278244, "tone": "bad", "note": "+16%" },
+              { "label": "available", "value": 569729, "tone": "bad", "note": "+137% — worst arm" },
+              { "label": "forced", "value": 178316, "tone": "win", "note": "−26% · S1 answered in a single turn" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "The flip: same arm, logic questions, +120%",
+      "narrative": [
+        "Now ask the winner a question a call graph was never built to answer. \"Why can <code>registerBeanDefinition</code> throw <code>BeanDefinitionOverrideException</code>?\" The forced agent got it <b>right</b> — it walked callee edges and reconstructed the override-guard chain — in <b>12 turns for 523,791 tokens</b>, against baseline's <b>6 turns and 231,012</b>, which included simply reading the file.",
+        "Across both logic questions: <b>758K, +120%</b>. The graph can substitute for reading code, expensively. It cannot beat reading code at comprehension.",
+        "One confound reported rather than buried: Spring is in the model's training data, so edge-walking partly <em>confirmed</em> logic it already knew. On a private codebase that same graph-shaped confidence over unread code is a hallucination risk, not a capability."
+      ],
+      "youDo": "Add <code>--forced-logic</code> to include the \"why\" questions in the forced arm — it is the expensive run, and it is the one that produces this finding.",
+      "source": "labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-multi.json, labs/CAPSTONE-2-java-token-benchmark/live_bench/SCENARIOS.md#the-combined-result",
+      "terminal": [
+        { "kind": "prompt", "text": "python run_live_bench.py D:/tmp/spring-framework --arms forced --reps 3 --mcp-config mcp.json --forced-logic" },
+        { "kind": "tool", "text": "graph_callees(symbol=\"registerBeanDefinition\")  … rebuilding the guard chain from edges alone" },
+        { "kind": "out-fail", "text": "L1 forced  median 12t 523,791  (baseline 6t 231,012 → +127%)" },
+        { "kind": "out-fail", "text": "L2 forced  median 8t 234,139   (baseline 3t 113,808 → +106%)" },
+        { "kind": "out", "text": "answers correct in both — cost, not accuracy, is what moved" }
+      ],
+      "state": {
+        "label": "measured · the whole grid · medians of 3 fresh sessions",
+        "before": {
+          "title": "NO ARM WINS EVERYWHERE — THAT IS THE FINDING",
+          "view": {
+            "type": "rows",
+            "columns": ["arm", "structural", "logic", "all four"],
+            "rows": [
+              { "cells": ["<code>baseline</code>", "240K", "345K", "<b>585K</b>"] },
+              { "cells": ["<code>init</code>", "278K (+16%)", "<b>321K (−7%)</b>", "600K (+2%)"] },
+              { "cells": ["<code>available</code>", "570K (+137%)", "389K (+13%)", "959K"], "tone": "bad" },
+              { "cells": ["<code>forced</code>", "<b>178K (−26%)</b>", "758K (+120%)", "936K"], "tone": "win" }
+            ]
+          }
+        },
+        "after": {
+          "title": "THE SYNTHESIS — M10's ROUTER, DERIVED FROM DATA",
+          "view": {
+            "type": "note",
+            "text": "Route structural questions to the forced graph and everything else to files: <b>178K + 345K ≈ 523K</b> for this question set, against 585K all-baseline. Each layer serves only the question class it is good at. Two honesty notes to carry with the table: the forced arm's dollar-cost field did not reconcile with its usage fields, so <b>tokens and turns are the trustworthy columns there</b>; and S2 under forcing had wild spread (45K–698K) because bare-name resolution merges overloads into thousand-caller answers."
+          }
+        }
+      }
+    },
+    {
+      "title": "The counterpoint: 36 files, and every graph arm loses",
+      "narrative": [
+        "Same four scenarios, same methodology, another 48 sessions — on <b>priorauth-api-boot3</b>, a 36-file Spring Boot service. The verdict flips completely.",
+        "One 55-line root <code>CLAUDE.md</code> is the best arm overall at <b>565K, −10%</b>, and <b>−38%</b> on the orientation-heavy logic question, where the map pointed straight at <code>CriteriaScoringService</code>. The graph loses in every configuration — including forced, at <b>+84%</b>. At 36 files grep answers a caller question in two turns, the graph is tiny and half AMBIGUOUS, and forced edge-walking burned 17 to 18 turns on the \"why\" questions.",
+        "This is the roughly 500-file payoff floor measured live instead of asserted, and it is the sharpest form of the course's closing lesson: <b>which context lever wins is a property of the repo and the question mix, not of the tool.</b> Big haystack plus structural questions, force the graph. Small repo one person can hold in their head, write one good CLAUDE.md. The only way to know which world you are in is the measurement you just learned to run."
+      ],
+      "youDo": "Run the same campaign on your own repo. Report your grid with the arm definitions attached — a token multiple without an integration mode and a question mix beside it is not a result.",
+      "source": "labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-priorauth.json, labs/CAPSTONE-2-java-token-benchmark/live_bench/SCENARIOS.md#worked-example-2",
+      "state": {
+        "label": "measured · priorauth-api-boot3 · 36 files · medians of 3, 48 sessions",
+        "before": {
+          "title": "PER QUESTION",
+          "view": {
+            "type": "rows",
+            "columns": ["question", "baseline", "init (root CLAUDE.md)", "available", "forced"],
+            "rows": [
+              { "cells": ["who calls <code>setStatus</code>", "160K · 4t", "<b>118K · 3t</b>", "228K · 7t", "188K · 6t"] },
+              { "cells": ["who calls <code>findByMemberNumber</code>", "<b>74K · 2t</b>", "77K · 2t", "149K · 4t", "149K · 4t"] },
+              { "cells": ["when does MANUAL_REVIEW happen", "196K · 7t", "<b>120K · 3t</b>", "195K · 7t", "468K · 17t"], "tone": "bad" },
+              { "cells": ["eligibility exception semantics", "<b>199K · 7t</b>", "250K · 9t", "283K · 10t", "352K · 18t"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "ALL FOUR — THE VERDICT FLIPPED",
+          "view": {
+            "type": "bars",
+            "unit": "tokens",
+            "max": 1156000,
+            "items": [
+              { "label": "init", "value": 565393, "tone": "win", "note": "−10% · one 55-line root CLAUDE.md, the best arm" },
+              { "label": "baseline", "value": 628728, "note": "the control" },
+              { "label": "available", "value": 854725, "tone": "bad", "note": "+36%" },
+              { "label": "forced", "value": 1155853, "tone": "bad", "note": "+84% · the winner on spring-framework, last here" }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

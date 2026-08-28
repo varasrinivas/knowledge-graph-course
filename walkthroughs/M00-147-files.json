@@ -1,0 +1,224 @@
+{
+  "id": "kg-147-files",
+  "badge": "WALKTHROUGH",
+  "color": "#D4A843",
+  "time": "~4 min",
+  "title": "The 147-file bug fix",
+  "spec": "M00 · exploration vs reasoning",
+  "intro": "A three-line fix that cost a hundred and seventy thousand tokens to find. Step through the session and watch where the money actually goes.",
+  "provenance": {
+    "kind": "illustrative",
+    "source": "the session is a narrated composite; steps 5-6 carry measured numbers, cited per step"
+  },
+  "foot": "The measured version of this comparison is Capstone 2 · <code>live_bench/SCENARIOS.md</code>",
+  "steps": [
+    {
+      "title": "The ask — three lines, if you knew where they were",
+      "narrative": [
+        "A developer asks their coding agent to fix a session-timeout bug in the authentication middleware. The fix will turn out to be <b>three lines</b>: one wrong comparison operator, plus a small test that pins it.",
+        "Nobody knows that yet — least of all the agent. Watch the context window on the right: right now it holds a system prompt, the tool definitions, and the question. That is the whole budget being spent on <em>thinking</em>."
+      ],
+      "youDo": "Ask for the fix the way you actually would — in one sentence, with no map attached.",
+      "terminal": [
+        { "kind": "prompt", "text": "sessions are timing out early — find and fix it in the auth middleware" },
+        { "kind": "claude", "text": "I'll locate the session-timeout logic first. Starting with the auth\nmiddleware, then following whatever it depends on." }
+      ],
+      "state": {
+        "label": "context window · turn 1",
+        "before": {
+          "title": "BEFORE — nothing but the question",
+          "view": {
+            "type": "window",
+            "label": "200K window",
+            "capacity": 200000,
+            "layers": [
+              { "label": "system", "tokens": 1200 },
+              { "label": "tool defs", "tokens": 1180 },
+              { "label": "history", "tokens": 0 },
+              { "label": "file reads", "tokens": 0 },
+              { "label": "your turn", "tokens": 60 }
+            ],
+            "note": "1% full. Every token in here is doing useful work."
+          }
+        }
+      }
+    },
+    {
+      "title": "It starts reading",
+      "narrative": [
+        "The agent greps, opens a file, finds an import, opens that one too. It reads the logging system. It reads the database migration history. It reads half the API endpoints. For reasons known only to itself, it reads the Terraform configs.",
+        "Every one of those was a <em>reasonable guess</em>. With no map of the codebase, following imports outward is the only search strategy available. Toggle <b>Before / After</b> to see what forty more file reads does to the window."
+      ],
+      "claudeSays": "Each read is cheap on its own — a few hundred to a few thousand tokens. It is the fan-out that costs, and the fan-out has no stopping rule.",
+      "terminal": [
+        { "kind": "tool", "text": "Grep  \"timeout\"  (68 matches across 41 files)" },
+        { "kind": "tool", "text": "Read  src/auth/middleware.py" },
+        { "kind": "tool", "text": "Read  src/auth/session.py" },
+        { "kind": "tool", "text": "Read  src/config/settings.py" },
+        { "kind": "out", "text": "… 34 more Read calls" },
+        { "kind": "tool", "text": "Read  infra/terraform/redis.tf" },
+        { "kind": "claude", "text": "Still narrowing. The timeout constant is referenced in several\nplaces and I can't yet tell which one the middleware honours." }
+      ],
+      "state": {
+        "label": "context window · turn 12",
+        "before": {
+          "title": "BEFORE — four files in",
+          "view": {
+            "type": "window",
+            "label": "200K window",
+            "capacity": 200000,
+            "layers": [
+              { "label": "system", "tokens": 1200 },
+              { "label": "tool defs", "tokens": 1180 },
+              { "label": "history", "tokens": 900 },
+              { "label": "file reads", "tokens": 9400 },
+              { "label": "your turn", "tokens": 60 }
+            ],
+            "note": "6% full, and still nothing that answers the question."
+          }
+        },
+        "after": {
+          "title": "AFTER — forty more files",
+          "view": {
+            "type": "window",
+            "label": "200K window",
+            "capacity": 200000,
+            "layers": [
+              { "label": "system", "tokens": 1200 },
+              { "label": "tool defs", "tokens": 1180 },
+              { "label": "history", "tokens": 8600 },
+              { "label": "file reads", "tokens": 74000 },
+              { "label": "your turn", "tokens": 60 }
+            ],
+            "highlight": ["file reads"],
+            "note": "43% full. The file-reads layer now dwarfs everything the agent is actually reasoning with."
+          }
+        }
+      }
+    },
+    {
+      "title": "Escape at 147",
+      "narrative": [
+        "The developer watches the file counter climb — 50, 90, 120 — and hits Escape at file <b>147</b>. No fix, no diagnosis, and a bill.",
+        "The natural reaction is to blame the model: <em>it's not smart enough to know where to look.</em> Hold that thought for one more step, because the diagnosis is wrong and the wrongness is the whole point of this course."
+      ],
+      "terminal": [
+        { "kind": "tool", "text": "Read  src/api/reports/export.py" },
+        { "kind": "out", "text": "files read: 147" },
+        { "kind": "gate", "text": "⎋  interrupted by user" },
+        { "kind": "out-fail", "text": "no fix proposed · 176,400 tokens spent · $0.53" }
+      ],
+      "state": {
+        "label": "where the tokens went",
+        "before": {
+          "title": "THE SPLIT — exploration vs reasoning",
+          "view": {
+            "type": "bars",
+            "unit": "tokens",
+            "items": [
+              { "label": "exploration", "value": 173300, "tone": "bad", "note": "finding things: greps, reads, and the transcript of both" },
+              { "label": "reasoning", "value": 3100, "tone": "win", "note": "actually thinking about the bug" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "The diagnosis: no map, not low IQ",
+      "narrative": [
+        "Look at what the agent read against what it needed. It was not being stupid; it was doing exactly what any competent newcomer does on their first day in an unfamiliar codebase — opening things to find out what they are.",
+        "A newcomer only does that <b>once</b>. They build a mental map and never pay the cost again. An agent starts every session at zero. <b>That</b> is the problem this course exists to solve: not a smarter model, a durable map."
+      ],
+      "state": {
+        "label": "read vs needed",
+        "before": {
+          "title": "147 files opened",
+          "view": {
+            "type": "rows",
+            "columns": ["what it read", "files", "was it needed?"],
+            "rows": [
+              { "cells": ["auth middleware + session", "6", "yes — the fix is here"], "tone": "win" },
+              { "cells": ["config &amp; settings", "11", "partly — one constant"] },
+              { "cells": ["API endpoints", "48", "no"], "tone": "bad" },
+              { "cells": ["logging &amp; telemetry", "22", "no"], "tone": "bad" },
+              { "cells": ["database migrations", "31", "no"], "tone": "bad" },
+              { "cells": ["Terraform / infra", "29", "no"], "tone": "bad" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "The same question, with a map",
+      "narrative": [
+        "Now the measured version. On <b>spring-framework</b> — 9,195 Java files — we asked a mechanical benchmark the structural question an agent asks constantly: <em>who calls this method?</em>",
+        "Without a graph, answering for <code>registerBeanDefinition</code> means 174 file operations and 764,534 tokens of source. With a structural graph already built, it is <b>one lookup</b> returning all 1,037 callers.",
+        "Toggle Before / After. The reduction here is 93.9% — a 16.4× multiple — and it is the honest middle of the range, not the headline."
+      ],
+      "youDo": "Reproduce this yourself in Capstone 2: extract the graph, then run <code>measure_tokens.py</code> against your own repo.",
+      "terminal": [
+        { "kind": "prompt", "text": "who calls registerBeanDefinition?" },
+        { "kind": "tool", "text": "graph_callers(symbol=\"registerBeanDefinition\")" },
+        { "kind": "out-pass", "text": "1037 callers · 1 operation · 46,540 tokens" },
+        { "kind": "claude", "text": "Callers are concentrated in three clusters: XML definition readers,\nannotation scanners, and the test fixtures. Here they are by module…" }
+      ],
+      "source": "labs/CAPSTONE-2-java-token-benchmark/expected_output/bench-spring.json#registerBeanDefinition",
+      "state": {
+        "label": "spring-framework · 9,195 files",
+        "before": {
+          "title": "BEFORE — read your way to the answer",
+          "view": {
+            "type": "bars",
+            "unit": "tokens",
+            "max": 764534,
+            "items": [
+              { "label": "no graph", "value": 764534, "tone": "bad", "note": "174 file operations" }
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — ask the graph",
+          "view": {
+            "type": "bars",
+            "unit": "tokens",
+            "max": 764534,
+            "items": [
+              { "label": "no graph", "value": 764534, "tone": "bad", "note": "174 file operations" },
+              { "label": "graph", "value": 46540, "tone": "win", "note": "1 operation · 1,037 callers found · 93.9% less" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "And the caveat that keeps you honest",
+      "narrative": [
+        "That 16.4× is a <b>mechanical</b> measurement: whole-file reading versus one graph call. Real agents are cleverer than that — their grep returns matching <em>lines</em>, not whole files — so the live numbers are far less flattering.",
+        "Here is the same structural question run through actual agent sessions. The graph arm used <b>more</b> tokens than the baseline, because the agent still explored around the graph's answer. Below roughly 500 files, the tooling tax exceeds the savings entirely.",
+        "You will meet the full four-arm comparison in Capstone 2. For now, take the shape of the problem — most of your bill is exploration — and treat every published multiple with suspicion, including ours."
+      ],
+      "source": "labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-summary.json#S1",
+      "state": {
+        "label": "live agent sessions · S1 \"who calls registerBeanDefinition\"",
+        "before": {
+          "title": "MEASURED — median of independent fresh sessions",
+          "view": {
+            "type": "rows",
+            "columns": ["arm", "turns", "tokens read", "cost", "verdict"],
+            "rows": [
+              { "cells": ["baseline (grep + read)", "4", "100,791", "$0.093", "both answered correctly"], "tone": "win" },
+              { "cells": ["graph tools offered", "5", "187,112", "$0.138", "+86% tokens, same answer"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "WHAT TO TAKE FROM IT",
+          "view": {
+            "type": "note",
+            "text": "A map is not automatically cheaper — it is cheaper when the question is structural, the repo is large, and the agent is told to prefer the graph over grep. Getting those three conditions right is what the next thirteen modules are for."
+          }
+        }
+      }
+    }
+  ]
+}

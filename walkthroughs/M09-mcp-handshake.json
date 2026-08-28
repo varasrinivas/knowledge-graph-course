@@ -1,0 +1,254 @@
+{
+  "id": "kg-mcp-handshake",
+  "badge": "WALKTHROUGH",
+  "color": "#8B5CF6",
+  "time": "~5 min",
+  "title": "Three round trips to an answer",
+  "spec": "M09 · registering, announcing, calling",
+  "intro": "Wire a graph server into an agent and follow the JSON. Two of the three round trips happen once per session; only the third is paid per question — and one of them is the smoke test that stops you shipping a benchmark built on a dead server.",
+  "provenance": {
+    "kind": "measured",
+    "source": "labs/M09-mcp-graph-server/solution/server.py#selftest, labs/sample-project, labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-multi.json#S1"
+  },
+  "foot": "Every tool response below is this server's real output over orderflow — reproduce with <code>python labs/M09-mcp-graph-server/solution/server.py --selftest</code>",
+  "steps": [
+    {
+      "title": "One line to register",
+      "narrative": [
+        "There is no deployment step here. You are telling the assistant: when a session starts in this project, spawn this subprocess and speak JSON to it over its stdin and stdout. No port, no daemon, no auth.",
+        "Everything after the <code>--</code> is the command line the client will run. Point it at the server file and, for anything other than orderflow, at a prebuilt graph with <code>--graph</code>. Absolute paths — the client does not inherit your shell's working directory."
+      ],
+      "youDo": "<code>claude mcp add orderflow-graph -- python /absolute/path/to/labs/M09-mcp-graph-server/solution/server.py</code>. For a scripted run, write the same thing as a config file instead and pass <code>--mcp-config mcp.json</code>.",
+      "source": "labs/CAPSTONE-2-java-token-benchmark/live_bench/mcp-config.template.json",
+      "terminal": [
+        { "kind": "prompt", "text": "claude mcp add orderflow-graph -- python D:/work/.../labs/M09-mcp-graph-server/solution/server.py" },
+        { "kind": "out-pass", "text": "Added stdio MCP server orderflow-graph to local config" },
+        { "kind": "prompt", "text": "claude mcp list" },
+        { "kind": "out", "text": "orderflow-graph   stdio   python .../solution/server.py   ✓ connected" }
+      ],
+      "state": {
+        "label": "mcp.json · the file form of that command",
+        "before": {
+          "title": "WHAT THE CLIENT STORES",
+          "view": {
+            "type": "json",
+            "data": {
+              "server": "orderflow-graph",
+              "transport": "stdio",
+              "command": "python",
+              "args": ".../solution/server.py --graph .../graph.json"
+            },
+            "highlight": ["transport"]
+          }
+        },
+        "after": {
+          "title": "WHAT IT DOESN'T STORE",
+          "view": {
+            "type": "note",
+            "text": "No URL, no port, no credential. The whole server is a subprocess reading JSON from stdin — the lab's is about 120 lines of Python. And because it speaks plain MCP, the same binary serves Claude Code, opencode, or any other MCP client without a per-agent integration."
+          }
+        }
+      }
+    },
+    {
+      "title": "Smoke-test it before you trust it",
+      "narrative": [
+        "Do this before the first real session, every time. Run the server standalone and confirm it loads the graph and answers.",
+        "The reason is the ugliest bug in this course. Capstone 2's first two benchmark campaigns measured a \"graph arm\" whose MCP server was crashing at startup on an SDK import rename. Nothing errored in the transcripts. The agent simply saw no tools, fell back to Read and Grep, and produced entirely plausible numbers for a configuration that never existed.",
+        "A component that fails silently under a client that degrades gracefully produces confident, wrong measurements. Six seconds of smoke test buys you the right to believe your own results."
+      ],
+      "youDo": "<code>python labs/M09-mcp-graph-server/solution/server.py --selftest</code> — it must print <code>SELFTEST PASSED</code>. Serving a foreign graph, run it plain and look for the <code>serving over stdio</code> line with a non-zero node count.",
+      "source": "labs/M09-mcp-graph-server/solution/server.py#selftest, labs/CAPSTONE-2-java-token-benchmark/live_bench/SCENARIOS.md#scenario-4, labs/CAPSTONE-2-java-token-benchmark/README.md#spring-graph-shape",
+      "terminal": [
+        { "kind": "prompt", "text": "python labs/M09-mcp-graph-server/solution/server.py --selftest" },
+        { "kind": "out", "text": "{\n  \"symbol\": \"decode_jwt\",\n  \"callers\": [\"shared.auth.verify_token\"]\n}" },
+        { "kind": "out", "text": "{\n  \"error\": \"symbol 'not_a_symbol' not in graph — it may be external; try grep\"\n}" },
+        { "kind": "out-pass", "text": "SELFTEST PASSED" },
+        { "kind": "prompt", "text": "python .../server.py --graph D:/tmp/spring-graph.json" },
+        { "kind": "out-pass", "text": "graph:spring-graph: serving over stdio (110885 nodes, 432741 edges)" }
+      ],
+      "state": {
+        "label": "selftest · 4 assertions",
+        "before": {
+          "title": "GREEN",
+          "view": {
+            "type": "tests",
+            "run": 4,
+            "failures": 0,
+            "big": "SELFTEST PASSED",
+            "note": "graph_callers resolves · graph_callees resolves · explore composes · an unknown symbol returns the graceful-miss dict instead of raising"
+          }
+        },
+        "after": {
+          "title": "WHAT A SILENT FAILURE LOOKS LIKE",
+          "view": {
+            "type": "rows",
+            "columns": ["symptom", "with file tools available", "with the graph forced"],
+            "rows": [
+              { "cells": ["server crashes at startup", "invisible — agent falls back to grep", "session reports \"tools unavailable\""] },
+              { "cells": ["your benchmark says", "plausible numbers for a fiction", "an obvious, loud failure"], "tone": "bad" },
+              { "cells": ["what you should run first", "a forced smoke session — no fallback to hide behind", "—"], "tone": "win" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "initialize, then tools/list",
+      "narrative": [
+        "The session starts and the client opens the handshake. <code>initialize</code> exchanges capabilities; <code>tools/list</code> asks what this server can do; the server replies with names and JSON input schemas.",
+        "Both of those happen <b>once per session</b>, not once per question. What they buy is a permanent addition to the agent's tool menu, sitting next to Read and Bash — three named functions the model can call the same way it calls anything else."
+      ],
+      "claudeSays": "The model now has three more callable functions with typed parameters. It has not read a single line of your source code, and the graph itself has not entered the context window — only the tool names and their schemas.",
+      "source": "labs/M09-mcp-graph-server/solution/server.py#serve",
+      "terminal": [
+        { "kind": "out", "text": "→ initialize  {\"protocolVersion\":\"2025-06-18\",\"clientInfo\":{\"name\":\"claude-code\"}}" },
+        { "kind": "out", "text": "← capabilities {\"tools\":{}}  serverInfo {\"name\":\"orderflow-graph\"}" },
+        { "kind": "out", "text": "→ tools/list  {}" },
+        { "kind": "out-pass", "text": "← graph_callers, graph_callees, explore   (each: {symbol: string})" },
+        { "kind": "out", "text": "orderflow-graph: serving over stdio (36 nodes, 22 edges)" }
+      ],
+      "state": {
+        "label": "the announced tool surface",
+        "before": {
+          "title": "THREE TOOLS, SHAPED AROUND THE QUESTION",
+          "view": {
+            "type": "rows",
+            "columns": ["tool", "the question it answers", "payload"],
+            "rows": [
+              { "cells": ["<code>graph_callers(symbol)</code>", "\"Who calls <code>verify_token</code>?\"", "one line of caller names"] },
+              { "cells": ["<code>graph_callees(symbol)</code>", "\"What does <code>handle_payment_webhook</code> call?\"", "one line of callee names"] },
+              { "cells": ["<code>explore(symbol)</code>", "\"What is this and how dangerous is it to touch?\"", "composite: location, both directions, blast radius"], "tone": "win" }
+            ]
+          }
+        },
+        "after": {
+          "title": "WHY THE THIRD ONE EXISTS",
+          "view": {
+            "type": "note",
+            "text": "Give an agent only single-purpose lookups and it makes four round trips to investigate one symbol — four tool-call overheads, four chances to lose the thread. <code>explore</code> collapses that chain into one call. The principle generalises: <b>shape tools around the agent's investigation pattern, not around your data model.</b> Your indexes are separate; the agent's question is not."
+          }
+        }
+      }
+    },
+    {
+      "title": "tools/call graph_callers(\"decode_jwt\")",
+      "narrative": [
+        "Now the round trip that repeats. The model decides on its own that this is a caller question, picks the tool, and fills in the parameter.",
+        "The response is the whole point of the architecture. <code>graph.json</code> stays on the server; the client never sees it. What crosses the wire is an <em>answer</em> — a symbol and its callers — and that is all that enters the context window."
+      ],
+      "youDo": "Ask a caller question in a session where the server is registered, then check the result against <code>labs/sample-project/README.md</code>'s ground-truth list. <code>graph_callers(\"decode_jwt\")</code> must return exactly <code>[\"shared.auth.verify_token\"]</code>; an empty list means your reverse index is keyed by source instead of target.",
+      "claudeSays": "It reasons over the returned names, not over <code>shared/auth.py</code>. The file is never opened, so its imports, its docstrings and its HMAC plumbing cost nothing.",
+      "source": "labs/M09-mcp-graph-server/solution/server.py#graph_callers",
+      "terminal": [
+        { "kind": "prompt", "text": "who calls decode_jwt, and is anything else reaching it?" },
+        { "kind": "tool", "text": "graph_callers(symbol=\"decode_jwt\")" },
+        { "kind": "out-pass", "text": "{\n  \"symbol\": \"decode_jwt\",\n  \"callers\": [\"shared.auth.verify_token\"]\n}" },
+        { "kind": "claude", "text": "Exactly one caller: shared.auth.verify_token, in the same file.\nNothing reaches decode_jwt directly — every service goes through\nverify_token, so that is the only place to change the contract." }
+      ],
+      "state": {
+        "label": "what crossed the wire",
+        "before": {
+          "title": "BEFORE — the pre-MCP route",
+          "view": {
+            "type": "rows",
+            "columns": ["action", "enters context as"],
+            "rows": [
+              { "cells": ["<code>grep -rn decode_jwt</code>", "a hit list that mixes calls with mentions"] },
+              { "cells": ["Read <code>shared/auth.py</code>", "the entire file — signing key, HMAC, base64 padding"], "tone": "bad" },
+              { "cells": ["Read each other candidate", "each one whole, whether or not it was a real call site"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "AFTER — the tool result",
+          "view": {
+            "type": "json",
+            "data": {
+              "symbol": "decode_jwt",
+              "callers": "shared.auth.verify_token"
+            },
+            "highlight": ["callers"]
+          }
+        }
+      }
+    },
+    {
+      "title": "explore: the whole structural picture in one call",
+      "narrative": [
+        "When the agent's real question is \"how dangerous is it to touch this?\", the composite tool answers it in a single round trip. Callers, callees, the file and line, and a transitive blast radius computed by breadth-first search over the reverse index.",
+        "Two fields deserve your attention. <code>blast_radius</code> counts every symbol that transitively depends on this one — the honest scope of a change. <code>ambiguous</code> is the tool admitting its own uncertainty: it is true when the bare name resolved to more than one node, which is exactly when you should not trust the caller list as complete."
+      ],
+      "claudeSays": "One call instead of four. The model gets location, both edge directions, and the risk number together, so it can answer without a follow-up query it would otherwise have to plan.",
+      "source": "labs/M09-mcp-graph-server/solution/server.py#explore",
+      "terminal": [
+        { "kind": "prompt", "text": "if I change verify_token's signature, what breaks?" },
+        { "kind": "tool", "text": "explore(symbol=\"verify_token\")" },
+        { "kind": "out-pass", "text": "{\n  \"symbol\": \"verify_token\",\n  \"kind\": \"function\",\n  \"location\": \"shared/auth.py:41\",\n  \"callers\": [\"services.billing.app.post_invoice\"],\n  \"callees\": [\"shared.auth.AuthError\", \"shared.auth.decode_jwt\"],\n  \"blast_radius\": 1,\n  \"ambiguous\": false\n}" },
+        { "kind": "claude", "text": "Blast radius 1: only billing's post_invoice calls it, and the name is\nunambiguous so that list is complete rather than a sample. Downstream\nyou'd keep decode_jwt and AuthError intact. This is a safe change." }
+      ],
+      "state": {
+        "label": "explore(\"verify_token\") · real server output",
+        "before": {
+          "title": "FOUR CALLS, THE OLD WAY",
+          "view": {
+            "type": "rows",
+            "columns": ["round trip", "what it returns"],
+            "rows": [
+              { "cells": ["<code>graph_callers</code>", "the caller list"] },
+              { "cells": ["<code>graph_callees</code>", "the callee list"] },
+              { "cells": ["a Read to find the definition", "the file, whole"], "tone": "bad" },
+              { "cells": ["a BFS the agent has to plan itself", "the blast radius, maybe"], "tone": "bad" }
+            ]
+          }
+        },
+        "after": {
+          "title": "ONE CALL",
+          "view": {
+            "type": "json",
+            "data": {
+              "symbol": "verify_token",
+              "kind": "function",
+              "location": "shared/auth.py:41",
+              "callers": "services.billing.app.post_invoice",
+              "callees": "shared.auth.AuthError, shared.auth.decode_jwt",
+              "blast_radius": 1
+            },
+            "highlight": ["blast_radius"]
+          }
+        }
+      }
+    },
+    {
+      "title": "What it costs — and the two traps",
+      "narrative": [
+        "The arithmetic is genuinely good on one question. A caller answer is a line of names; the file read it replaces is thousands of tokens. In okf-rs's own codebase, answering \"who calls <code>cmd_generate</code>?\" by reading the 672-line file costs roughly 6,000 tokens against about 15 for the tool call. That is arithmetic, not a session measurement.",
+        "The session measurement is less flattering, and it splits on <em>how</em> you integrate. Capstone 2 asked \"who calls <code>registerBeanDefinition</code>?\" through real agent sessions on spring-framework. With the graph merely <b>available</b> next to file tools, the model queried it, distrusted the thousand-name fan-out, re-verified against files, and paid for both paths. With the graph <b>forced</b> as the only tool, it answered in one turn.",
+        "The second trap is in the server you just read. <code>load_graph</code> runs once, at startup. Regenerate <code>graph.json</code> mid-session and this process keeps serving the old one until it restarts — a stale answer that looks exactly like a fresh one. M11 is about that."
+      ],
+      "source": "labs/CAPSTONE-2-java-token-benchmark/expected_output/live-run-multi.json#S1",
+      "state": {
+        "label": "measured · spring-framework · \"who calls registerBeanDefinition\" · medians of 3 fresh sessions",
+        "before": {
+          "title": "SAME SERVER, SAME QUESTION, THREE INTEGRATIONS",
+          "view": {
+            "type": "rows",
+            "columns": ["arm", "turns", "tokens", "vs baseline"],
+            "rows": [
+              { "cells": ["baseline — Read/Glob/Grep, no graph", "3", "116,033", "the control"] },
+              { "cells": ["graph available alongside files", "4", "154,266", "+33% — paid for both paths"], "tone": "bad" },
+              { "cells": ["graph forced, no file access", "1", "41,822", "−64%"], "tone": "win" }
+            ]
+          }
+        },
+        "after": {
+          "title": "THE RULE THAT FALLS OUT",
+          "view": {
+            "type": "note",
+            "text": "Serving a graph is not the same as saving tokens. It saves tokens when the question is structural, the repo is large, and the agent has no cheaper path to double-check on. Offering the graph as an option was the <b>worst</b> configuration in the campaign. And whatever you measure, smoke-test the server first — otherwise you may be measuring a subprocess that died at startup."
+          }
+        }
+      }
+    }
+  ]
+}
