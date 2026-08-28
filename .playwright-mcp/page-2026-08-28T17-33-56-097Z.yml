@@ -1,0 +1,357 @@
+- generic [active] [ref=f24e1]:
+  - banner [ref=f24e2]:
+    - generic [ref=f24e3]: AI AGENT DEVELOPMENT · COURSE CATALOG
+    - heading "Build AI Agents That Ship" [level=1] [ref=f24e4]
+    - paragraph [ref=f24e5]: Sixteen focused courses covering Claude, Gemini, OpenAI, MCP, open-source models, LLMOps, context engineering, spec-driven development, and knowledge graphs — grouped into six tracks, from your first AI-assisted commit to production deployment.
+  - generic [ref=f24e6]:
+    - generic [ref=f24e7]:
+      - generic [ref=f24e8]: "16"
+      - generic [ref=f24e9]: Courses
+    - generic [ref=f24e10]:
+      - generic [ref=f24e11]: "6"
+      - generic [ref=f24e12]: Tracks
+    - generic [ref=f24e13]:
+      - generic [ref=f24e14]: 290+
+      - generic [ref=f24e15]: Modules
+    - generic [ref=f24e16]:
+      - generic [ref=f24e17]: 200+
+      - generic [ref=f24e18]: Capstone Labs
+  - generic [ref=f24e20]:
+    - generic [ref=f24e21]: Suggested learning path
+    - generic [ref=f24e22]:
+      - generic [ref=f24e23]:
+        - generic [ref=f24e24]: 1 · Start Here
+        - generic [ref=f24e25]: Code With AI
+        - generic [ref=f24e26]: Never used an AI coding tool on real code? Begin here.
+      - generic [ref=f24e27]: →
+      - generic [ref=f24e28]:
+        - generic [ref=f24e29]: 2 · Foundations
+        - generic [ref=f24e30]: Context Engineering
+        - generic [ref=f24e31]: The skill under every reliable agent.
+      - generic [ref=f24e32]: →
+      - generic [ref=f24e33]:
+        - generic [ref=f24e34]: 3 · Build
+        - generic [ref=f24e35]: AI Agents with Claude
+        - generic [ref=f24e36]: The flagship — or Mistral & Ollama / Gemini if that's your stack.
+      - generic [ref=f24e37]: →
+      - generic [ref=f24e38]:
+        - generic [ref=f24e39]: 4 · Specialize
+        - generic [ref=f24e40]: MCP · Knowledge Graphs · Ultimate Context Engineering
+        - generic [ref=f24e41]: Deepen the layers your agents depend on.
+      - generic [ref=f24e42]: →
+      - generic [ref=f24e43]:
+        - generic [ref=f24e44]: 5 · Operate
+        - generic [ref=f24e45]: LLMOps · AI Platform Engineering
+        - generic [ref=f24e46]: Keep it reliable, observable, and governed after launch.
+  - generic [ref=f24e47]:
+    - generic [ref=f24e48]:
+      - generic [ref=f24e49]: Track 0
+      - text: 🚀 Start Here
+    - generic [ref=f24e50]: New to AI coding tools? This is the front door — one real repo, twelve real bugs
+  - link "Step 0 🍜 Start Here · Fundamentals Code With AI Learn AI-assisted development the way you'll actually do it — inside one real codebase seeded with twelve deliberate bugs. Every lab runs three ways (Claude Code, Copilot, or a free tier), every fix has to be verified, and the final track has you measure your own before-and-after honestly. 44 episodes 8 tracks 1 capstone Beginner /courses/code-with-ai/" [ref=f24e52] [cursor=pointer]:
+    - /url: courses/code-with-ai/index.html
+    - generic [ref=f24e53]: Step 0
+    - generic [ref=f24e54]: 🍜
+    - generic [ref=f24e55]: Start Here · Fundamentals
+    - generic [ref=f24e56]: Code With AI
+    - generic [ref=f24e57]: Learn AI-assisted development the way you'll actually do it — inside one real codebase seeded with twelve deliberate bugs. Every lab runs three ways (Claude Code, Copilot, or a free tier), every fix has to be verified, and the final track has you measure your own before-and-after honestly.
+    - generic [ref=f24e58]:
+      - generic [ref=f24e59]: 44 episodes
+      - generic [ref=f24e60]: 8 tracks
+      - generic [ref=f24e61]: 1 capstone
+      - generic [ref=f24e62]: Beginner
+      - generic [ref=f24e63]: /courses/code-with-ai/
+  - generic [ref=f24e64]:
+    - generic [ref=f24e65]:
+      - generic [ref=f24e66]: Track 1
+      - text: 🤖 Agents with Claude
+    - generic [ref=f24e67]: "Path: AI Agents with Claude→Claude Code Mastery→MCP→SDD by hand→SDD with OpenSpec"
+  - generic [ref=f24e68]:
+    - generic [ref=f24e69]:
+      - link "Building AI Agents with Claude — open the course" [ref=f24e70] [cursor=pointer]:
+        - /url: courses/claude-agents/index.html
+      - generic [ref=f24e71]: Step 1
+      - generic [ref=f24e72]: 🤖
+      - generic [ref=f24e73]: Flagship Course
+      - generic [ref=f24e74]: Building AI Agents with Claude
+      - generic [ref=f24e75]: Full agent lifecycle — design, build, protect, observe, deploy. 9 tracks from LLM fundamentals through multi-agent production systems. Includes certification prep for Claude Certified Architect.
+      - link "▶ Walkthroughs" [ref=f24e76] [cursor=pointer]:
+        - /url: courses/claude-agents/walkthrough/index.html
+      - generic [ref=f24e77]:
+        - generic [ref=f24e78]: 33 modules
+        - generic [ref=f24e79]: 9 tracks
+        - generic [ref=f24e80]: 19 capstone labs
+        - generic [ref=f24e81]: Python + TypeScript
+        - generic [ref=f24e82]: /courses/claude-agents/
+    - generic [ref=f24e83]:
+      - link "Claude Code Mastery — open the course" [ref=f24e84] [cursor=pointer]:
+        - /url: courses/cc/index.html
+      - generic [ref=f24e85]: Step 2
+      - generic [ref=f24e86]: ⚡
+      - generic [ref=f24e87]: Direct Track
+      - generic [ref=f24e88]: Claude Code Mastery
+      - generic [ref=f24e89]: Deep-dive into Claude Code — API essentials, prompt engineering, CLAUDE.md, permissions, subagents, hooks, tool use, MCP, and the Agent SDK. Fast path for engineers already comfortable with LLMs.
+      - link "▶ Walkthroughs" [ref=f24e90] [cursor=pointer]:
+        - /url: courses/cc/walkthrough/index.html
+      - generic [ref=f24e91]:
+        - generic [ref=f24e92]: 16 modules
+        - generic [ref=f24e93]: 1 capstone
+        - generic [ref=f24e94]: Intermediate–Advanced
+        - generic [ref=f24e95]: /courses/cc/
+    - generic [ref=f24e96]:
+      - link "MCP — Model Context Protocol — open the course" [ref=f24e97] [cursor=pointer]:
+        - /url: courses/mcp/index.html
+      - generic [ref=f24e98]: Step 3
+      - generic [ref=f24e99]: 🔌
+      - generic [ref=f24e100]: Protocol Deep Dive
+      - generic [ref=f24e101]: MCP — Model Context Protocol
+      - generic [ref=f24e102]: Build, secure, and orchestrate MCP servers from scratch. Covers resources, prompts, HTTP/SSE transport, multi-server orchestration, and production patterns for Claude Code and IDE integrations.
+      - link "▶ Walkthroughs" [ref=f24e103] [cursor=pointer]:
+        - /url: courses/mcp/walkthrough/index.html
+      - generic [ref=f24e104]:
+        - generic [ref=f24e105]: 9 modules
+        - generic [ref=f24e106]: 1 capstone
+        - generic [ref=f24e107]: Intermediate
+        - generic [ref=f24e108]: /courses/mcp/
+    - generic [ref=f24e109]:
+      - link "Spec-Driven Development with Claude — open the field guide" [ref=f24e110] [cursor=pointer]:
+        - /url: courses/spec-driven-development/index.html
+      - generic [ref=f24e111]: Step 4
+      - generic [ref=f24e112]: 📋
+      - generic [ref=f24e113]: New · Methodology
+      - generic [ref=f24e114]: Spec-Driven Development with Claude
+      - generic [ref=f24e115]: Stop prompting and start specifying — a field guide to specs Claude can build against. Three scenarios (feature, defect, migration) worked end-to-end on a healthcare prior-auth platform, with a runnable Spring Boot companion repo and four hands-on labs.
+      - link "▶ Labs quick reference" [ref=f24e116] [cursor=pointer]:
+        - /url: courses/spec-driven-development/walkthrough/index.html
+      - generic [ref=f24e117]:
+        - generic [ref=f24e118]: Field guide
+        - generic [ref=f24e119]: 3 scenarios
+        - generic [ref=f24e120]: 4 labs
+        - generic [ref=f24e121]: Intermediate
+        - generic [ref=f24e122]: /courses/spec-driven-development/
+    - generic [ref=f24e123]:
+      - link "Spec-Driven Development with OpenSpec — open the course" [ref=f24e124] [cursor=pointer]:
+        - /url: courses/openspec/index.html
+      - generic [ref=f24e125]: Step 5
+      - generic [ref=f24e126]: 📐
+      - generic [ref=f24e127]: New · Tooling
+      - generic [ref=f24e128]: Spec-Driven Development with OpenSpec
+      - generic [ref=f24e129]: The same discipline, tool-assisted. OpenSpec keeps capability specs as living documentation and every change as a reviewable proposal that is archived back into them — across Claude Code, Cursor, Copilot and 30+ agents. Nine phases from setup through governance, in Python and Java.
+      - link "⬇ Lab bundles — Python · Java · Data" [ref=f24e130] [cursor=pointer]:
+        - /url: courses/openspec/labs/index.html
+      - generic [ref=f24e131]:
+        - generic [ref=f24e132]: 9 phases
+        - generic [ref=f24e133]: 28 hands-on labs
+        - generic [ref=f24e134]: Python + Java
+        - generic [ref=f24e135]: Intermediate
+        - generic [ref=f24e136]: /courses/openspec/
+  - generic [ref=f24e137]:
+    - generic [ref=f24e138]:
+      - generic [ref=f24e139]: Track 1 · specializations
+      - text: 📐 OpenSpec by stack
+    - generic [ref=f24e140]: Take after the OpenSpec course — each applies the same workflow to one stack
+  - generic [ref=f24e141]:
+    - link "⚛️ OpenSpec for React Frontends Component specs, contract-driven UI work, and keeping the frontend honest against a changing API." [ref=f24e142] [cursor=pointer]:
+      - /url: courses/openspec/frontend.html
+      - generic [ref=f24e143]: ⚛️
+      - generic [ref=f24e144]:
+        - generic [ref=f24e145]: OpenSpec for React Frontends
+        - generic [ref=f24e146]: Component specs, contract-driven UI work, and keeping the frontend honest against a changing API.
+    - link "🌱 OpenSpec for Spring Boot APIs Capability specs for services, contract tests in CI, and a spec-coverage gate that fails a build when a scenario has no test." [ref=f24e147] [cursor=pointer]:
+      - /url: courses/openspec/api.html
+      - generic [ref=f24e148]: 🌱
+      - generic [ref=f24e149]:
+        - generic [ref=f24e150]: OpenSpec for Spring Boot APIs
+        - generic [ref=f24e151]: Capability specs for services, contract tests in CI, and a spec-coverage gate that fails a build when a scenario has no test.
+    - link "🗄️ OpenSpec for Data Engineering Bronze/silver/gold pipelines specified before they are built, with data-quality expectations as acceptance criteria." [ref=f24e152] [cursor=pointer]:
+      - /url: courses/openspec/data.html
+      - generic [ref=f24e153]: 🗄️
+      - generic [ref=f24e154]:
+        - generic [ref=f24e155]: OpenSpec for Data Engineering
+        - generic [ref=f24e156]: Bronze/silver/gold pipelines specified before they are built, with data-quality expectations as acceptance criteria.
+  - generic [ref=f24e157]:
+    - generic [ref=f24e158]:
+      - generic [ref=f24e159]: Track 2
+      - text: 🧠 Context Engineering & Knowledge
+    - generic [ref=f24e160]: "Path: Context Engineering→Knowledge Graphs→Ultimate Context Engineering"
+  - generic [ref=f24e161]:
+    - generic [ref=f24e162]:
+      - link "Context Engineering — open the course" [ref=f24e163] [cursor=pointer]:
+        - /url: courses/context-engineering/index.html
+      - generic [ref=f24e164]: Step 1
+      - generic [ref=f24e165]: 🧠
+      - generic [ref=f24e166]: Foundational Pillar
+      - generic [ref=f24e167]: Context Engineering
+      - generic [ref=f24e168]: Master the LLM context window end to end — design, assembly, retrieval, compression, optimization, and governance of everything you feed a model. The skill under every reliable agent.
+      - link "▶ Walkthroughs" [ref=f24e169] [cursor=pointer]:
+        - /url: courses/context-engineering/walkthrough/index.html
+      - generic [ref=f24e170]:
+        - generic [ref=f24e171]: 32 modules
+        - generic [ref=f24e172]: 8 tracks
+        - generic [ref=f24e173]: 64 capstones
+        - generic [ref=f24e174]: Foundational–Advanced
+        - generic [ref=f24e175]: /courses/context-engineering/
+    - generic [ref=f24e176]:
+      - link "Knowledge Graphs for AI Agents — open the course" [ref=f24e177] [cursor=pointer]:
+        - /url: courses/knowledge-graph/index.html
+      - generic [ref=f24e178]: Step 2
+      - generic [ref=f24e179]: 🕸️
+      - generic [ref=f24e180]: New · Applied Pillar
+      - generic [ref=f24e181]: Knowledge Graphs for AI Agents
+      - generic [ref=f24e182]: From RAG limits to self-updating codebase brains — structural graphs (tree-sitter, Graphify), Google's Open Knowledge Format, MCP serving, and honest multi-arm token benchmarks measured on real repositories.
+      - link "▶ Walkthroughs" [ref=f24e183] [cursor=pointer]:
+        - /url: courses/knowledge-graph/walkthrough/index.html
+      - generic [ref=f24e184]:
+        - generic [ref=f24e185]: 14 modules
+        - generic [ref=f24e186]: 6 tracks
+        - generic [ref=f24e187]: 2 capstones
+        - generic [ref=f24e188]: Intermediate–Advanced
+        - generic [ref=f24e189]: /courses/knowledge-graph/
+    - generic [ref=f24e190]:
+      - link "Ultimate Context Engineering — open the course" [ref=f24e191] [cursor=pointer]:
+        - /url: courses/ultimate-context-eng/index.html
+      - generic [ref=f24e192]: Step 3
+      - generic [ref=f24e193]: 🧾
+      - generic [ref=f24e194]: New · Synthesis Course
+      - generic [ref=f24e195]: Ultimate Context Engineering
+      - generic [ref=f24e196]: "Master the discipline on an app that shows its tokens — MedFlow Copilot's Token Lens itemizes every AI call by layer, cost, and correctness. Ten strategies, thirty labs, and one law: savings only count when the answer is right."
+      - link "▶ Walkthroughs" [ref=f24e197] [cursor=pointer]:
+        - /url: courses/ultimate-context-eng/walkthrough/index.html
+      - generic [ref=f24e198]:
+        - generic [ref=f24e199]: 15 modules
+        - generic [ref=f24e200]: 5 tracks
+        - generic [ref=f24e201]: 30 labs
+        - generic [ref=f24e202]: All levels
+        - generic [ref=f24e203]: /courses/ultimate-context-eng/
+  - generic [ref=f24e204]:
+    - generic [ref=f24e205]:
+      - generic [ref=f24e206]: Track 3
+      - text: ✨ Google AI
+    - generic [ref=f24e207]: "Path: Gemini Code Assist→Building with Gemini CLI"
+  - generic [ref=f24e208]:
+    - generic [ref=f24e209]:
+      - link "Gemini Code Assist — open the course" [ref=f24e210] [cursor=pointer]:
+        - /url: courses/gemini-code-assist/index.html
+      - generic [ref=f24e211]: Step 1
+      - generic [ref=f24e212]: 🧩
+      - generic [ref=f24e213]: Google AI · IDE
+      - generic [ref=f24e214]: Gemini Code Assist
+      - generic [ref=f24e215]: Beginner-friendly track for Google's AI pair programmer in VS Code and JetBrains — completion, chat, GEMINI.md context, agent mode, MCP, Gemini CLI, GitHub PR reviews, Cloud Run deployment, and enterprise controls.
+      - link "▶ Walkthroughs" [ref=f24e216] [cursor=pointer]:
+        - /url: courses/gemini-code-assist/walkthrough/index.html
+      - generic [ref=f24e217]:
+        - generic [ref=f24e218]: 12 modules
+        - generic [ref=f24e219]: 5 capstones
+        - generic [ref=f24e220]: Beginner
+        - generic [ref=f24e221]: /courses/gemini-code-assist/
+    - generic [ref=f24e222]:
+      - link "Building with Gemini CLI — open the course" [ref=f24e223] [cursor=pointer]:
+        - /url: courses/gemini-cli/index.html
+      - generic [ref=f24e224]: Step 2
+      - generic [ref=f24e225]: ✨
+      - generic [ref=f24e226]: Google AI
+      - generic [ref=f24e227]: Building with Gemini CLI
+      - generic [ref=f24e228]: End-to-end track for Gemini CLI — prompting, GEMINI.md, skill files, plan mode, requirements, design, implementation, testing, deployment, MCP servers, extensions, GitHub Actions, and Google Cloud MCP.
+      - link "▶ Walkthroughs" [ref=f24e229] [cursor=pointer]:
+        - /url: courses/gemini-cli/walkthrough/index.html
+      - generic [ref=f24e230]:
+        - generic [ref=f24e231]: 17 modules
+        - generic [ref=f24e232]: 1 capstone
+        - generic [ref=f24e233]: Beginner–Intermediate
+        - generic [ref=f24e234]: /courses/gemini-cli/
+  - generic [ref=f24e235]:
+    - generic [ref=f24e236]:
+      - generic [ref=f24e237]: Track 4
+      - text: 🦙 Open Source & Cross-Provider
+    - generic [ref=f24e238]: Take in any order — each stands alone
+  - generic [ref=f24e239]:
+    - generic [ref=f24e240]:
+      - link "AI Agents with Mistral & Ollama — open the course" [ref=f24e241] [cursor=pointer]:
+        - /url: courses/opensource/index.html
+      - generic [ref=f24e242]: 🦙
+      - generic [ref=f24e243]: Open Source
+      - generic [ref=f24e244]: AI Agents with Mistral & Ollama
+      - generic [ref=f24e245]: Build production agents using open-source models. Covers the full agent stack — RAG, memory, multi-agent systems, guardrails, observability, deployment, and cost optimization — without vendor lock-in.
+      - link "▶ Walkthroughs" [ref=f24e246] [cursor=pointer]:
+        - /url: courses/opensource/walkthrough/index.html
+      - generic [ref=f24e247]:
+        - generic [ref=f24e248]: 24 modules
+        - generic [ref=f24e249]: 1 capstone
+        - generic [ref=f24e250]: Intermediate
+        - generic [ref=f24e251]: /courses/opensource/
+    - generic [ref=f24e252]:
+      - link "One Agent, Three SDKs — open the course" [ref=f24e253] [cursor=pointer]:
+        - /url: courses/multi-sdk-agents/index.html
+      - generic [ref=f24e254]: 🔀
+      - generic [ref=f24e255]: Cross-SDK
+      - generic [ref=f24e256]: One Agent, Three SDKs
+      - generic [ref=f24e257]: Build the same AI agent three ways — in the Anthropic (Claude), Google (Gemini), and OpenAI SDKs, side by side. Tool use, structured output, memory, RAG, multi-agent, and production, each mapped across all three so switching providers is a config change, not a rewrite.
+      - link "▶ Walkthroughs" [ref=f24e258] [cursor=pointer]:
+        - /url: courses/multi-sdk-agents/walkthrough/index.html
+      - generic [ref=f24e259]:
+        - generic [ref=f24e260]: 8 modules
+        - generic [ref=f24e261]: Python + TypeScript
+        - generic [ref=f24e262]: Beginner–Advanced
+        - generic [ref=f24e263]: /courses/multi-sdk-agents/
+    - generic [ref=f24e264]:
+      - link "AI CLI Tools Compared — open the course" [ref=f24e265] [cursor=pointer]:
+        - /url: courses/ai-cli-comparison/index.html
+      - generic [ref=f24e266]: ⚖️
+      - generic [ref=f24e267]: Comparison
+      - generic [ref=f24e268]: AI CLI Tools Compared
+      - generic [ref=f24e269]: Side-by-side analysis of Claude Code vs Gemini CLI vs GitHub Copilot. Covers setup, prompting, code generation, file ops, agentic workflows, MCP, CI/CD, cost, and how to pick the right stack.
+      - link "▶ Walkthroughs" [ref=f24e270] [cursor=pointer]:
+        - /url: courses/ai-cli-comparison/walkthrough/index.html
+      - generic [ref=f24e271]:
+        - generic [ref=f24e272]: 10 modules
+        - generic [ref=f24e273]: 1 capstone
+        - generic [ref=f24e274]: All levels
+        - generic [ref=f24e275]: /courses/ai-cli-comparison/
+  - generic [ref=f24e276]:
+    - generic [ref=f24e277]:
+      - generic [ref=f24e278]: Track 5
+      - text: ⚙️ Production & Platform
+    - generic [ref=f24e279]: "Path: Production LLMOps→AI Platform Engineering"
+  - generic [ref=f24e280]:
+    - generic [ref=f24e281]:
+      - link "Production LLMOps — open the course" [ref=f24e282] [cursor=pointer]:
+        - /url: courses/llmops/index.html
+      - generic [ref=f24e283]: Step 1
+      - generic [ref=f24e284]: ⚙️
+      - generic [ref=f24e285]: Production · Operations
+      - generic [ref=f24e286]: Production LLMOps
+      - generic [ref=f24e287]: The "Day 2" discipline for LLM systems already in production — evaluation, deployment, monitoring, incident response, drift, and governance. Keep agents reliable, observable, and accountable after launch.
+      - link "▶ Walkthroughs" [ref=f24e288] [cursor=pointer]:
+        - /url: courses/llmops/course/walkthrough/index.html
+      - generic [ref=f24e289]:
+        - generic [ref=f24e290]: 32 modules
+        - generic [ref=f24e291]: 8 tracks
+        - generic [ref=f24e292]: 64 capstones
+        - generic [ref=f24e293]: Intermediate–Advanced
+        - generic [ref=f24e294]: /courses/llmops/
+    - generic [ref=f24e295]:
+      - link "AI Platform Engineering — open the course" [ref=f24e296] [cursor=pointer]:
+        - /url: courses/ai-platform-engineering/index.html
+      - generic [ref=f24e297]: Step 2
+      - generic [ref=f24e298]: 🏗️
+      - generic [ref=f24e299]: Infrastructure Pillar
+      - generic [ref=f24e300]: AI Platform Engineering
+      - generic [ref=f24e301]: Build the internal AI platform layer every team relies on — model gateway, prompt registry, guardrails, evaluation harness, cost controls, and compliance. Turn scattered AI experiments into shared infrastructure.
+      - link "▶ Walkthroughs" [ref=f24e302] [cursor=pointer]:
+        - /url: courses/ai-platform-engineering/walkthrough/index.html
+      - generic [ref=f24e303]:
+        - generic [ref=f24e304]: 32 modules
+        - generic [ref=f24e305]: 8 tracks
+        - generic [ref=f24e306]: 64 capstones
+        - generic [ref=f24e307]: Intermediate–Advanced
+        - generic [ref=f24e308]: /courses/ai-platform-engineering/
+  - generic [ref=f24e310]:
+    - generic [ref=f24e311]: Extras
+    - text: 📱 Companion Resources
+  - link "📱 Mobile Study Guide Condensed mobile-friendly versions of the course modules with pseudocode and quick-reference cards." [ref=f24e313] [cursor=pointer]:
+    - /url: mobile/index.html
+    - generic [ref=f24e314]: 📱
+    - generic [ref=f24e315]:
+      - generic [ref=f24e316]: Mobile Study Guide
+      - generic [ref=f24e317]: Condensed mobile-friendly versions of the course modules with pseudocode and quick-reference cards.
+  - contentinfo [ref=f24e318]: AI Agent Development Course Catalog — Built with Claude Code
