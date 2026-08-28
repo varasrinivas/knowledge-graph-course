@@ -36,7 +36,7 @@ B-suffix modules are ADDITIVE (sibling-course convention): inserted between numb
 - Course landing page: `output/index.html`
 - Prompt files: `prompts/` — read these BEFORE generating any content
 - Labs: `labs/M{XX}-{slug}/` with `README.md`, `starter/`, `solution/`, `expected_output/`
-- Walkthroughs: `walkthroughs/*.json` — interactive step-throughs embedded in modules. See `../shared/walkthrough/README.md`. Mount at the END of the section they belong to under `<h3>Walk it, step by step</h3>` + one bespoke bridge sentence + `<div data-wt="id" data-wt-theme="dark"></div>`, with `<!-- WT:BUNDLE -->` once before `</body>`. Rebuild with `python ../shared/walkthrough/build.py --scenarios walkthroughs/X.json --root . --target output/M{XX}-*.html` (idempotent). Every scenario declares provenance; a `measured` citation that does not resolve **fails the build** — that is the Honesty Rule made mechanical.
+- Walkthroughs: `walkthroughs/*.json` — interactive step-throughs embedded in modules. See `../shared/walkthrough/README.md` (`varasrinivas/course-walkthrough-runtime`, cloned as a sibling of this repo). Mount at the END of the section they belong to under `<h3>Walk it, step by step</h3>` + one bespoke bridge sentence + `<div data-wt="id" data-wt-theme="dark"></div>`, with `<!-- WT:BUNDLE -->` once before `</body>`. Rebuild with `python ../shared/walkthrough/build.py --scenarios walkthroughs/X.json --root . --target output/M{XX}-*.html` (idempotent). Every scenario declares provenance; a `measured` citation that does not resolve **fails the build** — that is the Honesty Rule made mechanical.
 
 ## Key Design Rules (always apply)
 1. Every technical term gets a tooltip definition on FIRST use
