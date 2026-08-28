@@ -14,3 +14,6 @@ __pycache__/
 
 # lab working copies
 labs/sample-project/.git/
+
+# browser-automation scratch output
+.playwright-mcp/
