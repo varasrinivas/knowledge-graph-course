@@ -295,12 +295,12 @@ graphify query <span class="tok-s">"What components depend on AuthTokenValidator
   <div class="animation-container" id="anim-comm">
     <div class="anim-title">Animation · COMMUNITY_MAP — orderflow clusters itself</div>
     <div class="anim-stage" style="position:relative;height:300px;">
-      <svg viewBox="0 0 760 300" width="100%" height="100%" aria-label="Animation of orderflow nodes clustering into three communities around a pulsing god node">
+      <svg viewBox="0 0 760 300" width="100%" height="100%" aria-label="Animation of orderflow nodes clustering into three communities around two shared hubs: a pulsing god node and a three-way bridge">
         <g font-family="JetBrains Mono, monospace" font-size="10">
           <g id="cm-edges" stroke="#334155" opacity="1">
-            <line x1="380" y1="150" x2="180" y2="80"/><line x1="380" y1="150" x2="150" y2="140"/><line x1="380" y1="150" x2="200" y2="200"/>
-            <line x1="380" y1="150" x2="560" y2="70"/><line x1="380" y1="150" x2="620" y2="130"/>
-            <line x1="380" y1="150" x2="560" y2="230"/><line x1="180" y1="80" x2="150" y2="140"/>
+            <line x1="380" y1="110" x2="150" y2="140"/><line x1="380" y1="110" x2="560" y2="70"/><line x1="380" y1="110" x2="620" y2="130"/>
+            <line x1="380" y1="215" x2="200" y2="200"/><line x1="380" y1="215" x2="560" y2="70"/><line x1="380" y1="215" x2="560" y2="230"/>
+            <line x1="180" y1="80" x2="150" y2="140"/>
             <line x1="560" y1="70" x2="620" y2="130"/><line x1="150" y1="140" x2="200" y2="200"/>
           </g>
           <g id="cm-b1"><circle cx="180" cy="80" r="22" fill="#162033" stroke="#94A3B8"/><text x="180" y="84" text-anchor="middle" fill="#E8ECF1">app</text></g>
@@ -309,12 +309,13 @@ graphify query <span class="tok-s">"What components depend on AuthTokenValidator
           <g id="cm-o1"><circle cx="560" cy="70" r="22" fill="#162033" stroke="#94A3B8"/><text x="560" y="74" text-anchor="middle" fill="#E8ECF1">orders</text></g>
           <g id="cm-o2"><circle cx="620" cy="130" r="22" fill="#162033" stroke="#94A3B8"/><text x="620" y="134" text-anchor="middle" fill="#E8ECF1">metrics</text></g>
           <g id="cm-n1"><circle cx="560" cy="230" r="22" fill="#162033" stroke="#94A3B8"/><text x="560" y="234" text-anchor="middle" fill="#E8ECF1">worker</text></g>
-          <g id="cm-god"><circle id="cm-god-c" cx="380" cy="150" r="28" fill="#162033" stroke="#D4A843" stroke-width="2"/><text x="380" y="147" text-anchor="middle" fill="#D4A843">shared/</text><text x="380" y="160" text-anchor="middle" fill="#D4A843">db.py</text></g>
-          <g id="cm-label" opacity="0"><text x="380" y="285" text-anchor="middle" fill="#94A3B8" font-size="12" font-family="Source Sans 3, sans-serif">3 communities found · 1 god node flagged (highest betweenness centrality)</text></g>
+          <g id="cm-god"><circle id="cm-god-c" cx="380" cy="110" r="28" fill="#162033" stroke="#D4A843" stroke-width="2"/><text x="380" y="107" text-anchor="middle" fill="#D4A843">shared/</text><text x="380" y="120" text-anchor="middle" fill="#D4A843">db.py</text></g>
+          <g id="cm-bridge"><circle id="cm-bridge-c" cx="380" cy="215" r="33" fill="#162033" stroke="#94A3B8" stroke-width="2"/><text x="380" y="212" text-anchor="middle" fill="#E8ECF1">shared/</text><text x="380" y="225" text-anchor="middle" fill="#E8ECF1">events.py</text></g>
+          <g id="cm-label" opacity="0"><text x="380" y="285" text-anchor="middle" fill="#94A3B8" font-size="12" font-family="Source Sans 3, sans-serif">3 communities · god node: shared/db.py (highest betweenness) · three-way bridge: shared/events.py</text></g>
         </g>
       </svg>
     </div>
-    <div class="anim-fallback"><p>Static description: orderflow's nodes settle into three colored clusters — billing (app, invoice, webhooks), orders (orders, metrics), notifications (worker) — while <code>shared/db.py</code> sits between all three, pulsing gold: the god node with the highest betweenness centrality.</p></div>
+    <div class="anim-fallback"><p>Static description: orderflow's nodes settle into three colored clusters — billing (app, invoice, webhooks), orders (orders, metrics), notifications (worker) — around two shared hubs. <code>shared/db.py</code> pulses gold: billing and orders both route through it, giving it the highest betweenness in the repo. <code>shared/events.py</code> is the only node touching all three clusters: billing and orders publish, notifications subscribes.</p></div>
     <div class="anim-caption" id="anim-comm-caption">Press play: Leiden clustering colors the subsystems; the god node pulses.</div>
     <div class="animation-controls">
       <button data-anim="comm" data-act="play" aria-label="Play community animation">▶</button>
@@ -425,8 +426,9 @@ path = Path(<span class="tok-s">"graphify-out/graph.json"</span>)
 <span class="tok-k">for</span> node_id, deg <span class="tok-k">in</span> degree.most_common(<span class="tok-n">5</span>):
     <span class="tok-f">print</span>(<span class="tok-s">f"  {deg:3d}  {node_id}"</span>)
 
-<span class="tok-c"># On orderflow, shared.db functions top the list — the god node,</span>
-<span class="tok-c"># found with 6 lines of stdlib.</span></code></pre></div>
+<span class="tok-c"># On orderflow: handle_payment_webhook (6), then the shared.auth</span>
+<span class="tok-c"># pair (4 each). Degree finds busy nodes, not the god node —</span>
+<span class="tok-c"># shared/db.py wins on betweenness, which this does not compute.</span></code></pre></div>
   </div>
 
   <div class="tab-panel" data-tabgroup="gj" data-tabname="js">
@@ -662,6 +664,7 @@ console.log(<span class="tok-s">"top nodes by degree:"</span>);
     var groups = { b: ['cm-b1', 'cm-b2', 'cm-b3'], o: ['cm-o1', 'cm-o2'], n: ['cm-n1'] };
     var colors = { b: '#6366F1', o: '#F97316', n: '#06B6D4' };
     var god = document.getElementById('cm-god-c');
+    var bridge = document.getElementById('cm-bridge-c');
     var pulseTimer = null;
     function setStroke(ids, color) { ids.forEach(function (id) { var c = document.getElementById(id); if (c) c.querySelector('circle').setAttribute('stroke', color); }); }
     function reset() {
@@ -669,7 +672,8 @@ console.log(<span class="tok-s">"top nodes by degree:"</span>);
       show('cm-label', 0); var l = document.getElementById('cm-label'); if (l) l.style.transition = 'opacity .5s';
       if (pulseTimer) { clearInterval(pulseTimer); pulseTimer = null; }
       if (god) god.setAttribute('r', '28');
-      caption('anim-comm-caption', 'Press play: Leiden clustering colors the subsystems; the god node pulses.');
+      if (bridge) { bridge.setAttribute('stroke', '#94A3B8'); bridge.setAttribute('stroke-width', '2'); }
+      caption('anim-comm-caption', 'Press play: Leiden clustering colors the subsystems, then the two shared hubs light up.');
     }
     reset();
     var tl = timeline([
@@ -677,13 +681,17 @@ console.log(<span class="tok-s">"top nodes by degree:"</span>);
       { at: 1100, fn: function () { setStroke(groups.o, colors.o); caption('anim-comm-caption', '…community 2: orders (orders, metrics)…'); } },
       { at: 1900, fn: function () { setStroke(groups.n, colors.n); caption('anim-comm-caption', '…community 3: notifications. No docs consulted — edges only.'); } },
       { at: 2700, fn: function () {
-          show('cm-label', 1);
-          caption('anim-comm-caption', 'shared/db.py bridges all three: the god node. Changes here have maximum blast radius.');
+          caption('anim-comm-caption', 'shared/db.py: billing and orders both route through it — the highest betweenness in the repo, so the widest blast radius.');
           if (!reduced && god) {
             var grow = true;
             pulseTimer = setInterval(function () { god.setAttribute('r', grow ? '32' : '28'); grow = !grow; }, 450);
-            setTimeout(function () { if (pulseTimer) { clearInterval(pulseTimer); pulseTimer = null; god.setAttribute('r', '28'); } }, 4000);
+            setTimeout(function () { if (pulseTimer) { clearInterval(pulseTimer); pulseTimer = null; god.setAttribute('r', '28'); } }, 3200);
           }
+      } },
+      { at: 4200, fn: function () {
+          show('cm-label', 1);
+          caption('anim-comm-caption', 'But the node touching all three communities is shared/events.py — billing and orders publish, notifications subscribes. Widest reach and highest centrality are different properties.');
+          if (bridge) { bridge.setAttribute('stroke', '#22C55E'); bridge.setAttribute('stroke-width', '4'); }
       } }
     ]);
     anims.comm = { play: tl.play.bind(tl), pause: tl.pause.bind(tl), restart: function () { tl.restart(reset); } };

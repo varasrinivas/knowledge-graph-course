@@ -630,7 +630,7 @@ footer { color: var(--text-muted); font-size: 0.85rem; margin-top: 2rem; }
 
 <section class="section" id="god-nodes">
   <h2>God nodes and the price of centrality</h2>
-  <p>Watch the animation's final frame: one node sits between all three communities, connected to everything. In orderflow that's <code>shared/db.py</code> — billing and orders both route through it, and it sits on more shortest paths than any other shared module. Graph tools call these <strong>god nodes</strong>: the main characters of your codebase, identified by <span class="term-tooltip" tabindex="0">centrality<span class="tooltip-content">A family of graph measures scoring how "important" a node is — by how many edges it has (degree), or how many shortest paths run through it (betweenness).</span></span> measures. The corpus definition is memorable and accurate: <em>"the classes everything else depends on — we call these God Nodes because if they die, the universe ends."</em></p>
+  <p>Watch the animation's final frames: <code>DatabasePool</code> sits between billing and orders, carrying more shortest paths than any other shared node, while <code>publish</code> is the one that actually touches all three communities. In orderflow that's <code>shared/db.py</code> — billing and orders both route through it, and it sits on more shortest paths than any other shared module. Graph tools call these <strong>god nodes</strong>: the main characters of your codebase, identified by <span class="term-tooltip" tabindex="0">centrality<span class="tooltip-content">A family of graph measures scoring how "important" a node is — by how many edges it has (degree), or how many shortest paths run through it (betweenness).</span></span> measures. The corpus definition is memorable and accurate: <em>"the classes everything else depends on — we call these God Nodes because if they die, the universe ends."</em></p>
   <p>Why you care, concretely: a god node is where refactoring risk, review scrutiny, and onboarding attention should concentrate. Any change to <code>shared/db.py</code> has, by definition, the largest possible blast radius. A new engineer (or agent) reading the graph learns in seconds what might take weeks of tribal exposure: <em>this</em> is the file you don't touch casually.</p>
   <p>Now the honest cost accounting. The strictest centrality measure — <strong>betweenness centrality</strong>, which counts how many shortest paths pass through each node — costs <strong>O(V×E)</strong>: nodes times edges. On orderflow (36 nodes, 22 edges) that's nothing. On a real monorepo it's a wall: one documented case in the corpus involved a <strong>450,000-node, 690,000-edge</strong> graph — roughly <strong>310 billion operations</strong>, single-threaded, because the algorithm doesn't parallelize cleanly. A full rebuild on a 96-core Xeon was <strong>killed after 114 minutes without completing</strong>, while a different (smaller) repo finished in ~10 minutes on a laptop. Remember this number in M11: it's why "just rebuild the graph on every commit" stops being a plan at scale, and why cheap proxies like plain degree count (which our lab uses) are often the right engineering choice.</p>
 </section>
@@ -1134,7 +1134,7 @@ console.log(blastRadius("execute", "EXTRACTED"));    // the provable subset</pre
       });
     });
     api.steps.push(function () {
-      api.caption('And one node belongs to no community — it belongs to ALL of them. DatabasePool: highest centrality, largest blast radius. The god node.');
+      api.caption('One node belongs to no community: DatabasePool. Billing and orders both route through it — the most shortest paths of any shared module. The god node.');
       var god = g.nodes['DatabasePool'];
       god.setAttribute('stroke', '#D4A843');
       god.setAttribute('stroke-width', '4');
@@ -1146,7 +1146,13 @@ console.log(blastRadius("execute", "EXTRACTED"));    // the provable subset</pre
       })();
     });
     api.steps.push(function () {
-      api.caption('Three communities + one god node — discovered from edge density alone. On healthy code, clusters match services; when they don’t, the mismatch is the finding.');
+      api.caption('But the node touching all three communities is publish — billing emits, orders emits, notifications consumes. Highest centrality and widest reach are different properties, and different risks.');
+      var bridge = g.nodes['publish'];
+      bridge.setAttribute('stroke', '#22C55E');
+      bridge.setAttribute('stroke-width', '4');
+    });
+    api.steps.push(function () {
+      api.caption('Three communities, one god node, one three-way bridge — discovered from edge density alone. On healthy code, clusters match services; when they don’t, the mismatch is the finding.');
     });
   });
 })();
