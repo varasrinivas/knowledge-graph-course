@@ -58,7 +58,7 @@ This file is the authoritative content distillation from the research corpus. Ev
 - What Graphify is: MIT/Apache-2.0, by Safi Shamsi (YC S26), PyPI package `graphifyy`, CLI `graphify`; turns any folder (code, docs, PDFs, images, video) into a graph. Code parsed structurally (free, no LLM); only docs/papers/images go through an LLM (only that pass can hallucinate).
 - Install & run: `uv tool install graphifyy && graphify install` (or pipx/pip); registers `/graphify` skill in 17 assistants (Claude Code, Cursor, Codex, Gemini CLI, Aider…). `graphify update .` / `/graphify .`.
 - The three artifacts in `graphify-out/`: `graph.json` (machine-readable, GraphRAG-ready), `graph.html` (interactive, self-contained), `GRAPH_REPORT.md` (plain-language audit). Plus `cache/` — only changed files re-run. `.graphifyignore` for exclusions. Note: very large codebases skip graph.html generation (logged).
-- Sample log output: "Rebuilt: 87 nodes, 100 edges, 13 communities".
+- Sample log output (measured, graphify 0.9.40 on labs/sample-project): "Rebuilt: 70 nodes, 89 edges, 15 communities". The course extractor kg_extract.py reports 36 nodes / 22 edges on the same repo — different node model, not a discrepancy.
 - Querying: `graphify path "UserService" "DatabasePool"`; `graphify query "What components depend on AuthTokenValidator?"`; MCP serving via `python -m graphify.serve graphify-out/graph.json`.
 - Leiden community detection → subsystem discovery; god-node identification; use cases: onboarding, impact analysis ("the 14 hidden dependencies that say Yes"), security audits (trace unauthenticated request flow), architecture discovery ("microservices that are secretly a monolith in a trench coat").
 - Honest benchmarks (HONESTY RULE — teach all of these): vendor 71.5x token reduction on a 52-file corpus (ceiling case: 123K tokens naive vs ~1.7K with graph); replications 6.8x (code review) to 49x (daily coding, 500+ file repos); 7.3x on a from-scratch real Python codebase; LongMemEval-S: graph retrieval 76% accuracy / 0.844 recall@10 vs dense RAG 76% / 0.848 — a tie on accuracy, slight loss on recall; LOCOMO: 45.3% at $1.40 ingest vs Supermemory 49.7% at $15.67 (11x cost). Graphify's real edge = ingest cost + zero-hallucination structure, NOT retrieval superiority. ~500-file floor where tooling tax exceeds savings.
@@ -207,9 +207,9 @@ This file is the authoritative content distillation from the research corpus. Ev
 **Measured reference results (real runs, 2026-08-24 snapshots)**:
 | Repo | Files | Nodes/Edges | Files opened/question | Aggregate per-question |
 |---|---|---|---|---|
-| synthetic-mini | 91 | — | 22 | 8.0x (87.5%) |
+| synthetic-mini | 91 | — | 12 | 8.3x (87.9%) |
 | commons-lang | 624 | 10,648 / 40,309 | 46 | 116.5x (99.1%) |
-| synthetic | 1,491 | 7,008 / 5,960 | 303 | 13.5x (92.6%) |
+| synthetic | 1,491 | 7,008 / 5,960 | 154 | 13.4x (92.6%) |
 | spring-framework | 9,195 | 110,885 / 432,741 | 567 | 33.7x (97.0%) |
 Spring headline: 8 questions by exploration = 4,535 files opened ≈ 15.2M tokens; via graph ≈ 451K. Extraction: spring 2m27s, commons-lang 12s.
 **Teaching points (Honesty Rule central)**: per-question vs session-level multiples (okf-rs's ~400x/query vs replicated 6.8x–49x sessions); why commons-lang's multiple EXCEEDS spring's (bigger answers: more callers + AMBIGUOUS candidates raise the graph arm's cost — answer quality trades against raw reduction); why published OkHttp = only 13% (session-level, small haystack); Windows longpaths for the spring clone; the M11 tie-in (2.5-min rebuild → how do you detect staleness within 24h — the Capstone-1 freshness gate works unchanged).

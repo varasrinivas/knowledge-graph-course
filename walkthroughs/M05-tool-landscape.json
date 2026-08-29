@@ -28,7 +28,7 @@
         { "kind": "out-pass", "text": "Generated 36 concepts into knowledge" },
         { "kind": "out", "text": "  Module 14   Class 4   Function 18" },
         { "kind": "prompt", "text": "graphify update ." },
-        { "kind": "out-pass", "text": "[graphify watch] Rebuilt: 36 nodes, 22 edges, 3 communities" }
+        { "kind": "out-pass", "text": "[graphify watch] Rebuilt: 70 nodes, 89 edges, 15 communities" }
       ],
       "state": {
         "label": "labs/sample-project · after three builds",

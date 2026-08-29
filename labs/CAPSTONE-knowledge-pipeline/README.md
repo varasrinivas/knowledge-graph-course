@@ -37,7 +37,9 @@ sample-project/                    # your working repo (git init'd in M08)
 ### Phase 2 — Structural layer (steps 3–5)
 3. Generate the graph (`graphify update .` or `python ../shared_tools/kg_extract.py . --out graphify-out/graph.json`).
 4. Verify the ground-truth edges from `sample-project/README.md` all appear.
-5. Identify communities and the god node; write one paragraph in `NOTES.md` on what the god node means for refactoring risk. ✅ `shared/auth.py` tops the in-degree list (6), with `shared/db.py` at 5 — in-degree and betweenness rank them differently, which is worth a sentence in your NOTES.md.
+5. Identify communities and the hub; write one paragraph in `NOTES.md` on what a high-centrality module means for refactoring risk. ✅ `shared/auth.py` tops the in-degree list (6), with `shared/db.py` at 5 and `shared/events.py` at 4. Graphify's own `graphify god-nodes` agrees: `AuthError` and `verify_token()` at 6 edges, `DatabasePool` down at 5.
+
+   Then compute betweenness and note that it disagrees about who is #1: `services/billing/webhooks.py` and `services/billing/invoice.py` score 4.00, `shared/auth.py` 2.00, and **`shared/db.py` scores 0.00** — nothing routes *through* the persistence layer, because it is a sink that calls nothing back. Two defensible metrics, two different answers, and the disagreement is the point: in-degree finds what is most depended upon, betweenness finds what sits on paths between others. Say in `NOTES.md` which one you would use to decide review scrutiny, and why. (Careful with counting rules: `shared/events.py` is reached by **all three** services — the only module that is — but ranks below `auth.py` on raw in-degree because auth accumulates more intra-file edges. State the metric before you state the winner.)
 
 ### Phase 3 — Narrative layer (steps 6–8)
 6. Complete the M07 bundle (5 concepts + index.md + log.md).

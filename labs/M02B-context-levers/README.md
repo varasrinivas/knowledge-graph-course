@@ -35,17 +35,17 @@ python context_levers.py --check
 **Expected shape of the output** (exact table in `expected_output/sample_output.txt`):
 ```
 arm                  tokens   vs raw  facts preserved
-raw                   3,131    100%  ALL
-compress              1,551     50%  ALL
-retrieve              1,049     34%  ALL
-offload               2,802     89%  ALL
-retrieve+offload        721     23%  ALL
+raw                   3,034    100%  ALL
+compress              1,454     48%  ALL
+retrieve                952     31%  ALL
+offload               2,802     92%  ALL
+retrieve+offload        721     24%  ALL
 SUCCESS CRITERION MET
 ```
 
 **The success criterion:** each lever must preserve the facts it owns — retrieve owns the caller facts (`verify_token`, `post_invoice`), offload owns the WAU facts (7-day window, completed orders, internal-tester exclusion) — at fewer tokens than raw. If `retrieve` loses the transitive caller, your BFS follows edges forward instead of backward. If `offload` loses a WAU fact, your history filter dropped the concept text too.
 
-Note what the table teaches: `raw` also "preserves ALL facts" — buried in 3,131 tokens of noise. Context rot is a **signal-to-noise problem, not a budget problem** (M03B's exact words); the levers don't add facts, they remove everything else.
+Note what the table teaches: `raw` also "preserves ALL facts" — buried in 3,034 tokens of noise. Context rot is a **signal-to-noise problem, not a budget problem** (M03B's exact words); the levers don't add facts, they remove everything else.
 
 ## Stretch Goals
 - Wire the sibling lab's `strategy()` bands to auto-pick a lever: `< 0.60 → ok`, `< 0.75 → compress`, `< 0.90 → retrieve`, else `retrieve+offload`.

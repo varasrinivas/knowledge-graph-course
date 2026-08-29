@@ -1,6 +1,8 @@
 """Tiny in-memory stand-in for a real connection pool.
 
-This module is orderflow's god node: every service imports it.
+Reached by billing and orders. Notifications never persists anything — it
+only consumes events — so this is NOT the module every service touches.
+That one is shared/events.py.
 """
 from collections import defaultdict
 

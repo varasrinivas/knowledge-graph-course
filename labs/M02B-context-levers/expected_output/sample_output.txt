@@ -1,17 +1,17 @@
 Per-layer accounting (raw):
   system            49 tokens
   tools             93 tokens
-  retrieved        447 tokens
+  retrieved        344 tokens
   history          492 tokens
   tool_results   2,341 tokens
   current           42 tokens
 
 arm                  tokens   vs raw  facts preserved
 ------------------------------------------------------------------
-raw                   3,131    100%  ALL
-compress              1,551     50%  ALL
-retrieve              1,049     34%  ALL
-offload               2,802     89%  ALL
-retrieve+offload        721     23%  ALL
+raw                   3,034    100%  ALL
+compress              1,454     48%  ALL
+retrieve                952     31%  ALL
+offload               2,802     92%  ALL
+retrieve+offload        721     24%  ALL
 ------------------------------------------------------------------
 SUCCESS CRITERION MET: each lever preserves the facts it owns at fewer tokens than raw.

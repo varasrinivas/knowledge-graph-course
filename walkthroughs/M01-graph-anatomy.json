@@ -233,7 +233,7 @@
               { "cells": ["traversal", "one dict inversion, then hash lookups", "M09 — served to agents over MCP"] },
               { "cells": ["multi-hop paths", "BFS to <code>post_invoice</code>, two hops", "M02 — why chunk retrieval cannot do this"] },
               { "cells": ["provenance", "9 EXTRACTED / 13 INFERRED / 0 AMBIGUOUS", "M03 — the resolution ladder that assigns them"], "tone": "win" },
-              { "cells": ["communities &amp; centrality", "left to the tools", "M04 — Leiden clusters and the <code>shared/db.py</code> god node"] }
+              { "cells": ["communities &amp; centrality", "left to the tools", "M04 — Leiden clusters, and why three centrality measures name three different hubs"] }
             ]
           }
         }

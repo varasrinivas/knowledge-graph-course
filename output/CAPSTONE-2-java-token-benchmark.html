@@ -436,7 +436,7 @@ AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code><
     <p>Answer three questions, in writing, with your data:</p>
     <ol>
       <li><strong>What level are these multiples?</strong> Per-question structural lookups. Cite the session-level range (6.8x–49x) and say why they differ: sessions spend most tokens on reasoning and edits the graph can't touch.</li>
-      <li><strong>Why does commons-lang (116.5x) beat Spring (33.7x) on the multiple despite being 15x smaller?</strong> Spring's answers are <em>bigger</em> — more callers and more AMBIGUOUS candidates per answer raise the graph arm's cost. Answer quality and ambiguity trade against raw reduction. Meanwhile the <em>exploration burden</em> (files/question) does scale with the haystack: 22 → 46 → 303 → 567.</li>
+      <li><strong>Why does commons-lang (116.5x) beat Spring (33.7x) on the multiple despite being 15x smaller?</strong> Spring's answers are <em>bigger</em> — more callers and more AMBIGUOUS candidates per answer raise the graph arm's cost. Answer quality and ambiguity trade against raw reduction. Meanwhile the <em>exploration burden</em> (files/question) does scale with the haystack: 12 → 46 → 154 → 567.</li>
       <li><strong>Why did CodeGraph's published OkHttp number land at 13%?</strong> 645 files, session-level measurement, small haystack — your own commons-lang session experience will feel closer to that than to your 116x lookup table, and now you can explain why both are true.</li>
     </ol>
     <div class="callout callout-check"><span class="box-label">✅ Checkpoint</span><p>Someone who has never seen this course could read your NOTES.md and NOT be misled by your own benchmark. That is the bar.</p></div>
@@ -463,9 +463,9 @@ AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code><
   <p>All from real runs of the course tooling (2026-08-24 snapshots; extraction: commons-lang ~12s, Spring ~2m27s):</p>
   <div class="table-wrap"><table>
     <tr><th>Repo</th><th>Files</th><th>Nodes / Edges</th><th>Files opened per question</th><th>Aggregate per-question</th></tr>
-    <tr><td>synthetic-mini</td><td>91</td><td>—</td><td>22</td><td>8.0x (87.5%)</td></tr>
+    <tr><td>synthetic-mini</td><td>91</td><td>—</td><td>12</td><td>8.3x (87.9%)</td></tr>
     <tr><td>commons-lang</td><td>624</td><td>10,648 / 40,309</td><td>46</td><td>116.5x (99.1%)</td></tr>
-    <tr><td>synthetic</td><td>1,491</td><td>7,008 / 5,960</td><td>303</td><td>13.5x (92.6%)</td></tr>
+    <tr><td>synthetic</td><td>1,491</td><td>7,008 / 5,960</td><td>154</td><td>13.4x (92.6%)</td></tr>
     <tr class="hl-row"><td>spring-framework</td><td>9,195</td><td>110,885 / 432,741</td><td>567</td><td>33.7x (97.0%)</td></tr>
   </table></div>
 
@@ -478,7 +478,7 @@ AGGREGATE                 4535   15,194,788   451,436     97.0%    33.7x</code><
       <text x="30" y="48" fill="#64748B" font-size="11" font-family="monospace">question</text>
       <g id="bs-bars"></g>
     </svg>
-    <div class="anim-note">The bars are the burden an exploring agent pays per structural question: 22 → 46 → 303 → 567 files as the haystack grows from 91 to 9,195 files. The <em>multiple</em> column doesn't rise monotonically (answer size interferes) — the burden does.</div>
+    <div class="anim-note">The bars are the burden an exploring agent pays per structural question: 12 → 46 → 154 → 567 files as the haystack grows from 91 to 9,195 files. The <em>multiple</em> column doesn't rise monotonically (answer size interferes) — the burden does.</div>
     <div class="animation-controls">
       <button data-anim="bench-scale" data-act="play" aria-label="Play animation">▶</button>
       <button data-anim="bench-scale" data-act="pause" aria-label="Pause animation">⏸</button>
@@ -736,7 +736,7 @@ python aggregate.py runs</code></pre></div>
     <div class="chip"><b>The measured claim</b>Spring: 8 questions = 4,535 files ≈ 15.2M tokens by exploration vs ≈451K via graph — 97.0%, 33.7x, reproduced on your machine in ~15s.</div>
     <div class="chip"><b>Per-question ≠ per-session</b>Your table is okf-rs-class (~400x/query territory); bills follow session-level numbers (6.8x–49x). Say which one you're quoting.</div>
     <div class="chip"><b>Refusal is a feature</b>AMBIG_CAP drops no-signal names; the server misses gracefully; the harness prints its own caveats. Honest tools name their limits.</div>
-    <div class="chip"><b>The burden curve</b>22 → 46 → 303 → 567 files per question as repos grow 91 → 9,195 files. The haystack is the story.</div>
+    <div class="chip"><b>The burden curve</b>12 → 46 → 154 → 567 files per question as repos grow 91 → 9,195 files. The haystack is the story.</div>
   </div>
   <p><strong>What you built:</strong> a verified Java structural graph pipeline, an MCP serving path for any pre-built graph, and — the real artifact — a benchmark table you can defend line by line. That closes the course: you can now build the map, keep it honest, and measure exactly what it saves.</p>
 </section>
@@ -888,9 +888,9 @@ python aggregate.py runs</code></pre></div>
     var g = document.getElementById("bs-bars");
     if (!g) return;
     var data = [
-      { label: "synth-mini", files: 91, burden: 22 },
+      { label: "synth-mini", files: 91, burden: 12 },
       { label: "commons-lang", files: 624, burden: 46 },
-      { label: "synthetic", files: 1491, burden: 303 },
+      { label: "synthetic", files: 1491, burden: 154 },
       { label: "spring", files: 9195, burden: 567 }
     ];
     var ns = "http://www.w3.org/2000/svg";

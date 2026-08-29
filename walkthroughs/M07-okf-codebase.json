@@ -41,7 +41,7 @@
               { "cells": ["<code>mark_paid</code>", "no", "a signature restated in prose. See the next two steps"], "tone": "bad" },
               { "cells": ["the <code>Invoice</code> dataclass", "no", "the field list <em>is</em> the code. Copying it creates a second source of truth"], "tone": "bad" },
               { "cells": ["<code>docs/adr-001-event-bus.md</code>", "not a new concept", "it is already a human-maintained source. <b>Cite</b> it from billing-service, do not paraphrase it"] },
-              { "cells": ["shared-libraries", "not yet", "the god node every service imports. M08's hook creates this one mechanically from the diff"] }
+              { "cells": ["shared-libraries", "not yet", "the shared layer billing and orders lean on. M08's hook creates this one mechanically from the diff"] }
             ]
           }
         },
@@ -259,7 +259,7 @@
               { "cells": ["billing → shared auth", "yes", "EXTRACTED", "agree — orientation and proof"], "tone": "win" },
               { "cells": ["billing → notifications (<code>payment.settled</code>)", "yes", "no direct call edge — it goes through the bus", "<b>the bundle is right</b>; the AST cannot see a runtime contract"], "tone": "win" },
               { "cells": ["notifications → billing", "missing until you add it", "n/a", "the rot: one end of a real edge documented, the other silent"], "tone": "bad" },
-              { "cells": ["everything → <code>shared/db.py</code>", "not mentioned anywhere", "the god node, bridging all three communities", "<b>the AST is right</b>; nobody thought to write it down"], "tone": "bad" }
+              { "cells": ["billing + orders → <code>shared/db.py</code>", "not mentioned anywhere", "widest blast radius in the repo; notifications never touches it", "<b>the AST is right</b>; nobody thought to write it down"], "tone": "bad" }
             ]
           }
         },

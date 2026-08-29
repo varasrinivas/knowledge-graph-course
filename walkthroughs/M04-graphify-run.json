@@ -8,7 +8,7 @@
   "intro": "Install Graphify, point it at a fifteen-file monorepo, and watch a queryable map fall out of it. Then the part nobody puts in the demo: check whether it was worth doing.",
   "provenance": {
     "kind": "illustrative",
-    "source": "a replayed session over labs/sample-project. The run log follows the shape documented in labs/M04-graphify-end-to-end/README.md; the node, edge, caller and community figures are reproducible with labs/shared_tools/kg_extract.py and checkable by hand against labs/sample-project/README.md. Steps 3, 4, 5 and 6 carry their own citations."
+    "source": "a replayed session over labs/sample-project. The step-1 run log is the real output of graphify 0.9.40 on this repo (70 nodes / 89 edges / 15 communities), as documented in labs/M04-graphify-end-to-end/README.md; the node, edge, caller and community figures are reproducible with labs/shared_tools/kg_extract.py and checkable by hand against labs/sample-project/README.md. Steps 3, 4, 5 and 6 carry their own citations."
   },
   "foot": "Reproduce every step in <code>labs/M04-graphify-end-to-end/README.md</code> · the four-arm measured version is Capstone 2",
   "steps": [
@@ -53,7 +53,7 @@
       "terminal": [
         { "kind": "prompt", "text": "cd labs/sample-project && graphify update ." },
         { "kind": "out", "text": "Re-extracting code files in . (no LLM needed)..." },
-        { "kind": "out", "text": "[graphify watch] Rebuilt: 36 nodes, 22 edges, 3 communities" },
+        { "kind": "out", "text": "[graphify watch] Rebuilt: 70 nodes, 89 edges, 15 communities" },
         { "kind": "out", "text": "[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in graphify-out" },
         { "kind": "out-pass", "text": "Code graph updated. For doc/paper/image changes run /graphify --update in your AI assistant." }
       ],
@@ -90,12 +90,12 @@
       }
     },
     {
-      "title": "36 nodes, 22 edges — and which ones are guesses",
+      "title": "36 nodes, 22 edges — the course extractor's view, and which edges are guesses",
       "narrative": [
         "Open <code>graph.json</code> and count. Thirty-six nodes: fourteen modules, eighteen functions, four classes. Twenty-two edges between them.",
         "The number that matters is the split on the right. Nine edges are <b>EXTRACTED</b> — read straight off the syntax tree, 100% confidence. Thirteen are <b>INFERRED</b> — a heuristic matched a bare name to a definition and attached a confidence score. Graphify is the tool in this space that tells you which of its answers are facts and which are guesses, and on a repo this small you can audit every one."
       ],
-      "youDo": "Offline route, same numbers: <code>python labs/shared_tools/kg_extract.py labs/sample-project --out graph.json</code>. It prints the node-kind and provenance breakdowns you see here.",
+      "youDo": "Offline route — <b>different numbers, and that is the lesson</b>: <code>python labs/shared_tools/kg_extract.py labs/sample-project --out graph.json</code>. The course extractor counts only functions, classes and modules joined by <code>calls</code> edges, so it reports 36/22 where Graphify reported 70/89 (Graphify also indexes docstrings, doc headings, <code>imports_from</code> and <code>contains</code>). Two tools, two definitions of a node — never compare graph sizes across tools.",
       "source": "labs/shared_tools/kg_extract.py, labs/sample-project/README.md",
       "terminal": [
         { "kind": "prompt", "text": "python labs/shared_tools/kg_extract.py labs/sample-project --out graph.json" },
@@ -133,10 +133,10 @@
       }
     },
     {
-      "title": "It rediscovers the architecture doc",
+      "title": "It rediscovers the architecture — but does not label it for you",
       "narrative": [
-        "Leiden clustering runs on every build. On orderflow the 36 nodes fall into three communities that line up with <code>billing</code>, <code>orders</code> and <code>notifications</code> — the exact subsystem split <code>docs/architecture.md</code> claims, recovered from call edges alone with no doc in sight.",
-        "It also flags one <b>god node</b>: <code>shared/db.py</code>. Billing and orders both depend on it, and it carries the highest betweenness of any shared module. That is not a bug report. It is a blast-radius warning — a change there touches more of the repo than a change anywhere else."
+        "Leiden clustering runs on every build, and on orderflow it does <b>not</b> hand you three tidy services. Graphify reports 15 communities named after <em>files</em> — <code>app.py</code>, <code>db.py</code>, <code>worker.py</code>, <code>webhooks.py</code>, <code>orders.py</code>, <code>invoice.py</code> — plus one per document. The billing / orders / notifications split <code>docs/architecture.md</code> claims <em>is</em> in there: those file communities map onto the three services. But you recover it by reading the clusters, not by being handed the answer. On an 18-file corpus there is too little call density for the clustering to coarsen further — the small-repo tax, seen from the inside.",
+        "It also flags <b>god nodes</b> — and reading the list carefully matters. Graphify ranks by edge count, putting <code>AuthError</code>, <code>verify_token()</code>, <code>handle_payment_webhook()</code> and <code>publish()</code> at 6 edges each, with <code>DatabasePool</code> at 5. Rank instead by <em>blast radius</em> and <code>shared/db.py</code> takes the title: seven functions transitively depend on it. Rank by betweenness and it scores zero, because nothing routes through a sink. Three defensible measures, three answers — the warning is real, the single ranking is not."
       ],
       "youDo": "Open <code>graphify-out/graph.html</code>, find the three colored clusters, then read <code>GRAPH_REPORT.md</code> and check it names the same three. If the two disagree, you have found M11's desync problem four modules early.",
       "source": "labs/sample-project/README.md#ground-truth",
@@ -151,7 +151,7 @@
               { "cells": ["billing", "app.py · invoice.py · webhooks.py", "yes"], "tone": "win" },
               { "cells": ["orders", "orders.py · metrics.py", "yes"], "tone": "win" },
               { "cells": ["notifications", "worker.py", "yes"], "tone": "win" },
-              { "cells": ["god node", "<code>shared/db.py</code> — bridges all three", "the doc never says this"], "new": true }
+              { "cells": ["widest blast radius", "<code>shared/db.py</code> — billing + orders (not notifications)", "the doc never says this"], "new": true }
             ]
           }
         },

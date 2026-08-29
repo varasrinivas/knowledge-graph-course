@@ -54,10 +54,12 @@ python solution/measure_tokens.py <repo> <repo>-graph.json --questions 8 --json 
 
 | Repo | Files | Files opened/question | Aggregate per-question multiple |
 |---|---|---|---|
-| synthetic-mini | 91 | 22 | 8.0x |
+| synthetic-mini | 91 | 12 | 8.3x |
 | commons-lang | 624 | 46 | 116.5x |
-| synthetic | 1,491 | 303 | 13.5x |
+| synthetic | 1,491 | 154 | 13.4x |
 | spring-framework | 9,195 | 567 | **33.7x** (97.0% reduction) |
+
+The two synthetic rows are reproducible exactly: `gen_java_repo.py` seeds its RNG with `random.Random(42)`, so the same command yields the same 91/1,491 files, the same graph, and the same table on any machine. The two real-repo rows depend on the upstream snapshot you clone, so expect drift there instead.
 
 11. ✅ Checkpoint — spring's headline row: answering 8 structural questions by exploration means opening **4,535 files (~15.2M tokens)**; through the graph it costs ~451K tokens.
 

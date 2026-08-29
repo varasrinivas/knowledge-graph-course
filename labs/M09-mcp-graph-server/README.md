@@ -4,7 +4,9 @@
 **Time**: 60–75 min · **Prerequisites**: M01 lab; `pip install mcp`.
 
 ## Why this matters (the arithmetic)
-Answering "who calls `decode_jwt`?" by reading `shared/auth.py` costs the file's full size in tokens, every session, every re-read after compaction. `graph_callers` returns one line. On a 672-line file that's roughly 6,000 tokens vs ~15 — and the parse cost was paid ONCE at extract time.
+Answering "who calls `decode_jwt`?" by reading `shared/auth.py` costs the file's full size in tokens, every session, every re-read after compaction. `graph_callers` returns one line.
+
+On orderflow that is a modest win and you should see it as modest: `shared/auth.py` is 45 lines, about **375 tokens** (chars/4) against roughly **15** for the graph answer. The ratio only becomes decisive at real file sizes — a 700-line service module runs to ~6,000 tokens for the same one-line answer — and the ratio is not the whole story anyway: the parse cost was paid ONCE at extract time, so the saving repeats on every session and every re-read after compaction, while the cost does not.
 
 ## Step 1: Generate the graph
 ```bash

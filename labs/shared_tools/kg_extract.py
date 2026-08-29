@@ -110,6 +110,10 @@ def main() -> int:
     out = Path(sys.argv[sys.argv.index("--out") + 1]) if "--out" in sys.argv else Path("graph.json")
 
     graph = extract(root)
+    # --out graphify-out/graph.json is the documented shape (M11, capstone), so
+    # create the directory rather than dying with a bare FileNotFoundError.
+    if out.parent != Path("") and not out.parent.exists():
+        out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(graph, indent=2), encoding="utf-8")
     kinds = defaultdict(int)
     for n in graph["nodes"]:

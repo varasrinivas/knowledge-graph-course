@@ -189,18 +189,18 @@
       "narrative": [
         "Two layers are still untouched and together they are 6,050 tokens: <b>retrieved</b> holds similarity-ranked chunks about the WAU metric, including a stale one; <b>history</b> still contains the whole argument about which definition is right, long since settled.",
         "<code>offload</code> puts settled knowledge where it belongs — one canonical OKF concept file, ~340 tokens, kept honest by M08's enrichment hook — and lets the resolved debate leave the transcript. Alone it takes the window to <b>6,985</b>. Combined with <code>retrieve</code>: <b>5,215</b>, or 54% of the baseline, with every fact still present.",
-        "Now the caveat that keeps this honest. On this module's lab fixture the profile was different — tool results were 2,341 of 3,131 tokens, 75% of the budget — so there <code>retrieve</code> was the big winner at 34% of raw and <code>offload</code> only reached 89%. On <em>this</em> window, history and retrieved dominate, so offload wins bigger. <b>Which lever pays is a property of your layer profile, not a ranking you can memorise.</b> Itemise first."
+        "Now the caveat that keeps this honest. On this module's lab fixture the profile was different — tool results were 2,341 of 3,034 tokens, 77% of the budget — so there <code>retrieve</code> was the big winner at 31% of raw and <code>offload</code> only reached 92%. On <em>this</em> window, history and retrieved dominate, so offload wins bigger. <b>Which lever pays is a property of your layer profile, not a ranking you can memorise.</b> Itemise first."
       ],
       "youDo": "<code>cd labs/M02B-context-levers/starter &amp;&amp; python context_levers.py --check</code> — then compare the arm ordering it prints against the ordering here, and explain the difference from the layer profile alone.",
       "source": "labs/M02B-context-levers/expected_output/sample_output.txt",
       "terminal": [
         { "kind": "prompt", "text": "python context_levers.py --check" },
         { "kind": "out", "text": "arm                  tokens   vs raw  facts preserved" },
-        { "kind": "out", "text": "raw                   3,131    100%  ALL" },
-        { "kind": "out", "text": "compress              1,551     50%  ALL" },
-        { "kind": "out-pass", "text": "retrieve              1,049     34%  ALL" },
-        { "kind": "out", "text": "offload               2,802     89%  ALL" },
-        { "kind": "out-pass", "text": "retrieve+offload        721     23%  ALL" },
+        { "kind": "out", "text": "raw                   3,034    100%  ALL" },
+        { "kind": "out", "text": "compress              1,454     48%  ALL" },
+        { "kind": "out-pass", "text": "retrieve                952     31%  ALL" },
+        { "kind": "out", "text": "offload               2,802     92%  ALL" },
+        { "kind": "out-pass", "text": "retrieve+offload        721     24%  ALL" },
         { "kind": "gate", "text": "the raw arm also preserves ALL facts — rot is signal-to-noise, not budget" }
       ],
       "state": {

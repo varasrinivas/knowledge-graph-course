@@ -16,7 +16,11 @@ print(tree.root_node)   # the AST, as an S-expression
 ✅ Checkpoint: you see a `(module ...)` S-expression with `function_definition` nodes.
 
 ## Step 2: Prove fault tolerance
-Delete a closing parenthesis from a COPY of the file and re-parse. tree-sitter still returns a tree — with an `ERROR` node island — and every OTHER function still parses. This is why real tools use it: development never happens in a permanently compilable state.
+On a COPY of the file, delete the closing parenthesis on the **`def verify_token(token: str | None) -> dict:` line** (line 41) and re-parse. tree-sitter still returns a tree; the damage is an `ERROR` island around `verify_token`, and `decode_jwt` **still extracts normally**. This is why real tools use it: development never happens in a permanently compilable state.
+
+✅ Checkpoint: your function list drops from `['decode_jwt', 'verify_token']` to `['decode_jwt']` — one function lost, not the file.
+
+⚠️ Which parenthesis you delete matters, and that is worth knowing. Break one *inside a function body* and the error is usually contained the same way. But delete the paren on line 9 (`SIGNING_KEY = os.environ.get(...)`) or on `def decode_jwt(...)` itself and recovery fails completely — the parse yields **no** functions at all. Error recovery is best-effort and local: it contains damage that stays inside a construct, and loses the file when the break is at module level or in the first definition's own signature. Tools like Graphify hit this too; it is a reason extraction is re-run per commit rather than trusted forever.
 
 ## Step 3: Extract defs and calls
 Walk the tree: collect `function_definition` names, and inside each, `call` nodes. Resolve each call name against your collected defs:

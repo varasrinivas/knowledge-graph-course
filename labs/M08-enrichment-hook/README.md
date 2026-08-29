@@ -29,7 +29,7 @@ Note what the hook does NOT do: no `nohup` (silently absent on Git-for-Windows â
 Edit `services/billing/webhooks.py` (add a comment), commit, and watch:
 ```
 [enrich] changed: services/billing/webhooks.py -> concept billing-service
-[enrich] refreshed Dependencies (4 edges) in knowledge/services/billing-service.md
+[enrich] refreshed Dependencies (4 edges) in billing-service.md
 [enrich] log.md updated
 [enrich] lint: 5 concepts valid, 0 errors
 ```

@@ -6,7 +6,10 @@ Three services communicate through a synchronous in-process event bus (`shared/e
 - **orders-service** owns the order lifecycle and writes one `orders_fact` row per COMPLETED order. It also owns the canonical `weekly_active_users` metric (excludes internal testers — see `services/orders/metrics.py`).
 - **notifications-service** subscribes to `payment.settled` (receipt) and `order.completed` (completion note).
 
-Known wart: `shared/db.py` is a god node — every service imports it. A future ADR may split read/write pools.
+Known wart: `shared/events.py` is the hub — all three services touch it, so a change to the bus contract reaches everything. `shared/db.py` is next (billing and orders); notifications never persists. A future ADR may split read/write pools.
 
-## Historical note (STALE — kept deliberately for the M02 lab)
-An earlier revision of this doc defined WAU as "unique users with any API call in 7 days" with no tester exclusion. That definition is wrong; the canonical one lives in `services/orders/metrics.py`. This paragraph exists so a naive RAG pipeline can retrieve the stale definition — which is exactly what module M02 demonstrates.
+## Metrics
+
+**Weekly active users (WAU)** is calculated as the number of unique users with
+any API call in a rolling 7-day window. Both the ops dashboard and the weekly
+exec report read this figure, so keep the window aligned when you change it.
