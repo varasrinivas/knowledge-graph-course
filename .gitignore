@@ -17,3 +17,6 @@ labs/sample-project/.git/
 
 # browser-automation scratch output
 .playwright-mcp/
+
+# OS cruft
+desktop.ini
