@@ -1869,6 +1869,7 @@ box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
     shortcut: 'g',
     title: 'Glossary',
     subtitle: '',
+    drawerLabel: 'Domain',
   };
   var BASE_SKIP = [
     'code', 'pre', 'kbd', 'samp', 'var', 'tt',
@@ -2158,6 +2159,17 @@ box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
       b.className = 'dg-ui dg-fab';
       document.body.appendChild(b);
     }
+    var slot = CFG.chrome && CFG.chrome.drawer && document.querySelector(CFG.chrome.drawer);
+    if (slot) {
+      var head = el('h4', '', CFG.drawerLabel || 'Domain');
+      var entry = el('button', CFG.chrome.item || '', label + '  ' + CFG.title);
+      entry.type = 'button';
+      entry.className += ' dg-adopted';
+      entry.addEventListener('click', function (e) { e.stopPropagation(); openPanel(); });
+      slot.textContent = '';
+      slot.appendChild(head);
+      slot.appendChild(entry);
+    }
   }
   function ours(node) {
     var e = node && (node.nodeType === 1 ? node : node.parentElement);
@@ -2236,6 +2248,7 @@ box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
       if (cfg.shortcut) CFG.shortcut = cfg.shortcut;
       if (cfg.title) CFG.title = cfg.title;
       if (cfg.subtitle) CFG.subtitle = cfg.subtitle;
+      if (cfg.drawerLabel) CFG.drawerLabel = cfg.drawerLabel;
     },
     register: function (corpus) { CORPUS = corpus; INDEX = buildIndex(corpus); },
     start: start,
