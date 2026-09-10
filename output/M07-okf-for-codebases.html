@@ -1675,5 +1675,598 @@ process.exit(errors ? <span class="tok-n">1</span> : <span class="tok-n">0</span
 
 WT.register([{"id":"kg-okf-codebase","badge":"WALKTHROUGH","color":"#8B5CF6","time":"~5 min","title":"Five concepts, not fifty","spec":"M07 · what deserves a file, and what is already free","intro":"Turn orderflow into an OKF bundle. The hard part is not the Markdown — it is saying no. A concept that restates a function signature costs real maintenance and buys nothing the AST did not already give you.","provenance":{"kind":"illustrative","source":"a replayed authoring session over labs/sample-project, targeting the bundle described in labs/M07-orderflow-bundle/README.md. The citations, contracts and decisions quoted are read from the real files in labs/sample-project/docs/; steps 4 and 5 carry their own citations."},"foot":"Build the whole bundle in <code>labs/M07-orderflow-bundle/</code> — five concepts, an index, and bidirectional links.","steps":[{"title":"Inventory the repo, then say no a lot","narrative":["orderflow has fifteen files, three services, thirty-six symbols and three documents. The naive move is one concept per file, and it is wrong. The right question for every candidate is a single test: <b>could a parser have told me this?</b>","If the answer is yes, the structural graph from Track 2 already knows it, for free, deterministically, and — crucially — it will still be right after the next refactor. A concept file that duplicates it is a second copy of one fact, maintained by hand, guaranteed to drift.","Curated narrative knowledge is the residue: the things that are true about this system and written nowhere in it. Contracts between services. Decisions and their consequences. Policy baked into a constant. Run the test down the list."],"youDo":"<code>ls -R labs/sample-project</code>, then for each candidate ask: is this derivable from the AST? If yes, it is not a concept.","terminal":[{"kind":"prompt","text":"ls -R labs/sample-project"},{"kind":"out","text":"services/billing/    app.py invoice.py webhooks.py\nservices/orders/     orders.py metrics.py\nservices/notifications/  worker.py\nshared/              auth.py db.py events.py\ndocs/                architecture.md adr-001-event-bus.md runbook-key-rotation.md"}],"state":{"label":"the derivability test","before":{"title":"COULD A PARSER HAVE TOLD ME THIS?","view":{"type":"rows","columns":["candidate","concept?","the reason"],"rows":[{"cells":["billing-service","yes","owns the <code>payment.settled</code> contract two other services depend on — a contract is an agreement, not a symbol"],"tone":"win"},{"cells":["orders-service","yes","owns the attested WAU computation; the tester exclusion list is a governance decision that happens to live in a constant"],"tone":"win"},{"cells":["notifications-service","yes","the consumer side of the contract — without it the edge only exists in one direction"],"tone":"win"},{"cells":["weekly_active_users (metric)","yes","the definition M02's churn disaster was missing. \"Excludes internal testers\" is policy, not code"],"tone":"win"},{"cells":["orders_fact (table)","yes","schema, join keys and who consumes it — the metric needs this to generate a correct query"],"tone":"win"},{"cells":["<code>decode_jwt</code>","no","the graph answers callers, callees and blast radius for free, and stays correct through refactors"],"tone":"bad"},{"cells":["<code>mark_paid</code>","no","a signature restated in prose. See the next two steps"],"tone":"bad"},{"cells":["the <code>Invoice</code> dataclass","no","the field list <em>is</em> the code. Copying it creates a second source of truth"],"tone":"bad"},{"cells":["<code>docs/adr-001-event-bus.md</code>","not a new concept","it is already a human-maintained source. <b>Cite</b> it from billing-service, do not paraphrase it"]},{"cells":["shared-libraries","not yet","the shared layer billing and orders lean on. M08's hook creates this one mechanically from the diff"]}]}},"after":{"title":"THE BUNDLE THAT SURVIVES THE TEST","view":{"type":"rows","columns":["path","type","what it holds that the code does not"],"rows":[{"cells":["<code>index.md</code>","reserved","one line per concept — the agent's pre-flight read"],"new":true},{"cells":["<code>services/billing-service.md</code>","Service","the contract, the ADR consequence, the rotation constraint"],"new":true},{"cells":["<code>services/orders-service.md</code>","Service","the attested computation and who reads it"],"new":true},{"cells":["<code>services/notifications-service.md</code>","Service","the back-link that closes the <code>payment.settled</code> edge"],"new":true},{"cells":["<code>analytics/metrics/weekly_active_users.md</code>","metric","the exclusion policy, from M06"],"new":true},{"cells":["<code>analytics/tables/orders_fact.md</code>","table","schema and joins, from M06"],"new":true},{"cells":["<code>log.md</code>","reserved","what the bundle learned, dated — not what the files changed"],"new":true}]}}}},{"title":"A concept that earns its file","narrative":["Here is <code>billing-service.md</code>. Read it once as a human, then read it again asking which sentences a parser could have produced. The answer is: almost none of them.","That the event bus is synchronous and in-process is in the code. That it was <b>chosen</b> over a broker, that events are lost on crash, and that going multi-process means replacing it and updating the <code>payment.settled</code> contract — that is ADR-001, and no AST will ever recover it. That <code>shared/auth.py</code> reads the signing key at import time, so a key rotation requires a rolling restart of billing — that is the runbook, and it is the difference between a safe deploy and an outage.","Notice the shape as much as the content: Responsibilities, then Dependencies, then Citations, in that order, in every Service concept. Consistency of body structure matters more to an agent than any individual field, because fifty identically-shaped files can be parsed mechanically and fifty differently-shaped ones become fifty interpretation problems."],"youDo":"Write the three Service concepts with byte-identical heading structure, then diff their headings to prove it: <code>grep '^#' knowledge/services/*.md</code>.","state":{"label":"knowledge/services/billing-service.md","before":{"title":"THE CONCEPT","view":{"type":"diff","file":"knowledge/services/billing-service.md","lines":[["a","---"],["a","type: Service"],["a","title: billing-service"],["a","description: Handles invoicing and payment webhooks."],["a","resource: services/billing"],["a","tags: [billing, payments, python]"],["a","timestamp: 2026-08-24T00:00:00Z"],["a","---"],["a",""],["a","# Responsibilities"],["a","Owns the Invoice domain model. Verifies every request via shared auth."],["a","Publishes `payment.settled` — a contract, not an implementation detail:"],["a","changing its payload breaks notifications-service silently, because a"],["a","failing handler is logged and skipped by design (ADR-001)."],["a",""],["a","# Dependencies"],["a","- Calls [shared auth](shared-libraries.md) to verify tokens."],["a","- Publishes `payment.settled`, consumed by [notifications-service](notifications-service.md)."],["a",""],["a","# Citations"],["a","[1] [ADR-001: in-process event bus](../../docs/adr-001-event-bus.md) — no durability;"],["a","    events are lost on crash. Multi-process means a broker and a new contract."],["a","[2] [Runbook: rotate the payments signing key](../../docs/runbook-key-rotation.md) —"],["a","    auth reads the key at import time, so rotation needs a rolling restart of billing."]]}},"after":{"title":"WHICH SENTENCE CAME FROM WHERE","view":{"type":"rows","columns":["claim in the concept","derivable from code?","source"],"rows":[{"cells":["billing calls shared auth","yes — an EXTRACTED edge","the graph. Kept because the concept is the agent's orientation map"],"tone":"bad"},{"cells":["<code>payment.settled</code> is a <b>contract</b>","no","a human decision about what other teams may rely on"],"tone":"win"},{"cells":["a failing consumer is skipped <em>by design</em>","the behaviour is; the intent is not","ADR-001, accepted 2026-05-14"],"tone":"win"},{"cells":["events are lost on crash","no","ADR-001 Consequences — the thing that bites at 3am"],"tone":"win"},{"cells":["rotation needs a rolling restart","no","the key-rotation runbook, written by whoever did it last"],"tone":"win"}]}}}},{"title":"A concept that wastes its file","narrative":["Now the one that looks productive and is not. Someone works down <code>invoice.py</code> writing a concept per function, and produces this.","Every sentence in it is already in the repository twice — once in the source and once in the graph — and the graph's copy is better: it is complete, it carries provenance, and it updates when the code does. This copy is prose, it is unversioned against the function it describes, and it is <b>silently wrong the moment somebody renames the parameter</b>.","Toggle the panes. Same fact, two costs. The bundle version costs an author, a reviewer, and an ongoing maintenance obligation nobody scheduled. The graph version costs one query."],"youDo":"Try the test on your own draft bundle: for each concept, delete it and ask whether an agent with the structural graph would notice. If the answer is no, it was never knowledge.","state":{"label":"the same fact, bought twice","before":{"title":"THE WASTEFUL CONCEPT — hand-written, will rot","view":{"type":"stack","views":[{"type":"diff","file":"knowledge/functions/mark_paid.md","lines":[["a","---"],["a","type: Function"],["a","title: mark_paid"],["a","resource: services/billing/invoice.py"],["a","---"],["a",""],["a","# Responsibilities"],["a","Marks an invoice as paid. Takes an `invoice_id` string and returns the"],["a","invoice as a dict. Raises `KeyError` if the invoice is unknown."],["a",""],["a","# Dependencies"],["a","- Queries the shared database pool."]]},{"type":"note","text":"Author cost: ten minutes. Review cost: someone must check it against the source. Maintenance cost: <b>forever</b>, and nothing will tell you when it stops being true. Rename <code>invoice_id</code> and this file lies with a straight face, having passed every lint rule in the bundle."}]}},"after":{"title":"THE SAME FACT, ALREADY FREE","view":{"type":"stack","views":[{"type":"json","data":{"symbol":"mark_paid","kind":"function","location":"services/billing/invoice.py:31","signature":"mark_paid(invoice_id: str) -> dict","callers":"services.billing.webhooks.handle_payment_webhook","callees":"shared.db.POOL.query","provenance":"EXTRACTED"},"highlight":["signature","callers","provenance"]},{"type":"note","text":"Author cost: zero. Maintenance cost: zero — it is regenerated from the syntax tree. And it answers a question the concept file never could: <b>who calls this</b>, completely, with the provenance label saying the edge was read off the AST rather than guessed."}]}}}},{"title":"index.md — the file the agent reads before touching the repo","narrative":["The index is not a table of contents for humans. It is the pre-flight read: title and one-line description per concept, pulled straight from frontmatter, and nothing else. An agent reads it, decides which one concept the task needs, and loads that.","Here is the arithmetic on orderflow, measured rather than asserted. The whole of <code>services/</code> and <code>shared/</code> is 9,798 characters across fourteen Python files — call it <b>2,450 tokens</b> to read the codebase cold. The M06 concept files measure 876 and 920 characters, so a real concept costs about <b>220 tokens</b>. Index plus one concept lands near 400.","Be honest about what that ratio proves: about six-to-one on a fifteen-file toy, which is not a business case. What matters is the <em>slope</em>. The source side grows with every file you add; the index grows by one line per concept and the agent still loads exactly one. On a thousand-file repo that is the difference between working and overflowing."],"youDo":"Count it yourself: <code>wc -c labs/sample-project/services/*/*.py labs/sample-project/shared/*.py</code> against <code>wc -c knowledge/index.md knowledge/services/billing-service.md</code>. Record both — the capstone reuses them.","source":"labs/sample-project, labs/M06-okf-authoring/solution/knowledge, labs/M07-orderflow-bundle/README.md","terminal":[{"kind":"prompt","text":"cat knowledge/index.md"},{"kind":"out","text":"# orderflow\n\n* [billing-service](services/billing-service.md) - invoicing and payment webhooks\n* [orders-service](services/orders-service.md) - order lifecycle and canonical metrics\n* [notifications-service](services/notifications-service.md) - consumes payment.settled\n* [weekly_active_users](analytics/metrics/weekly_active_users.md) - the attested WAU computation\n* [orders_fact](analytics/tables/orders_fact.md) - one row per completed order"},{"kind":"prompt","text":"add a retry to the payment webhook"},{"kind":"tool","text":"Read  knowledge/index.md"},{"kind":"tool","text":"Read  knowledge/services/billing-service.md"},{"kind":"claude","text":"Before I open any source: billing owns Invoice, verifies via shared\nauth, and publishes payment.settled which notifications consumes. A\nretry must not re-publish the event twice — ADR-001 says the bus has\nno durability and consumers are fire-and-forget. Opening webhooks.py\nnow, knowing what I must not break."}],"state":{"label":"measured · orderflow","before":{"title":"TWO WAYS TO LEARN THE SAME TERRITORY","view":{"type":"bars","unit":"tokens","max":2450,"items":[{"label":"read the source","value":2450,"tone":"bad","note":"9,798 characters across 14 .py files in services/ and shared/ — measured"},{"label":"index + 1 concept","value":400,"tone":"win","note":"~180 for the index, ~220 for one concept — concept sizes measured from the M06 solution files"}]}},"after":{"title":"THE HONEST READ","view":{"type":"note","text":"Six-to-one on fifteen files is a teaching number, not a saving — the same ~500-file floor that undercuts every tool in M05 applies to bundles too. The claim worth defending is different and stronger: <b>the pre-flight cost is bounded by the task, not by the repo.</b> Add nine hundred more files and the agent still reads one index line and one concept. That is why an index bloated with detail is a real bug: it re-couples the read to the size of the bundle."}}}},{"title":"Lint it — then check the direction nobody checks","narrative":["Five concepts, zero errors. That is the gate from M06 doing exactly its job, and it is worth being clear about what it proved: the bundle is <em>well-formed</em>. It did not prove the bundle is complete.","Here is the gap. <code>billing-service.md</code> says it publishes <code>payment.settled</code> and links to notifications. Does <code>notifications-service.md</code> link back? Nothing in the spec requires it, no lint rule you have written checks it, and an agent that loads only the notifications concept will never learn that billing depends on it. <b>One-directional links are how bundles silently rot.</b>","Fix it, then run the harder check: rename a linked file without updating its inbound links and confirm your dangling-link rule fails. If it passes, you have built a linter that agrees with you."],"youDo":"<code>python ../M06-okf-authoring/solution/validate.py knowledge</code>, then <code>grep -c \"billing-service.md\" knowledge/services/notifications-service.md</code> and make that number 1.","source":"labs/M07-orderflow-bundle/README.md","terminal":[{"kind":"prompt","text":"python ../M06-okf-authoring/solution/validate.py knowledge"},{"kind":"out-pass","text":"5 concepts valid, 0 errors"},{"kind":"gate","text":"well-formed. Now: does every edge exist from both ends?"},{"kind":"prompt","text":"grep -c \"billing-service.md\" knowledge/services/notifications-service.md"},{"kind":"out-fail","text":"0"},{"kind":"out","text":"# add: \"- Consumes `payment.settled` from [billing-service](billing-service.md).\""},{"kind":"prompt","text":"grep -c \"billing-service.md\" knowledge/services/notifications-service.md"},{"kind":"out-pass","text":"1"}],"state":{"label":"curated is not verified","before":{"title":"WHAT THE BUNDLE CLAIMS vs WHAT THE AST KNOWS","view":{"type":"rows","columns":["edge","in the bundle","in the graph","reading"],"rows":[{"cells":["billing → shared auth","yes","EXTRACTED","agree — orientation and proof"],"tone":"win"},{"cells":["billing → notifications (<code>payment.settled</code>)","yes","no direct call edge — it goes through the bus","<b>the bundle is right</b>; the AST cannot see a runtime contract"],"tone":"win"},{"cells":["notifications → billing","missing until you add it","n/a","the rot: one end of a real edge documented, the other silent"],"tone":"bad"},{"cells":["billing + orders → <code>shared/db.py</code>","not mentioned anywhere","widest blast radius in the repo; notifications never touches it","<b>the AST is right</b>; nobody thought to write it down"],"tone":"bad"}]}},"after":{"title":"WHEN THEY DISAGREE","view":{"type":"note","text":"The AST is right about <b>structure</b>; the bundle is right about <b>why</b> — and the disagreement itself is a maintenance signal, not an error in either. Use the links for orientation and intent; use the verified edges for impact analysis you are going to bet a refactor on. A bundle that is asked to do the second job will confidently tell an agent that billing has two dependencies on the sprint somebody added a third."}}}}]}]);WT.mountAll();</script>
 <!-- WT:END -->
+<!-- DG:START -->
+<!-- generated by shared/domain/build.py — do not hand-edit -->
+<style>.dg-ui {
+--dg-bg:     var(--surface,    var(--bg-card,        Canvas));
+--dg-fg:     var(--text,       var(--text-primary,   CanvasText));
+--dg-muted:  var(--text-muted, var(--text-secondary, GrayText));
+--dg-line:   var(--border,     var(--code-border,    GrayText));
+--dg-accent: var(--accent-primary, var(--text, currentColor));
+--dg-mono:   var(--font-mono, ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, monospace);
+--dg-body:   var(--font-body, system-ui, -apple-system, 'Segoe UI', sans-serif);
+--dg-z: 400;
+}
+.dg-chip {
+font: inherit;
+color: inherit;
+background: none;
+border: 0;
+border-bottom: 1px dashed currentColor;
+border-radius: 2px;
+padding: 0 1px;
+margin: 0;
+cursor: pointer;
+opacity: .95;
+transition: background .15s, opacity .15s;
+}
+.dg-chip:hover,
+.dg-chip[aria-expanded="true"] {
+opacity: 1;
+background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.dg-chip:focus-visible {
+outline: 2px solid currentColor;
+outline-offset: 2px;
+}
+.dg-pop {
+position: fixed;
+z-index: var(--dg-z);
+display: none;
+width: min(320px, calc(100vw - 24px));
+box-sizing: border-box;
+padding: 12px 14px;
+border: 1px solid var(--dg-line);
+border-radius: 8px;
+background: var(--dg-bg);
+color: var(--dg-fg);
+font-family: var(--dg-body);
+box-shadow: 0 8px 28px rgba(0, 0, 0, .28);
+}
+.dg-pop.dg-open { display: block; }
+.dg-pop .dg-pop-t {
+font-family: var(--dg-mono);
+font-size: 11.5px;
+font-weight: 600;
+letter-spacing: .3px;
+margin-bottom: 5px;
+color: var(--dg-fg);
+}
+.dg-pop .dg-pop-s { font-size: 13px; line-height: 1.5; color: var(--dg-fg); }
+.dg-pop .dg-pop-l { font-size: 12px; line-height: 1.55; color: var(--dg-muted); margin-top: 6px; }
+.dg-pop .dg-pop-see { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.dg-pop .dg-pop-ref {
+font-family: var(--dg-mono);
+font-size: 10.5px;
+padding: 2px 7px;
+border: 1px solid var(--dg-line);
+border-radius: 3px;
+background: none;
+color: var(--dg-muted);
+cursor: pointer;
+}
+.dg-pop .dg-pop-ref:hover { color: var(--dg-fg); }
+.dg-pop .dg-pop-more {
+display: block;
+margin-top: 10px;
+padding: 0;
+border: 0;
+background: none;
+cursor: pointer;
+font-family: var(--dg-mono);
+font-size: 10.5px;
+letter-spacing: 1px;
+text-transform: uppercase;
+color: var(--dg-muted);
+}
+.dg-pop .dg-pop-more:hover { color: var(--dg-fg); }
+.dg-backdrop {
+position: fixed;
+inset: 0;
+z-index: calc(var(--dg-z) + 10);
+background: rgba(0, 0, 0, .5);
+opacity: 0;
+pointer-events: none;
+transition: opacity .2s;
+}
+.dg-backdrop.dg-open { opacity: 1; pointer-events: auto; }
+.dg-panel {
+position: fixed;
+z-index: calc(var(--dg-z) + 11);
+top: 50%;
+left: 50%;
+transform: translate(-50%, -48%);
+width: min(560px, calc(100vw - 24px));
+max-height: min(80vh, 760px);
+box-sizing: border-box;
+display: none;
+flex-direction: column;
+overflow: hidden;
+border: 1px solid var(--dg-line);
+border-radius: 10px;
+background: var(--dg-bg);
+color: var(--dg-fg);
+font-family: var(--dg-body);
+box-shadow: 0 16px 50px rgba(0, 0, 0, .4);
+}
+.dg-panel.dg-open { display: flex; }
+.dg-panel .dg-panel-head { padding: 18px 20px 13px; border-bottom: 1px solid var(--dg-line); }
+.dg-panel .dg-panel-h {
+margin: 0 0 4px;
+font-family: var(--dg-mono);
+font-size: 10.5px;
+font-weight: 600;
+letter-spacing: 2px;
+text-transform: uppercase;
+color: var(--dg-muted);
+}
+.dg-panel .dg-panel-sub { font-size: 12.5px; line-height: 1.5; color: var(--dg-muted); }
+.dg-panel .dg-search {
+box-sizing: border-box;
+width: 100%;
+margin-top: 13px;
+padding: 9px 11px;
+border: 1px solid var(--dg-line);
+border-radius: 5px;
+background: transparent;
+color: var(--dg-fg);
+font-family: var(--dg-body);
+font-size: 13px;
+}
+.dg-panel .dg-search:focus { outline: none; border-color: var(--dg-accent); }
+.dg-panel .dg-panel-x {
+position: absolute;
+top: 13px;
+right: 13px;
+width: 28px;
+height: 28px;
+border: 1px solid var(--dg-line);
+border-radius: 50%;
+background: transparent;
+color: var(--dg-muted);
+font-size: 12px;
+line-height: 1;
+cursor: pointer;
+}
+.dg-panel .dg-panel-x:hover { color: var(--dg-fg); }
+.dg-panel .dg-list { overflow-y: auto; padding: 4px 20px 18px; }
+.dg-panel .dg-term { padding: 10px 0; border-bottom: 1px solid var(--dg-line); }
+.dg-panel .dg-term:last-of-type { border-bottom: none; }
+.dg-panel .dg-term[hidden] { display: none; }
+.dg-panel .dg-term.dg-hit { background: color-mix(in srgb, currentColor 8%, transparent); }
+.dg-panel .dg-term-t {
+display: block;
+font-family: var(--dg-mono);
+font-size: 11.5px;
+font-weight: 600;
+color: var(--dg-fg);
+margin-bottom: 3px;
+}
+.dg-panel .dg-term-s { display: block; font-size: 12.5px; line-height: 1.5; color: var(--dg-fg); }
+.dg-panel .dg-term-l { display: block; font-size: 11.5px; line-height: 1.55; color: var(--dg-muted); margin-top: 4px; }
+.dg-panel .dg-empty { padding: 18px 0; font-size: 13px; color: var(--dg-muted); }
+.dg-fab {
+position: fixed;
+z-index: var(--dg-z);
+top: 14px;
+right: 62px;
+width: 40px;
+height: 40px;
+display: flex;
+align-items: center;
+justify-content: center;
+border: 1px solid var(--dg-line);
+border-radius: 50%;
+background: var(--dg-bg);
+color: var(--dg-fg);
+font-size: 15px;
+line-height: 1;
+cursor: pointer;
+box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
+}
+.dg-fab:hover { border-color: var(--dg-accent); }
+.dg-locked, .dg-locked body { overflow: hidden; }
+@media (max-width: 600px) {
+.dg-panel { width: calc(100vw - 16px); max-height: 86vh; }
+.dg-fab { right: 58px; width: 36px; height: 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+.dg-chip, .dg-backdrop { transition: none; }
+}</style>
+<script>(function (global) {
+  'use strict';
+  var CFG = {
+    scope: ['#mvBody', 'main.content', 'main', 'body'],
+    skip: [],
+    chrome: {},
+    shortcut: 'g',
+    title: 'Glossary',
+    subtitle: '',
+  };
+  var BASE_SKIP = [
+    'code', 'pre', 'kbd', 'samp', 'var', 'tt',
+    'a', 'button', 'select', 'textarea', 'input', 'label', 'option',
+    'svg', 'math', 'canvas',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'script', 'style', 'title', '[contenteditable]',
+    '[data-wt]', '.wt',
+    '.term-tooltip', '.tooltip-content',
+    '.dg-ui', '.dg-chip', '[data-dg-skip]',
+  ];
+  var CORPUS = null;
+  var INDEX = null;
+  var LINKING = false;      // set while we mutate, so the observer ignores us
+  var PENDING = null;
+  var PASSES = 0;
+  var openChip = null;
+  var started = false;
+  function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&'); }
+  function buildIndex(corpus) {
+    var byForm = Object.create(null);
+    var forms = [];
+    (corpus.glossary || []).forEach(function (g) {
+      [g.term].concat(g.match || []).forEach(function (f) {
+        byForm[f.toLowerCase()] = g;
+        forms.push(f);
+      });
+    });
+    forms.sort(function (a, b) { return b.length - a.length; });
+    if (!forms.length) return null;
+    var alt = forms.map(escapeRe).join('|');
+    return {
+      byForm: byForm,
+      re: new RegExp('\\b(' + alt + ')(s|es)?\\b', 'gi'),
+    };
+  }
+  function resolve(hit) {
+    var e = INDEX.byForm[hit.toLowerCase()];
+    if (!e) return null;
+    if (e.cs) {
+      var forms = [e.term].concat(e.match || []);
+      if (forms.indexOf(hit) === -1) return null;
+    }
+    return e;
+  }
+  function skipSelector() { return BASE_SKIP.concat(CFG.skip).join(','); }
+  function resolveScope() {
+    for (var i = 0; i < CFG.scope.length; i++) {
+      var el = document.querySelector(CFG.scope[i]);
+      if (el) return el;
+    }
+    return document.body;
+  }
+  function isLinked(scope) { return !!scope.querySelector(':scope > [data-dg-mark]'); }
+  function mark(scope) {
+    var m = document.createElement('span');
+    m.className = 'dg-ui';
+    m.setAttribute('data-dg-mark', '');
+    m.hidden = true;
+    scope.appendChild(m);
+  }
+  function link(root) {
+    if (!INDEX) return 0;
+    var scope = root || resolveScope();
+    if (!scope) return 0;
+    LINKING = true;
+    var made = 0;
+    try {
+      var used = Object.create(null);
+      var existing = scope.querySelectorAll('.dg-chip[data-dg-term]');
+      for (var i = 0; i < existing.length; i++) used[existing[i].getAttribute('data-dg-term')] = 1;
+      var skip = skipSelector();
+      var walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (node) {
+          if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+          var p = node.parentElement;
+          if (!p || p.closest(skip)) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      });
+      var nodes = [];
+      var n;
+      while ((n = walker.nextNode())) nodes.push(n);
+      for (var j = 0; j < nodes.length; j++) made += linkTextNode(nodes[j], used);
+      if (!isLinked(scope)) mark(scope);
+      PASSES++;
+    } finally {
+      LINKING = false;
+    }
+    return made;
+  }
+  function linkTextNode(node, used) {
+    var text = node.nodeValue;
+    var frag = null, last = 0, made = 0, m;
+    INDEX.re.lastIndex = 0;
+    while ((m = INDEX.re.exec(text)) !== null) {
+      var entry = resolve(m[1]);
+      if (!entry || used[entry.term]) continue;
+      used[entry.term] = 1;
+      if (!frag) frag = document.createDocumentFragment();
+      if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+      frag.appendChild(makeChip(entry, m[0]));
+      last = m.index + m[0].length;
+      made++;
+    }
+    if (!frag) return 0;
+    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    node.parentNode.replaceChild(frag, node);
+    return made;
+  }
+  function makeChip(entry, surface) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'dg-chip';
+    b.textContent = surface;          // keep the author's casing and plural
+    b.setAttribute('data-dg-term', entry.term);
+    b.setAttribute('aria-expanded', 'false');
+    b.setAttribute('title', entry.short || entry.term);
+    return b;
+  }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function popNode() {
+    var p = document.getElementById('dgPop');
+    if (!p) {
+      p = el('div', 'dg-ui dg-pop');
+      p.id = 'dgPop';
+      p.addEventListener('click', function (e) { e.stopPropagation(); });
+      document.body.appendChild(p);
+    }
+    return p;
+  }
+  function openPop(chip, entry) {
+    if (openChip === chip) { closePop(); return; }
+    closePop();
+    var p = popNode();
+    p.textContent = '';
+    p.appendChild(el('div', 'dg-pop-t', entry.term));
+    if (entry.short) p.appendChild(el('div', 'dg-pop-s', entry.short));
+    if (entry.long) p.appendChild(el('div', 'dg-pop-l', entry.long));
+    if (entry.see && entry.see.length) {
+      var row = el('div', 'dg-pop-see');
+      entry.see.forEach(function (t) {
+        var b = el('button', 'dg-pop-ref', t);
+        b.type = 'button';
+        b.addEventListener('click', function () { openPanel(t); });
+        row.appendChild(b);
+      });
+      p.appendChild(row);
+    }
+    var more = el('button', 'dg-pop-more', 'All terms \u2192');
+    more.type = 'button';
+    more.addEventListener('click', function () { openPanel(entry.term); });
+    p.appendChild(more);
+    openChip = chip;
+    chip.setAttribute('aria-expanded', 'true');
+    p.classList.add('dg-open');
+    place(p, chip);
+    global.addEventListener('scroll', closePop, { passive: true, once: true });
+  }
+  function place(p, chip) {
+    var r = chip.getBoundingClientRect();
+    var w = p.offsetWidth || 320, h = p.offsetHeight || 120;
+    var left = Math.min(Math.max(12, r.left), Math.max(12, global.innerWidth - w - 12));
+    var top = r.bottom + 8;
+    if (top + h > global.innerHeight - 12) top = Math.max(12, r.top - h - 8);
+    p.style.left = left + 'px';
+    p.style.top = top + 'px';
+  }
+  function closePop() {
+    var p = document.getElementById('dgPop');
+    if (p) p.classList.remove('dg-open');
+    if (openChip) openChip.setAttribute('aria-expanded', 'false');
+    openChip = null;
+  }
+  function buildPanel() {
+    if (document.getElementById('dgPanel')) return;
+    var back = el('div', 'dg-ui dg-backdrop');
+    back.id = 'dgBackdrop';
+    back.addEventListener('click', closePanel);
+    var panel = el('aside', 'dg-ui dg-panel');
+    panel.id = 'dgPanel';
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-modal', 'true');
+    panel.setAttribute('aria-label', CFG.title);
+    var close = el('button', 'dg-panel-x', '\u2715');
+    close.type = 'button';
+    close.setAttribute('aria-label', 'Close the glossary');
+    close.addEventListener('click', closePanel);
+    var head = el('div', 'dg-panel-head');
+    head.appendChild(el('h2', 'dg-panel-h', CFG.title));
+    if (CFG.subtitle) head.appendChild(el('div', 'dg-panel-sub', CFG.subtitle));
+    var search = document.createElement('input');
+    search.type = 'search';
+    search.className = 'dg-search';
+    search.id = 'dgSearch';
+    search.placeholder = 'Filter terms\u2026';
+    search.autocomplete = 'off';
+    search.addEventListener('input', function () { filter(this.value); });
+    head.appendChild(search);
+    var list = el('div', 'dg-list');
+    list.id = 'dgList';
+    (CORPUS.glossary || []).forEach(function (g) {
+      var row = el('div', 'dg-term');
+      row.setAttribute('data-dg-key', g.term.toLowerCase());
+      row.appendChild(el('span', 'dg-term-t', g.term));
+      if (g.short) row.appendChild(el('span', 'dg-term-s', g.short));
+      if (g.long) row.appendChild(el('span', 'dg-term-l', g.long));
+      list.appendChild(row);
+    });
+    var empty = el('div', 'dg-empty', 'No term matches that.');
+    empty.id = 'dgEmpty';
+    empty.hidden = true;
+    list.appendChild(empty);
+    panel.appendChild(close);
+    panel.appendChild(head);
+    panel.appendChild(list);
+    document.body.appendChild(back);
+    document.body.appendChild(panel);
+  }
+  function openPanel(term) {
+    buildPanel();
+    closePop();
+    var panel = document.getElementById('dgPanel');
+    var back = document.getElementById('dgBackdrop');
+    panel.classList.add('dg-open');
+    back.classList.add('dg-open');
+    document.documentElement.classList.add('dg-locked');
+    var search = document.getElementById('dgSearch');
+    search.value = '';
+    filter('');
+    if (term) {
+      var row = document.querySelector('.dg-term[data-dg-key="' + cssEscape(String(term).toLowerCase()) + '"]');
+      if (row) {
+        row.classList.add('dg-hit');
+        if (row.scrollIntoView) row.scrollIntoView({ block: 'center' });
+      }
+    } else if (search.focus) {
+      search.focus();
+    }
+  }
+  function closePanel() {
+    var panel = document.getElementById('dgPanel');
+    var back = document.getElementById('dgBackdrop');
+    if (panel) panel.classList.remove('dg-open');
+    if (back) back.classList.remove('dg-open');
+    document.documentElement.classList.remove('dg-locked');
+    var hit = document.querySelector('.dg-term.dg-hit');
+    if (hit) hit.classList.remove('dg-hit');
+  }
+  function panelOpen() {
+    var p = document.getElementById('dgPanel');
+    return !!(p && p.classList.contains('dg-open'));
+  }
+  function filter(q) {
+    var list = document.getElementById('dgList');
+    if (!list) return;
+    var needle = (q || '').trim().toLowerCase();
+    var rows = list.querySelectorAll('.dg-term');
+    var shown = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var hit = !needle || rows[i].textContent.toLowerCase().indexOf(needle) !== -1;
+      rows[i].hidden = !hit;
+      if (hit) shown++;
+    }
+    document.getElementById('dgEmpty').hidden = shown > 0;
+  }
+  function cssEscape(s) { return s.replace(/["\\]/g, '\\$&'); }
+  function buildOpener() {
+    var label = '\u25EB';
+    var sel = CFG.chrome && CFG.chrome.topbar;
+    var anchor = sel && document.querySelector(sel);
+    var b = el('button', '', label);
+    b.type = 'button';
+    b.id = 'dgOpen';
+    b.setAttribute('aria-label', CFG.title + ' \u2014 press ' + CFG.shortcut);
+    b.setAttribute('title', CFG.title + ' (' + CFG.shortcut + ')');
+    b.addEventListener('click', function (e) { e.stopPropagation(); openPanel(); });
+    if (anchor) {
+      b.className = anchor.className + ' dg-adopted';
+      anchor.parentNode.insertBefore(b, anchor);
+    } else {
+      b.className = 'dg-ui dg-fab';
+      document.body.appendChild(b);
+    }
+  }
+  function ours(node) {
+    var e = node && (node.nodeType === 1 ? node : node.parentElement);
+    if (!e || !e.closest) return false;
+    return !!e.closest('.dg-ui,.dg-chip,[data-dg-mark],.wt,[data-wt]' +
+      (CFG.skip.length ? ',' + CFG.skip.join(',') : ''));
+  }
+  function relevant(records) {
+    for (var i = 0; i < records.length; i++) {
+      var r = records[i];
+      if (ours(r.target)) continue;
+      if (r.type !== 'childList') continue;
+      var added = r.addedNodes, any = false;
+      for (var j = 0; j < added.length; j++) { if (!ours(added[j])) { any = true; break; } }
+      if (any || (!added.length && r.removedNodes.length)) return true;
+    }
+    return false;
+  }
+  function tick() {
+    PENDING = null;
+    if (openChip && !openChip.isConnected) closePop();
+    var scope = resolveScope();
+    if (scope && !isLinked(scope)) link(scope);
+  }
+  function observe() {
+    if (!global.MutationObserver || !document.body) return;
+    new MutationObserver(function (records) {
+      if (LINKING || PENDING) return;
+      if (!relevant(records)) return;
+      PENDING = setTimeout(tick, 60);
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+  function keys() {
+    document.addEventListener('keydown', function (e) {
+      var t = e.target || {};
+      var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || '') || t.isContentEditable;
+      if (e.key === 'Escape') {
+        if (panelOpen()) { closePanel(); e.stopPropagation(); e.preventDefault(); return; }
+        if (openChip) { closePop(); e.stopPropagation(); e.preventDefault(); return; }
+        return;
+      }
+      if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey &&
+          e.key && e.key.toLowerCase() === CFG.shortcut) {
+        openPanel();
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    }, true);
+  }
+  function start() {
+    if (started || !CORPUS) return;
+    started = true;
+    buildPanel();
+    buildOpener();
+    keys();
+    document.addEventListener('click', function (e) {
+      var chip = e.target && e.target.closest && e.target.closest('.dg-chip');
+      if (chip) {
+        e.stopPropagation();
+        var entry = INDEX && INDEX.byForm[chip.getAttribute('data-dg-term').toLowerCase()];
+        if (entry) openPop(chip, entry);
+        return;
+      }
+      closePop();
+    });
+    global.addEventListener('resize', closePop);
+    link();
+    observe();
+  }
+  global.DG = {
+    configure: function (cfg) {
+      cfg = cfg || {};
+      if (cfg.scope) CFG.scope = cfg.scope;
+      if (cfg.skip) CFG.skip = cfg.skip;
+      if (cfg.chrome) CFG.chrome = cfg.chrome;
+      if (cfg.shortcut) CFG.shortcut = cfg.shortcut;
+      if (cfg.title) CFG.title = cfg.title;
+      if (cfg.subtitle) CFG.subtitle = cfg.subtitle;
+    },
+    register: function (corpus) { CORPUS = corpus; INDEX = buildIndex(corpus); },
+    start: start,
+    link: link,
+    open: openPanel,
+    close: function () { closePanel(); closePop(); },
+    state: function () {
+      return {
+        passes: PASSES,
+        chips: document.querySelectorAll('.dg-chip').length,
+        terms: CORPUS ? (CORPUS.glossary || []).length : 0,
+        scope: (function () { var s = resolveScope(); return s ? (s.id || s.tagName.toLowerCase()) : null; })(),
+        skip: skipSelector(),
+      };
+    },
+  };
+})(typeof window !== 'undefined' ? window : this);
+DG.configure({"scope":["main.content","main","body"],"skip":[".quiz-option",".anim-stage",".animation-container",".sidebar-nav",".module-nav",".code-head",".code-tabs",".track-badge",".meta-row"],"shortcut":"g","title":"Course Glossary","subtitle":"Every domain word this course uses. Press g from anywhere."});DG.register({"glossary":[{"term":"ADRs","short":"Architecture Decision Records: short documents capturing a significant design decision, its context, and its consequences.","long":"orderflow's docs/adr-001-event-bus.md is one.","match":["ADR"],"cs":true},{"term":"AMBIGUOUS","short":"The pipeline found more than one candidate and refused to guess.","long":"The tag that matters most: a graph that silently picks one of three possible targets is worse than one that admits it does not know.","cs":true,"see":["Provenance"]},{"term":"AST","short":"Abstract Syntax Tree — the tree-shaped representation of code's grammatical structure that parsers produce.","long":"M03 is entirely about this.","cs":true},{"term":"Atom editor","short":"GitHub's extensible text editor (2014–2022).","long":"tree-sitter was built to give it fast, accurate syntax highlighting; the editor is gone, the parser became an industry standard."},{"term":"attested computation","short":"An OKF concept documenting the sanctioned, checkable WAY to compute a value — not just what the value means.","long":"The single source of truth for governed metrics."},{"term":"betweenness centrality","short":"A graph metric scoring how often a node sits on shortest paths between other nodes — the god-node detector from M01.","long":"Computing it exactly requires touching a large share of all vertex-edge combinations."},{"term":"blast radius","short":"The count of symbols that transitively depend on this one — every function whose behavior could change if it changes.","long":"You computed it with BFS over the reverse index in M01."},{"term":"breadth-first search","short":"BFS: explore a graph level by level from a starting node, using a queue and a visited-set so nothing is processed twice."},{"term":"Bundle-relative links","short":"Markdown links whose target is a path inside the bundle (e.g.","long":"/services/customer-service.md). They connect concepts regardless of where the described code lives in the actual repo tree."},{"term":"centrality","short":"A family of graph measures scoring how \"important\" a node is — by how many edges it has (degree), or how many shortest paths run through it (betweenness)."},{"term":"chunks","short":"Fixed-size text segments, typically 256–1000 tokens, cut from documents so each piece fits an embedding model's input and stays \"focused.\"","match":["chunking"]},{"term":"compacted","short":"When a conversation outgrows the context window, older content is summarized or dropped.","long":"Files the agent read earlier are gone — re-consulting them means re-reading them at full price."},{"term":"context window","short":"The fixed amount of text (measured in tokens) a model can consider at once — every file it reads, every instruction, every previous message counts against it."},{"term":"embedding","short":"A vector of hundreds of floats representing the text's meaning; texts with similar meaning get vectors that sit near each other.","match":["embeddings"]},{"term":"EXTRACTED","short":"A fact read directly out of the source. The graph saw it.","long":"The strongest provenance tag: a call, an import or a definition the parser found in the text. If it is wrong, the code is wrong.","cs":true,"see":["Provenance"]},{"term":"FTS5","short":"SQLite's built-in Full-Text Search extension (version 5): tokenizes text into an index so \"which rows mention X\" is answered without scanning every row."},{"term":"git worktrees","short":"Additional working directories attached to the same repository, letting parallel work happen on different branches without re-cloning."},{"term":"god node","short":"A node so widely depended on that it distorts everything around it.","long":"The course's example is Registry.lookup with 1,192 callers. Not automatically a bug — some hubs are deliberate. Centrality finds them; judgement decides what to do.","see":["betweenness centrality","blast radius"]},{"term":"graph","short":"A data structure made of nodes (things) and edges (relationships between pairs of things).","long":"Nothing more exotic than that."},{"term":"INFERRED","short":"A fact the pipeline derived rather than read. Fallible on purpose.","long":"Dynamic dispatch, reflection and framework wiring produce edges nobody wrote down. Keeping them tagged is what lets a reader discount them.","cs":true,"see":["Provenance"]},{"term":"JSON-RPC","short":"A minimal convention for sending named method calls with parameters as JSON, and getting results back as JSON.","long":"No REST endpoints, no URLs — just method + params over a pipe."},{"term":"language server","short":"A background process implementing the Language Server Protocol (LSP) — the same thing that powers go-to-definition in VS Code.","long":"rust-analyzer (Rust) and pyright (Python) are the reference examples."},{"term":"Leiden","short":"The community-detection algorithm used to cluster the graph.","long":"Partitions nodes into densely-connected neighbourhoods, so a codebase can be described by its regions rather than file by file.","cs":true,"see":["modularity"]},{"term":"Leiden community detection","short":"A graph-clustering algorithm (successor to Louvain) that partitions nodes to maximize modularity — the degree to which clusters are internally dense and externally sparse.","long":"M01 introduced it."},{"term":"lint","short":"An automated checker that enforces rules stricter than the format requires — e.g., \"every concept must have a description\" or \"no dangling links.\" The okf CLI ships 13 built-in lint rules (M07)."},{"term":"LLM Wiki","short":"Karpathy's April 2026 thought experiment: instead of a model re-searching raw documents on every query, let it build and maintain a living, cross-linked Markdown wiki as durable external memory."},{"term":"Markdown","short":"The lightweight plain-text formatting language used in READMEs everywhere: # for headings, [text](url) for links, | pipes | for tables.","long":"Renders natively on GitHub."},{"term":"MCP","short":"Model Context Protocol — the open standard that lets AI assistants call external tools.","long":"M09 builds a graph-serving MCP server from scratch.","cs":true,"see":["MCP server"]},{"term":"MCP server","short":"A Model Context Protocol server — a small process exposing typed tools (here: graph queries) to any MCP-aware agent over stdio."},{"term":"modularity","short":"A score measuring how much denser connections are inside clusters than you'd expect by random chance.","long":"High modularity = crisp subsystems."},{"term":"nearest neighbors","short":"The stored vectors closest to the query vector by cosine similarity — the mathematical stand-in for \"most related text.\""},{"term":"Neovim","short":"A modern fork of the Vim editor.","long":"Its syntax highlighting and code navigation are powered by tree-sitter grammars."},{"term":"okf-rs","short":"A published OKF implementation the course cites for its benchmark numbers.","long":"Referenced for its ~400x per-query structural-lookup figure, quoted as somebody else's measurement rather than this course's.","see":["Open Knowledge Format"]},{"term":"Open Knowledge Format","short":"OKF: Google Cloud's June 2026 spec for knowledge as a directory of Markdown files with YAML frontmatter.","long":"Track 3 of this course (M06–M08) covers it in depth.","match":["OKF"],"cs":true,"see":["Provenance","YAML frontmatter"]},{"term":"orchestrator","short":"The top-level agent that decomposes a task and dispatches sub-agents.","long":"It decides what context each sub-agent receives — which makes it the gatekeeper of the token budget."},{"term":"orderflow","short":"The sample project the whole course runs on.","long":"A small Python service repo — billing, orders, notifications and shared auth — chosen because it is big enough to have real structure and small enough to hold in your head while you check the graph's answers."},{"term":"Progressive disclosure","short":"A consumption pattern: start at the root index, follow links only as deep as the task requires, and load only the concept files actually needed — instead of loading the entire bundle into context."},{"term":"prompt caching","short":"Providers cache the processed prefix of a prompt.","long":"If your next request starts with the identical prefix, that part is nearly free. One changed byte early in the prompt invalidates everything after it."},{"term":"Provenance","short":"Where a fact in the graph came from, recorded alongside it.","long":"Every edge is either read from the code or derived from it, and the graph says which. A graph that cannot tell you how it knows something is a graph you cannot act on.","see":["EXTRACTED","INFERRED"]},{"term":"RAG","short":"Retrieval-Augmented Generation: retrieve relevant text from your own data and paste it into the model's prompt so it can answer from your knowledge instead of its training data."},{"term":"RDF/OWL","short":"The W3C semantic-web standards for formal knowledge graphs: typed relationships, machine-checkable ontologies, logical inference.","long":"Far more rigorous than Markdown links — and far heavier to author and maintain."},{"term":"skill","short":"A markdown file under .claude/skills/ with a name and description in frontmatter.","long":"The agent loads it only when the description matches the task, or when invoked explicitly as a slash command."},{"term":"sparse-checkout","short":"A git feature (2.25+) that writes only chosen directories to disk while keeping the rest in the index — a partial working copy of a full repository."},{"term":"specification","short":"A written standard describing exactly what a valid artifact looks like, so independent tools can produce and consume it interchangeably.","long":"A spec is a contract, not software."},{"term":"SQLite","short":"The embedded, serverless SQL database that lives in a single file — no server process, no configuration.","long":"The most deployed database on earth."},{"term":"Staleness","short":"The gap between what the graph says and what the code now does.","long":"A knowledge graph is a cache over a moving repository. The question is never whether it goes stale but how fast you notice.","match":["stale"],"see":["drift"]},{"term":"stdio","short":"Standard input/output — the server is a subprocess; the client writes requests to its stdin and reads responses from its stdout.","long":"No network, no ports, no auth to configure."},{"term":"subagent","short":"A worker agent with its own separate context window.","long":"It performs a delegated task (like exploration) and returns only a summary to the main conversation; everything it read stays in its context and is discarded."},{"term":"system prompt","short":"The standing instructions loaded at the start of every turn — identity, rules, conventions.","long":"Static by design."},{"term":"token","short":"The unit LLMs read and bill by; ~4 characters of English/code on average.","long":"A 24KB file ≈ 6,000 tokens of context.","match":["tokens"]},{"term":"tool definitions","short":"The JSON schemas describing every tool the agent can call.","long":"Loaded whether or not the tools get used."},{"term":"tree-sitter","short":"The parser that turns source files into syntax trees.","long":"Fast, incremental, and grammar-driven per language — which is why the pipeline can re-parse only what changed instead of the whole repository.","see":["AST"]},{"term":"WAU","short":"Weekly Active Users — the course's stand-in for knowledge the code does not contain.","long":"Used as the example of tribal knowledge: the graph can show you where WAU is computed, but not that it excludes testers on purpose. That part lives in people's heads, and is what documentation is for.","cs":true},{"term":"YAML frontmatter","short":"A block of key: value metadata at the very top of a Markdown file, fenced by two lines containing only ---.","long":"YAML is the human-friendly config syntax used by tools like GitHub Actions."}]});DG.start();</script>
+<!-- DG:END -->
 </body>
 </html>

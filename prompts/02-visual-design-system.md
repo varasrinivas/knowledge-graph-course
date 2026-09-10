@@ -285,7 +285,9 @@ Import from Google Fonts CDN:
   transition: opacity var(--transition-fast);
   z-index: 10;
 }
-.term-tooltip:hover .tooltip-content { opacity: 1; }
+.term-tooltip:hover .tooltip-content,
+.term-tooltip:focus .tooltip-content,
+.term-tooltip:focus-within .tooltip-content { opacity: 1; }
 ```
 
 ### Progress Bar
