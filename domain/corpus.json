@@ -97,6 +97,10 @@
     {
       "word": "billing-service",
       "skip": "one of orderflow's services; the sample project is defined, its individual directories need not be"
+    },
+    {
+      "word": "LSP ladder",
+      "term": "LSP ladder"
     }
   ],
   "glossary": [
@@ -132,7 +136,7 @@
     {
       "term": "attested computation",
       "short": "An OKF concept documenting the sanctioned, checkable WAY to compute a value — not just what the value means.",
-      "long": "The single source of truth for governed metrics."
+      "long": "The code path or query that produces the value, as distinct from prose describing what the value means — the single source of truth for a governed metric."
     },
     {
       "term": "betweenness centrality",
@@ -167,11 +171,12 @@
     {
       "term": "compacted",
       "short": "When a conversation outgrows the context window, older content is summarized or dropped.",
-      "long": "Files the agent read earlier are gone — re-consulting them means re-reading them at full price."
+      "long": "Files the agent read earlier vanish from it, and re-consulting them means re-reading them at full price."
     },
     {
       "term": "context window",
-      "short": "The fixed amount of text (measured in tokens) a model can consider at once — every file it reads, every instruction, every previous message counts against it."
+      "short": "The fixed amount of text (measured in tokens) a model can consider at once — every file it reads, every instruction, every previous message counts against it.",
+      "long": "The prompt, every file it has read, every command output and its own responses all share the one budget."
     },
     {
       "term": "embedding",
@@ -228,7 +233,7 @@
     {
       "term": "language server",
       "short": "A background process implementing the Language Server Protocol (LSP) — the same thing that powers go-to-definition in VS Code.",
-      "long": "rust-analyzer (Rust) and pyright (Python) are the reference examples."
+      "long": "It maintains a live semantic index of a codebase — definitions, references, types. rust-analyzer and pyright are the reference implementations; editors use it for go-to-definition, and agents can too."
     },
     {
       "term": "Leiden",
@@ -253,6 +258,15 @@
       "short": "Karpathy's April 2026 thought experiment: instead of a model re-searching raw documents on every query, let it build and maintain a living, cross-linked Markdown wiki as durable external memory."
     },
     {
+      "term": "LSP ladder",
+      "short": "The rungs M03 climbs when a bare name has more than one candidate.",
+      "long": "Heuristic name matching first, then LSP-backed disambiguation via textDocument/definition, then accept AMBIGUOUS. Each rung costs more and resolves more, and stopping early is what produces a wrong edge rather than an honest one.",
+      "see": [
+        "language server",
+        "AMBIGUOUS"
+      ]
+    },
+    {
       "term": "Markdown",
       "short": "The lightweight plain-text formatting language used in READMEs everywhere: # for headings, [text](url) for links, | pipes | for tables.",
       "long": "Renders natively on GitHub."
@@ -260,7 +274,7 @@
     {
       "term": "MCP",
       "short": "Model Context Protocol — the open standard that lets AI assistants call external tools.",
-      "long": "M09 builds a graph-serving MCP server from scratch.",
+      "long": "A client — the AI assistant — discovers and calls tools a server process exposes, usually over stdio: named JSON messages in, results out. M09 builds a graph-serving MCP server from scratch.",
       "cs": true,
       "see": [
         "MCP server"
@@ -390,7 +404,7 @@
     {
       "term": "token",
       "short": "The unit LLMs read and bill by; ~4 characters of English/code on average.",
-      "long": "A 24KB file ≈ 6,000 tokens of context.",
+      "long": "“authentication” is about 3 tokens; a 500-line source file about 2,000, and a 24KB file roughly 6,000.",
       "match": [
         "tokens"
       ]

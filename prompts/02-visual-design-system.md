@@ -260,7 +260,16 @@ Import from Google Fonts CDN:
 }
 ```
 
-### Tooltip (for technical terms)
+### Tooltip (rarely — prefer the corpus)
+
+> Do not reach for this to define a technical term. Terms belong in
+> `domain/corpus.json`, where the shared runtime links the first use of each one
+> in **every** page; a tooltip only ever defines a word in the module that
+> carries it. The 52 hand-written tooltips this course used to ship were retired
+> for that reason. The markup below stays legal, and the runtime still lets it
+> win, for the rare gloss that must differ *in this module* from the canonical
+> definition.
+
 ```css
 .term-tooltip {
   position: relative;
